@@ -1,0 +1,7 @@
+pricing_id,route_id,fuel_surcharge_usd,port_charge_usd,demand_factor,risk_surcharge_usd,target_margin_percent
+P001,R001,100,75,1.00,50,15
+P002,R002,110,80,0.95,60,15
+P003,R003,105,70,1.05,55,15
+P004,R004,100,80,1.00,50,15
+P005,R005,95,70,1.00,45,15
+P006,R006,105,75,0.95,55,15

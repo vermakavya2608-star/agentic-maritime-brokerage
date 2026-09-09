@@ -1,0 +1,603 @@
+route_id,origin,destination,distance_nm,transit_days,transshipments,route_type,base_freight_usd
+R001,Tokyo,Sydney,4860,12,0,Direct,1500
+R002,Tokyo,Sydney,5200,15,1,Alternative,1300
+R003,Tokyo,Hamburg,11200,30,1,Standard,2800
+R004,Tokyo,Hamburg,11800,34,2,Alternative,2400
+R005,Sydney,Los Angeles,6500,18,0,Direct,2200
+R006,Sydney,Los Angeles,7100,22,1,Alternative,1950
+R007,Hamburg,New York,3800,11,0,Direct,1800
+R008,Hamburg,New York,4200,14,1,Alternative,1600
+R009,Santos,Rotterdam,5300,16,0,Direct,2100
+R010,Santos,Rotterdam,5800,19,1,Alternative,1850
+R011,Cape Town,Mumbai,7948,21,0,Direct,2718
+R012,Durban,New York,13621,39,1,Standard,5066
+R013,Cape Town,Valparaiso,9497,41,2,Alternative,2484
+R014,Long Beach,Seattle,2132,5,0,Direct,900
+R015,Durban,Vancouver,14804,43,1,Standard,5212
+R016,Chennai,Sydney,7971,32,1,Alternative,2912
+R017,New York,Mombasa,14478,33,0,Direct,5162
+R018,Tokyo,Busan,1838,9,2,Standard,900
+R019,Colombo,Jebel Ali,3785,19,2,Alternative,1273
+R020,Busan,Port Klang,5165,13,0,Direct,2196
+R021,Buenos Aires,Santos,2758,10,1,Standard,922
+R022,Sydney,Mumbai,8423,31,1,Alternative,2361
+R023,Barcelona,Cape Town,9556,23,0,Direct,3638
+R024,Jebel Ali,Shanghai,6484,21,1,Standard,2327
+R025,Dubai,Barcelona,6196,24,1,Alternative,2049
+R026,Dubai,New York,13573,32,0,Direct,4750
+R027,Vancouver,Jebel Ali,15254,47,2,Standard,5704
+R028,Rotterdam,Singapore,10461,39,2,Alternative,3671
+R029,Valparaiso,Mumbai,18451,46,0,Direct,6500
+R030,Durban,Tokyo,14017,47,2,Standard,4661
+R031,Vancouver,Mumbai,16594,52,1,Alternative,5764
+R032,London,Colombo,8540,20,0,Direct,3113
+R033,Busan,Barcelona,12750,43,1,Standard,4795
+R034,Panama City,Vancouver,7297,28,1,Alternative,2284
+R035,Singapore,Long Beach,20108,47,0,Direct,6500
+R036,Durban,Buenos Aires,9605,30,2,Standard,3897
+R037,Seattle,Hamburg,13442,50,1,Alternative,4059
+R038,Chennai,Port Klang,3326,8,0,Direct,1514
+R039,Mumbai,Valparaiso,12644,40,1,Standard,4101
+R040,London,Rotterdam,1290,10,2,Alternative,900
+R041,Mumbai,Jebel Ali,2275,6,0,Direct,900
+R042,Port Klang,Cape Town,11089,39,1,Standard,4234
+R043,Seattle,Mombasa,19474,71,1,Alternative,5097
+R044,Singapore,Busan,4841,11,0,Direct,2264
+R045,Dubai,Seattle,17064,52,2,Standard,6224
+R046,Seattle,Chennai,22100,81,2,Alternative,6500
+R047,Genoa,Hamburg,1647,4,0,Direct,900
+R048,Sydney,Colombo,10419,33,2,Standard,4295
+R049,Chennai,Singapore,2921,15,2,Alternative,952
+R050,Tokyo,Genoa,14523,35,0,Direct,6500
+R051,Sydney,Cape Town,13832,40,1,Standard,4952
+R052,London,Sydney,17955,67,2,Alternative,5419
+R053,Genoa,Long Beach,11423,30,0,Direct,4496
+R054,Durban,Valparaiso,11731,38,1,Standard,4240
+R055,Santos,Busan,21696,70,2,Alternative,6500
+R056,Cape Town,Long Beach,16511,41,0,Direct,5699
+R057,Valparaiso,Hamburg,13621,40,1,Standard,5634
+R058,London,Busan,12784,55,2,Alternative,3563
+R059,Vancouver,Buenos Aires,13781,38,0,Direct,6193
+R060,Valparaiso,Seattle,10442,36,2,Standard,3241
+R061,Genoa,Busan,11467,40,2,Alternative,3915
+R062,Sydney,Rotterdam,20661,48,0,Direct,6500
+R063,Panama City,Dubai,11416,35,2,Standard,4905
+R064,Durban,Sydney,13159,44,1,Alternative,4625
+R065,New York,Singapore,14945,36,0,Direct,6500
+R066,Hong Kong,Los Angeles,18182,58,1,Standard,6472
+R067,Antwerp,Mombasa,7126,29,1,Alternative,1925
+R068,Singapore,Antwerp,13610,33,0,Direct,5575
+R069,Rotterdam,Mumbai,8191,26,1,Standard,2946
+R070,Mumbai,Santos,13882,50,2,Alternative,3894
+R071,Mumbai,Tokyo,6949,16,0,Direct,2653
+R072,Rotterdam,New York,9839,32,1,Standard,3338
+R073,Los Angeles,Tokyo,30194,111,1,Alternative,6500
+R074,Cape Town,Sydney,13846,36,0,Direct,6500
+R075,Hong Kong,Busan,2604,10,1,Standard,1013
+R076,Durban,Dubai,7797,30,2,Alternative,2942
+R077,Jebel Ali,Singapore,6380,16,0,Direct,2483
+R078,Colombo,Long Beach,20934,62,1,Standard,6500
+R079,Port Klang,Genoa,11004,36,1,Alternative,3785
+R080,New York,Hong Kong,17178,47,0,Direct,6500
+R081,Hong Kong,Genoa,9186,28,1,Standard,2965
+R082,Busan,Tokyo,1507,11,2,Alternative,900
+R083,Barcelona,Santos,10637,25,0,Direct,5022
+R084,Long Beach,Cape Town,18644,56,2,Standard,6500
+R085,Vancouver,Valparaiso,10990,37,1,Alternative,3179
+R086,Hong Kong,Seattle,25154,57,0,Direct,6500
+R087,Antwerp,Singapore,13046,39,1,Standard,3937
+R088,Seattle,Cape Town,17357,61,2,Alternative,6029
+R089,Port Klang,New York,18669,43,0,Direct,6500
+R090,Hong Kong,Panama City,16603,50,2,Standard,6192
+R091,Los Angeles,Port Klang,25218,84,1,Alternative,6500
+R092,Hong Kong,Valparaiso,21200,54,0,Direct,6500
+R093,Los Angeles,Seattle,2375,10,1,Standard,900
+R094,Durban,London,10780,43,2,Alternative,4133
+R095,Hamburg,Colombo,10015,25,0,Direct,4445
+R096,Singapore,Tokyo,5088,21,2,Standard,1850
+R097,Port Klang,Panama City,16997,57,1,Alternative,4899
+R098,Vancouver,Barcelona,12033,28,0,Direct,4258
+R099,Panama City,Durban,13029,44,2,Standard,4583
+R100,Mombasa,Genoa,5864,28,2,Alternative,1686
+R101,Genoa,Shanghai,11569,32,0,Direct,4473
+R102,Chennai,Los Angeles,23577,79,1,Standard,6500
+R103,Durban,Antwerp,9093,35,1,Alternative,2538
+R104,Durban,Mumbai,8321,22,0,Direct,3975
+R105,Rotterdam,Barcelona,2181,8,1,Standard,900
+R106,Mumbai,Busan,6774,26,1,Alternative,2455
+R107,Jebel Ali,Seattle,17842,48,0,Direct,6197
+R108,Port Klang,Mumbai,4304,14,1,Standard,1557
+R109,Busan,Seattle,27349,95,1,Alternative,6500
+R110,Panama City,Long Beach,5785,14,0,Direct,2669
+R111,Los Angeles,Vancouver,2456,11,2,Standard,900
+R112,Buenos Aires,Cape Town,7760,31,2,Alternative,2512
+R113,Busan,Shanghai,1183,3,0,Direct,900
+R114,Tokyo,Dubai,7180,23,1,Standard,2700
+R115,Buenos Aires,Tokyo,22916,83,2,Alternative,6500
+R116,Shanghai,London,10691,29,0,Direct,4614
+R117,Port Klang,Dubai,6603,22,2,Standard,2350
+R118,Dubai,Shanghai,7879,30,2,Alternative,2456
+R119,Barcelona,Sydney,18784,48,0,Direct,6500
+R120,Long Beach,Singapore,20628,61,2,Standard,6368
+R121,Mumbai,Durban,8214,37,2,Alternative,2924
+R122,Colombo,Valparaiso,17803,49,0,Direct,6500
+R123,Santos,Panama City,5948,20,1,Standard,2459
+R124,London,Jebel Ali,7773,26,1,Alternative,2627
+R125,Durban,Port Klang,8004,20,0,Direct,2894
+R126,Vancouver,Antwerp,12263,36,1,Standard,4264
+R127,Genoa,Sydney,18901,61,1,Alternative,6500
+R128,Port Klang,Hong Kong,3812,9,0,Direct,1639
+R129,Mumbai,Shanghai,4674,19,2,Standard,1511
+R130,Durban,Long Beach,17856,68,2,Alternative,5063
+R131,Singapore,Genoa,9631,25,0,Direct,3465
+R132,Los Angeles,London,12192,37,1,Standard,3998
+R133,Sydney,New York,22887,82,1,Alternative,6500
+R134,Cape Town,Durban,2121,5,0,Direct,983
+R135,Port Klang,Rotterdam,10247,38,2,Standard,3182
+R136,New York,Sydney,23195,81,2,Alternative,6500
+R137,Los Angeles,Genoa,11369,31,0,Direct,4549
+R138,Busan,Hamburg,11309,38,2,Standard,4373
+R139,Sydney,Chennai,7628,32,1,Alternative,2282
+R140,Los Angeles,Santos,8806,21,0,Direct,3350
+R141,Hong Kong,Cape Town,10147,35,2,Standard,3214
+R142,Buenos Aires,Durban,8979,40,2,Alternative,3340
+R143,Barcelona,Jebel Ali,4500,11,0,Direct,1579
+R144,Genoa,Rotterdam,1453,8,2,Standard,900
+R145,Cape Town,Dubai,7694,26,1,Alternative,2172
+R146,Sydney,Vancouver,33646,79,0,Direct,6500
+R147,Durban,Singapore,6737,22,1,Standard,2371
+R148,Panama City,Genoa,8201,36,2,Alternative,2962
+R149,Barcelona,Mumbai,6721,18,0,Direct,2764
+R150,Long Beach,Mumbai,21785,64,1,Standard,6500
+R151,Genoa,Singapore,12071,47,1,Alternative,3448
+R152,Jebel Ali,Barcelona,6504,15,0,Direct,2279
+R153,Sydney,Tokyo,10643,34,1,Standard,3972
+R154,Jebel Ali,Colombo,4096,18,2,Alternative,1398
+R155,Vancouver,Busan,20777,52,0,Direct,6500
+R156,Seattle,Barcelona,14030,45,1,Standard,4344
+R157,London,Singapore,11512,43,1,Alternative,3422
+R158,Dubai,Cape Town,8522,21,0,Direct,3502
+R159,Colombo,Los Angeles,19507,58,2,Standard,6500
+R160,Long Beach,Durban,18917,69,1,Alternative,6088
+R161,Buenos Aires,London,10139,26,0,Direct,4598
+R162,Tokyo,Long Beach,28788,88,1,Standard,6500
+R163,Tokyo,Durban,12155,46,2,Alternative,4123
+R164,Buenos Aires,Mumbai,13636,35,0,Direct,6114
+R165,Durban,Hamburg,11024,36,2,Standard,3401
+R166,Tokyo,Panama City,18375,71,2,Alternative,6500
+R167,Seattle,London,13110,30,0,Direct,5069
+R168,Buenos Aires,Dubai,13635,44,1,Standard,5253
+R169,Seattle,Durban,18650,68,1,Alternative,5762
+R170,Mumbai,Los Angeles,20707,50,0,Direct,6500
+R171,Hamburg,Shanghai,12816,46,2,Standard,4961
+R172,Colombo,Cape Town,7749,33,2,Alternative,2972
+R173,London,Buenos Aires,11776,30,0,Direct,4377
+R174,Vancouver,London,10143,30,1,Standard,3176
+R175,Singapore,Jebel Ali,6890,25,1,Alternative,2576
+R176,London,Vancouver,12992,33,0,Direct,4712
+R177,Vancouver,Dubai,20461,61,2,Standard,6500
+R178,Port Klang,Barcelona,10760,40,2,Alternative,3129
+R179,Panama City,Rotterdam,9662,23,0,Direct,4345
+R180,Barcelona,Long Beach,10579,31,1,Standard,4252
+R181,Buenos Aires,Jebel Ali,15368,55,2,Alternative,5135
+R182,Mombasa,Vancouver,17223,45,0,Direct,6500
+R183,London,Panama City,9463,29,1,Standard,3009
+R184,Santos,Hamburg,10327,37,2,Alternative,3429
+R185,Sydney,Singapore,5778,13,0,Direct,2195
+R186,Los Angeles,Cape Town,17359,50,1,Standard,5540
+R187,Los Angeles,Chennai,18898,63,2,Alternative,6500
+R188,Panama City,Busan,19902,50,0,Direct,6500
+R189,Panama City,Jebel Ali,16073,55,1,Standard,6500
+R190,Cape Town,Tokyo,16954,58,2,Alternative,4711
+R191,Valparaiso,Barcelona,10895,26,0,Direct,3916
+R192,Long Beach,Los Angeles,595,6,2,Standard,900
+R193,Barcelona,Los Angeles,10594,45,2,Alternative,3151
+R194,Barcelona,Colombo,7912,21,0,Direct,3397
+R195,Vancouver,Chennai,21003,61,1,Standard,6500
+R196,Barcelona,Mombasa,7321,26,1,Alternative,2180
+R197,Colombo,Durban,5536,15,0,Direct,2205
+R198,Shanghai,Busan,1108,7,2,Standard,900
+R199,Sydney,Panama City,23410,83,1,Alternative,6500
+R200,Singapore,Seattle,23945,63,0,Direct,6500
+R201,London,Shanghai,13683,41,1,Standard,5222
+R202,Rotterdam,Genoa,1953,13,2,Alternative,900
+R203,Los Angeles,Dubai,16209,43,0,Direct,6500
+R204,Mombasa,Mumbai,4941,16,1,Standard,2003
+R205,Mombasa,Antwerp,6949,32,2,Alternative,1988
+R206,Colombo,Hong Kong,4335,11,0,Direct,1662
+R207,Singapore,London,11728,39,1,Standard,4666
+R208,Busan,Dubai,6684,23,1,Alternative,2026
+R209,Port Klang,Sydney,5929,15,0,Direct,2347
+R210,Singapore,Barcelona,11013,32,1,Standard,4014
+R211,Genoa,Hong Kong,10976,40,2,Alternative,3891
+R212,Sydney,Barcelona,14584,33,0,Direct,5327
+R213,Long Beach,Sydney,24802,79,1,Standard,6500
+R214,Valparaiso,Durban,10394,44,2,Alternative,3302
+R215,Singapore,Buenos Aires,16518,38,0,Direct,6431
+R216,Singapore,Durban,9856,31,2,Standard,4171
+R217,Santos,Chennai,11339,45,2,Alternative,4129
+R218,Cape Town,Vancouver,18088,49,0,Direct,6500
+R219,Shanghai,Mombasa,10006,35,1,Standard,4014
+R220,Singapore,Mombasa,6294,23,1,Alternative,2192
+R221,Buenos Aires,Rotterdam,14590,37,0,Direct,5117
+R222,Long Beach,London,10205,34,1,Standard,3431
+R223,Buenos Aires,Port Klang,19025,66,1,Alternative,5903
+R224,Durban,Cape Town,1694,4,0,Direct,900
+R225,Valparaiso,Los Angeles,8788,27,1,Standard,3777
+R226,Rotterdam,Hamburg,728,5,1,Alternative,900
+R227,Chennai,Colombo,905,3,0,Direct,900
+R228,Tokyo,Singapore,7170,23,1,Standard,2663
+R229,Singapore,Santos,13754,46,1,Alternative,5234
+R230,Rotterdam,Santos,11295,28,0,Direct,4032
+R231,Jebel Ali,Genoa,4591,15,1,Standard,1392
+R232,Jebel Ali,Dubai,508,8,2,Alternative,900
+R233,Antwerp,Valparaiso,13124,36,0,Direct,5193
+R234,Shanghai,Long Beach,25446,81,2,Standard,6500
+R235,Jebel Ali,Antwerp,6148,26,2,Alternative,1958
+R236,Port Klang,Tokyo,6141,17,0,Direct,2800
+R237,Shanghai,Genoa,11756,35,1,Standard,3723
+R238,Santos,New York,8300,31,1,Alternative,2486
+R239,Los Angeles,Buenos Aires,9400,25,0,Direct,4442
+R240,Hamburg,London,1391,6,1,Standard,900
+R241,Valparaiso,Long Beach,9522,37,2,Alternative,2591
+R242,New York,Jebel Ali,13855,32,0,Direct,5009
+R243,Tokyo,Cape Town,15970,53,2,Standard,6500
+R244,Cape Town,Panama City,8751,36,1,Alternative,3004
+R245,Singapore,Shanghai,4823,13,0,Direct,2026
+R246,Sydney,Long Beach,28318,80,1,Standard,6500
+R247,Singapore,New York,19000,74,2,Alternative,6500
+R248,Jebel Ali,Rotterdam,6123,17,0,Direct,2133
+R249,Seattle,Singapore,22264,73,1,Standard,6500
+R250,Buenos Aires,Shanghai,18211,63,2,Alternative,6500
+R251,Long Beach,Chennai,23016,55,0,Direct,6500
+R252,Cape Town,Buenos Aires,6473,23,1,Standard,2320
+R253,Santos,Port Klang,12469,43,2,Alternative,4642
+R254,Dubai,Sydney,11399,27,0,Direct,5365
+R255,Buenos Aires,Seattle,12865,40,1,Standard,4720
+R256,Hamburg,Barcelona,2042,14,2,Alternative,900
+R257,Durban,Colombo,6746,18,0,Direct,2626
+R258,Mombasa,Colombo,3900,15,2,Standard,1501
+R259,Antwerp,Colombo,9450,32,1,Alternative,2986
+R260,Genoa,Durban,11358,29,0,Direct,4502
+R261,Antwerp,Genoa,898,7,2,Standard,900
+R262,Antwerp,Long Beach,11317,41,2,Alternative,3353
+R263,Durban,Genoa,11709,29,0,Direct,4191
+R264,Hamburg,Santos,9379,30,1,Standard,3259
+R265,Panama City,Mumbai,13141,50,2,Alternative,3494
+R266,Colombo,Rotterdam,8056,19,0,Direct,3324
+R267,Jebel Ali,Vancouver,15346,50,1,Standard,5826
+R268,Santos,Long Beach,9078,36,2,Alternative,2958
+R269,Santos,Cape Town,6904,17,0,Direct,2637
+R270,Chennai,New York,17484,52,1,Standard,6500
+R271,Dubai,Genoa,5980,22,1,Alternative,1761
+R272,Vancouver,Colombo,22143,55,0,Direct,6500
+R273,Genoa,Chennai,6905,23,1,Standard,2718
+R274,Buenos Aires,Long Beach,11542,38,1,Alternative,3364
+R275,London,Genoa,2061,6,0,Direct,900
+R276,Colombo,Buenos Aires,13234,40,1,Standard,4676
+R277,Rotterdam,Durban,11775,40,1,Alternative,3855
+R278,Hong Kong,Shanghai,2077,5,0,Direct,900
+R279,Valparaiso,Antwerp,15261,51,2,Standard,5281
+R280,Hong Kong,Dubai,7084,29,2,Alternative,2018
+R281,Mombasa,Rotterdam,7348,19,0,Direct,3466
+R282,Mombasa,Busan,12524,38,1,Standard,4880
+R283,Genoa,Antwerp,1505,11,2,Alternative,900
+R284,Mumbai,Rotterdam,8682,23,0,Direct,3774
+R285,Dubai,Santos,11248,33,1,Standard,4550
+R286,Mombasa,Chennai,4386,18,1,Alternative,1392
+R287,Hong Kong,Barcelona,10397,28,0,Direct,4740
+R288,Barcelona,Tokyo,12545,43,2,Standard,3941
+R289,Valparaiso,Chennai,17345,69,1,Alternative,6500
+R290,Mombasa,Cape Town,3966,11,0,Direct,1577
+R291,Los Angeles,New York,4870,18,2,Standard,1464
+R292,Santos,Dubai,11799,44,2,Alternative,4418
+R293,London,Hamburg,1749,5,0,Direct,900
+R294,London,Valparaiso,12013,35,1,Standard,3743
+R295,Jebel Ali,Valparaiso,14969,48,1,Alternative,4232
+R296,Colombo,Tokyo,7966,18,0,Direct,2748
+R297,Shanghai,Los Angeles,26590,75,1,Standard,6500
+R298,London,Seattle,13823,52,1,Alternative,4677
+R299,Sydney,Dubai,14001,37,0,Direct,6500
+R300,Port Klang,Durban,8533,26,1,Standard,3079
+R301,Santos,Los Angeles,8707,38,2,Alternative,2783
+R302,Tokyo,Hong Kong,2900,8,0,Direct,1122
+R303,Vancouver,Shanghai,22200,73,1,Standard,6500
+R304,London,Port Klang,13652,57,2,Alternative,4737
+R305,New York,Buenos Aires,8149,20,0,Direct,3838
+R306,New York,Genoa,6795,23,1,Standard,2274
+R307,Long Beach,Buenos Aires,9930,38,1,Alternative,3045
+R308,Santos,Rotterdam,9914,27,0,Direct,3796
+R309,Valparaiso,New York,9052,30,2,Standard,3527
+R310,Rotterdam,London,868,9,2,Alternative,900
+R311,Dubai,Hamburg,4903,12,0,Direct,2345
+R312,Rotterdam,Tokyo,13153,40,2,Standard,5240
+R313,Sydney,Buenos Aires,22757,75,1,Alternative,6500
+R314,Hamburg,Genoa,1860,5,0,Direct,900
+R315,Mombasa,Barcelona,6029,22,1,Standard,2237
+R316,Seattle,Shanghai,24030,91,1,Alternative,6500
+R317,New York,Port Klang,17694,47,0,Direct,6500
+R318,Los Angeles,Mombasa,13679,40,1,Standard,4910
+R319,Valparaiso,London,12780,45,1,Alternative,4440
+R320,London,Long Beach,10655,27,0,Direct,4840
+R321,Rotterdam,Jebel Ali,7060,25,1,Standard,2434
+R322,Seattle,Mumbai,15659,49,1,Alternative,5032
+R323,London,Los Angeles,10716,25,0,Direct,4792
+R324,Panama City,Valparaiso,6815,23,1,Standard,2834
+R325,Buenos Aires,Antwerp,12068,51,2,Alternative,4650
+R326,Busan,Valparaiso,24196,59,0,Direct,6500
+R327,Rotterdam,Long Beach,10954,35,1,Standard,4322
+R328,Seattle,Busan,21344,66,1,Alternative,6500
+R329,Dubai,Jebel Ali,567,3,0,Direct,900
+R330,Shanghai,Santos,15930,52,1,Standard,6500
+R331,Busan,Sydney,9483,32,1,Alternative,2982
+R332,Busan,Jebel Ali,8048,21,0,Direct,2812
+R333,Los Angeles,Antwerp,12868,41,2,Standard,5319
+R334,Genoa,Buenos Aires,10328,41,2,Alternative,3409
+R335,Mombasa,Dubai,5074,14,0,Direct,2083
+R336,Shanghai,Vancouver,22204,73,2,Standard,6500
+R337,Chennai,Dubai,3408,15,1,Alternative,949
+R338,Panama City,Antwerp,10387,26,0,Direct,3931
+R339,Valparaiso,Jebel Ali,14927,45,2,Standard,5692
+R340,Rotterdam,Shanghai,11672,38,1,Alternative,4463
+R341,Shanghai,New York,20596,53,0,Direct,6500
+R342,Antwerp,Panama City,8560,26,1,Standard,3094
+R343,Durban,Los Angeles,18842,61,1,Alternative,6500
+R344,Mombasa,Los Angeles,16631,41,0,Direct,5966
+R345,Mumbai,Barcelona,6777,22,1,Standard,2845
+R346,Cape Town,Hamburg,12126,49,1,Alternative,3747
+R347,Hamburg,Singapore,11490,27,0,Direct,4209
+R348,Seattle,Los Angeles,2679,12,2,Standard,970
+R349,Chennai,Long Beach,22392,73,2,Alternative,5866
+R350,Busan,Rotterdam,15052,41,0,Direct,6500
+R351,Port Klang,London,11523,38,2,Standard,3763
+R352,London,Durban,12522,45,2,Alternative,3875
+R353,Panama City,Port Klang,17971,47,0,Direct,6500
+R354,Jebel Ali,New York,14964,44,1,Standard,5894
+R355,Long Beach,Busan,26503,94,1,Alternative,6500
+R356,Dubai,Buenos Aires,13610,32,0,Direct,4658
+R357,Dubai,Rotterdam,6612,23,2,Standard,2237
+R358,Port Klang,Long Beach,18924,68,2,Alternative,5524
+R359,Cape Town,Port Klang,10061,26,0,Direct,4495
+R360,Buenos Aires,Hong Kong,18525,57,2,Standard,6500
+R361,Santos,Buenos Aires,2332,12,1,Alternative,900
+R362,New York,Long Beach,4384,10,0,Direct,2078
+R363,Los Angeles,Rotterdam,12168,44,2,Standard,3660
+R364,Singapore,Hong Kong,3027,14,1,Alternative,900
+R365,Seattle,Colombo,18115,46,0,Direct,6500
+R366,Dubai,Tokyo,9418,29,1,Standard,2844
+R367,Los Angeles,Colombo,19908,79,1,Alternative,6500
+R368,Genoa,Dubai,5432,15,0,Direct,2465
+R369,Rotterdam,Valparaiso,13612,39,1,Standard,5011
+R370,Singapore,Hamburg,10453,38,2,Alternative,3081
+R371,Barcelona,Genoa,1188,3,0,Direct,900
+R372,Port Klang,Colombo,2714,10,1,Standard,1106
+R373,Vancouver,Mombasa,14619,58,1,Alternative,4521
+R374,Vancouver,Cape Town,17241,42,0,Direct,6500
+R375,Valparaiso,Shanghai,17032,52,2,Standard,6362
+R376,Los Angeles,Shanghai,26384,98,1,Alternative,6500
+R377,Panama City,Tokyo,23456,59,0,Direct,6500
+R378,Santos,Durban,6488,23,2,Standard,1974
+R379,Valparaiso,Hong Kong,22627,70,1,Alternative,6500
+R380,Tokyo,Buenos Aires,23595,55,0,Direct,6500
+R381,Chennai,Mombasa,4685,16,1,Standard,1922
+R382,Busan,Genoa,12979,51,2,Alternative,4622
+R383,Jebel Ali,Mombasa,5009,12,0,Direct,2054
+R384,Vancouver,Santos,13751,44,1,Standard,5624
+R385,Mumbai,Genoa,7232,27,2,Alternative,2187
+R386,Long Beach,Dubai,18019,45,0,Direct,6500
+R387,Mombasa,Durban,4300,14,1,Standard,1659
+R388,Buenos Aires,Valparaiso,1788,12,2,Alternative,900
+R389,Sydney,Shanghai,7085,18,0,Direct,3186
+R390,Busan,Panama City,17737,57,1,Standard,5532
+R391,Antwerp,Mumbai,9491,36,2,Alternative,2593
+R392,Shanghai,Sydney,7387,19,0,Direct,3085
+R393,New York,Seattle,4622,16,1,Standard,1442
+R394,Long Beach,Mombasa,16752,70,2,Alternative,5256
+R395,Buenos Aires,Hamburg,14607,34,0,Direct,6500
+R396,Port Klang,Singapore,1036,7,2,Standard,900
+R397,Santos,Tokyo,16646,62,2,Alternative,4464
+R398,Port Klang,Valparaiso,17123,45,0,Direct,6500
+R399,Singapore,Rotterdam,10920,36,2,Standard,4118
+R400,Colombo,London,8326,32,1,Alternative,3191
+R401,Antwerp,Cape Town,10248,26,0,Direct,4721
+R402,New York,London,7513,24,2,Standard,2386
+R403,Hong Kong,Buenos Aires,17267,61,1,Alternative,4888
+R404,Port Klang,Shanghai,4102,11,0,Direct,1793
+R405,Singapore,Chennai,3320,12,1,Standard,1116
+R406,Barcelona,Hong Kong,12656,41,1,Alternative,3619
+R407,Seattle,Long Beach,2323,6,0,Direct,968
+R408,London,Dubai,7848,29,2,Standard,3168
+R409,Santos,Colombo,14447,52,2,Alternative,4017
+R410,Panama City,Cape Town,10125,25,0,Direct,4456
+R411,Seattle,Genoa,14166,40,1,Standard,5132
+R412,Long Beach,Hong Kong,21875,78,2,Alternative,6500
+R413,Shanghai,Mumbai,5215,13,0,Direct,2440
+R414,Vancouver,Hong Kong,19500,60,2,Standard,6271
+R415,Buenos Aires,Chennai,15710,53,2,Alternative,4761
+R416,Vancouver,Tokyo,28333,79,0,Direct,6500
+R417,New York,Rotterdam,8254,28,2,Standard,3093
+R418,Tokyo,Vancouver,25008,84,2,Alternative,6500
+R419,Shanghai,Dubai,6797,15,0,Direct,2770
+R420,New York,Santos,7636,23,1,Standard,3015
+R421,Panama City,New York,4025,18,2,Alternative,1319
+R422,Durban,Panama City,10974,28,0,Direct,4801
+R423,Santos,Singapore,13926,41,1,Standard,4386
+R424,Valparaiso,Mombasa,13506,46,1,Alternative,3800
+R425,Vancouver,Singapore,27146,68,0,Direct,6500
+R426,Los Angeles,Barcelona,11232,38,1,Standard,3961
+R427,Shanghai,Rotterdam,10679,43,2,Alternative,3800
+R428,Dubai,Antwerp,7214,18,0,Direct,2845
+R429,Colombo,Barcelona,9479,29,1,Standard,3840
+R430,Singapore,Mumbai,3174,14,1,Alternative,906
+R431,Sydney,Hong Kong,7143,17,0,Direct,2956
+R432,Busan,Durban,13531,41,1,Standard,5091
+R433,London,Antwerp,973,6,1,Alternative,900
+R434,Seattle,Sydney,26198,64,0,Direct,6500
+R435,Genoa,Panama City,9037,31,1,Standard,3149
+R436,Singapore,Los Angeles,18818,67,2,Alternative,6298
+R437,Tokyo,Colombo,7028,17,0,Direct,3071
+R438,Panama City,Sydney,24175,82,2,Standard,6500
+R439,Singapore,Vancouver,20026,64,1,Alternative,6500
+R440,Rotterdam,Vancouver,12373,29,0,Direct,5876
+R441,Chennai,Tokyo,6879,22,1,Standard,2435
+R442,Port Klang,Chennai,3287,15,1,Alternative,900
+R443,Barcelona,Seattle,13551,37,0,Direct,5033
+R444,Antwerp,London,1293,6,1,Standard,900
+R445,Chennai,Mumbai,1623,8,1,Alternative,900
+R446,Los Angeles,Mumbai,19081,47,0,Direct,6500
+R447,Singapore,Valparaiso,19587,66,2,Standard,6500
+R448,Panama City,Chennai,17467,65,1,Alternative,6500
+R449,Tokyo,Mombasa,10863,25,0,Direct,3825
+R450,Dubai,Mombasa,4573,17,1,Standard,1810
+R451,Hamburg,Mombasa,8817,38,2,Alternative,2452
+R452,Seattle,Rotterdam,10934,26,0,Direct,4590
+R453,Sydney,Los Angeles,27963,94,2,Standard,6500
+R454,Genoa,Cape Town,9251,34,2,Alternative,3023
+R455,Cape Town,Singapore,10854,29,0,Direct,4830
+R456,Dubai,London,6069,19,1,Standard,1920
+R457,Cape Town,Antwerp,12115,41,1,Alternative,4454
+R458,Seattle,Panama City,7596,19,0,Direct,2733
+R459,Dubai,Chennai,3676,13,1,Standard,1138
+R460,Shanghai,Hong Kong,2308,11,1,Alternative,900
+R461,London,Tokyo,14994,38,0,Direct,6122
+R462,Chennai,Busan,6410,25,2,Standard,2733
+R463,Durban,Rotterdam,11427,41,2,Alternative,4153
+R464,Long Beach,Shanghai,22396,53,0,Direct,6500
+R465,Hamburg,Dubai,5464,18,1,Standard,1731
+R466,Hong Kong,Mombasa,9331,38,1,Alternative,3185
+R467,Mombasa,London,8791,24,0,Direct,4044
+R468,Tokyo,Hamburg,12322,41,1,Standard,4799
+R469,Tokyo,Port Klang,5258,25,2,Alternative,2004
+R470,Busan,New York,18314,47,0,Direct,6438
+R471,Panama City,Mombasa,12991,45,1,Standard,4953
+R472,Chennai,Panama City,17509,62,1,Alternative,4759
+R473,Jebel Ali,Mumbai,1849,5,0,Direct,900
+R474,Sydney,Mombasa,10729,38,1,Standard,4188
+R475,Tokyo,London,15726,56,1,Alternative,4556
+R476,Colombo,Mumbai,1526,4,0,Direct,900
+R477,Hong Kong,Long Beach,20821,62,1,Standard,6500
+R478,Buenos Aires,Genoa,10032,35,1,Alternative,2822
+R479,Chennai,Hong Kong,3518,9,0,Direct,1270
+R480,Cape Town,Colombo,8131,25,1,Standard,2530
+R481,Mumbai,London,7511,27,1,Alternative,2327
+R482,Busan,Long Beach,28452,67,0,Direct,6500
+R483,Buenos Aires,Sydney,21495,67,2,Standard,6500
+R484,Long Beach,Rotterdam,11631,38,1,Alternative,4019
+R485,Seattle,New York,4921,12,0,Direct,1803
+R486,Barcelona,Dubai,5929,19,1,Standard,2390
+R487,Antwerp,Durban,9399,37,1,Alternative,3223
+R488,Barcelona,Rotterdam,1160,3,0,Direct,900
+R489,New York,Colombo,13570,44,1,Standard,5275
+R490,Los Angeles,Jebel Ali,19210,77,1,Alternative,5163
+R491,Santos,Genoa,8880,20,0,Direct,4198
+R492,Santos,Hong Kong,15952,50,2,Standard,6376
+R493,Hamburg,Chennai,8494,30,1,Alternative,2802
+R494,Cape Town,New York,10899,28,0,Direct,4485
+R495,Vancouver,New York,4459,18,2,Standard,1677
+R496,Sydney,Antwerp,19894,73,1,Alternative,6303
+R497,Buenos Aires,Colombo,17026,47,0,Direct,5994
+R498,Mombasa,Singapore,6539,23,2,Standard,2224
+R499,Cape Town,Hong Kong,13291,52,1,Alternative,4678
+R500,Hamburg,Long Beach,13726,34,0,Direct,5333
+R501,Buenos Aires,Panama City,6440,23,1,Standard,2038
+R502,Valparaiso,Cape Town,9939,34,1,Alternative,2622
+R503,Sydney,Busan,9933,25,0,Direct,3742
+R504,Long Beach,Colombo,23606,73,1,Standard,6500
+R505,Valparaiso,Vancouver,9630,36,1,Alternative,2823
+R506,Rotterdam,Dubai,5527,13,0,Direct,1968
+R507,Dubai,Port Klang,5751,18,1,Standard,1734
+R508,Panama City,Seattle,5466,22,2,Alternative,1548
+R509,Long Beach,Port Klang,25411,63,0,Direct,6500
+R510,Tokyo,Rotterdam,14831,48,1,Standard,5251
+R511,Barcelona,Hamburg,2152,10,1,Alternative,900
+R512,Long Beach,Valparaiso,9907,26,0,Direct,4483
+R513,Antwerp,Los Angeles,14712,43,1,Standard,6069
+R514,Cape Town,Los Angeles,17463,71,2,Alternative,5577
+R515,Los Angeles,Hong Kong,21371,53,0,Direct,6500
+R516,Rotterdam,Los Angeles,13050,40,1,Standard,4751
+R517,Seattle,Vancouver,537,5,1,Alternative,900
+R518,Dubai,Durban,6239,16,0,Direct,2854
+R519,Panama City,Colombo,17974,53,1,Standard,6271
+R520,Busan,Santos,20311,76,1,Alternative,6500
+R521,Chennai,Genoa,7651,17,0,Direct,2753
+R522,Los Angeles,Sydney,24600,70,1,Standard,6500
+R523,Vancouver,Sydney,30718,97,2,Alternative,6500
+R524,Antwerp,Buenos Aires,10098,25,0,Direct,3990
+R525,Jebel Ali,Panama City,13606,41,1,Standard,4312
+R526,Seattle,Dubai,16070,57,2,Alternative,5714
+R527,Barcelona,New York,7087,19,0,Direct,3345
+R528,Chennai,Shanghai,4694,19,2,Standard,1472
+R529,Mombasa,Port Klang,6262,29,2,Alternative,1919
+R530,Hamburg,Durban,11814,31,0,Direct,4455
+R531,New York,Valparaiso,7667,28,2,Standard,3002
+R532,Busan,Cape Town,14252,58,2,Alternative,5023
+R533,Tokyo,Los Angeles,29792,74,0,Direct,6500
+R534,Hamburg,Cape Town,9687,28,1,Standard,3982
+R535,Durban,Seattle,18326,71,1,Alternative,5007
+R536,Valparaiso,Santos,3181,9,0,Direct,1451
+R537,Los Angeles,Durban,19552,57,1,Standard,6500
+R538,Santos,Mombasa,9740,35,1,Alternative,2860
+R539,Busan,Mombasa,11079,25,0,Direct,4073
+R540,Hong Kong,Vancouver,24419,69,1,Standard,6500
+R541,Mumbai,Vancouver,17827,74,2,Alternative,6500
+R542,Mombasa,New York,12570,32,0,Direct,4325
+R543,Shanghai,Singapore,4505,16,1,Standard,1461
+R544,Dubai,Singapore,5184,20,1,Alternative,1763
+R545,Antwerp,Sydney,18915,48,0,Direct,6500
+R546,Barcelona,London,1388,6,1,Standard,900
+R547,Hamburg,Antwerp,1333,7,1,Alternative,900
+R548,Sydney,Seattle,31652,75,0,Direct,6500
+R549,Busan,Vancouver,25104,71,1,Standard,6500
+R550,Santos,Shanghai,16762,62,1,Alternative,4835
+R551,Panama City,Shanghai,23361,61,0,Direct,6500
+R552,Mumbai,Dubai,2272,10,2,Standard,969
+R553,Colombo,Mombasa,4149,18,1,Alternative,1519
+R554,Antwerp,Chennai,10152,24,0,Direct,4798
+R555,Singapore,Cape Town,9931,29,1,Standard,4259
+R556,Hamburg,Busan,10336,38,2,Alternative,3624
+R557,Cape Town,Barcelona,10772,26,0,Direct,4192
+R558,Jebel Ali,Sydney,12093,37,2,Standard,4943
+R559,Hong Kong,Sydney,9129,39,2,Alternative,2418
+R560,Port Klang,Seattle,18673,49,0,Direct,6500
+R561,Cape Town,Chennai,7179,22,1,Standard,2471
+R562,Valparaiso,Busan,18433,73,1,Alternative,6198
+R563,Jebel Ali,Hamburg,7304,20,0,Direct,3021
+R564,Hamburg,Tokyo,12002,36,1,Standard,4633
+R565,Long Beach,Hamburg,13312,53,2,Alternative,5149
+R566,Jebel Ali,Chennai,3602,9,0,Direct,1709
+R567,Mombasa,Santos,9325,29,2,Standard,3638
+R568,Port Klang,Hamburg,12927,44,1,Alternative,4729
+R569,Shanghai,Jebel Ali,6897,17,0,Direct,2467
+R570,Los Angeles,Panama City,6007,22,2,Standard,2578
+R571,Jebel Ali,Buenos Aires,15529,53,1,Alternative,5896
+R572,Rotterdam,Panama City,11642,28,0,Direct,4127
+R573,Cape Town,Rotterdam,10724,39,2,Standard,3700
+R574,Jebel Ali,London,6423,23,1,Alternative,2229
+R575,Los Angeles,Hamburg,14042,35,0,Direct,5295
+R576,Valparaiso,Sydney,19194,62,1,Standard,6027
+R577,Hong Kong,Singapore,2626,14,2,Alternative,1013
+R578,Vancouver,Port Klang,26197,61,0,Direct,6500
+R579,Tokyo,New York,19894,62,2,Standard,6500
+R580,Antwerp,Seattle,10570,40,1,Alternative,3186
+R581,Rotterdam,Hong Kong,13245,34,0,Direct,6149
+R582,Colombo,Chennai,807,6,2,Standard,900
+R583,Genoa,Jebel Ali,5356,23,2,Alternative,1692
+R584,Shanghai,Valparaiso,21890,51,0,Direct,6500
+R585,Valparaiso,Genoa,10331,33,1,Standard,3843
+R586,Port Klang,Jebel Ali,6700,27,2,Alternative,2001
+R587,Colombo,New York,13164,32,0,Direct,6023
+R588,Rotterdam,Antwerp,541,4,1,Standard,900
+R589,Mumbai,Long Beach,20206,79,2,Alternative,5321
+R590,Genoa,Los Angeles,10919,25,0,Direct,4436
+R591,Tokyo,Valparaiso,18781,58,1,Standard,6500
+R592,Mombasa,Hamburg,6822,31,2,Alternative,2559
+R593,Sydney,Port Klang,6660,18,0,Direct,2674
+R594,Colombo,Antwerp,8416,32,2,Standard,3347
+R595,Mombasa,Seattle,17933,61,2,Alternative,5627
+R596,Buenos Aires,Mombasa,11407,28,0,Direct,5221
+R597,Hamburg,Jebel Ali,6717,23,2,Standard,2832
+R598,Mumbai,Hong Kong,4409,22,2,Alternative,1372
+R599,Antwerp,Vancouver,14047,35,0,Direct,6500
+R600,Colombo,Vancouver,23234,79,2,Standard,6500
+R601,Tokyo,Sydney,7500,15,1,Alternative,5140
+R602,Tokyo,Sydney,4762,15,1,Alternative,4820
