@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { generateQuotation } from './services/routeApi'
 import './App.css'
 
 function Dashboard() {
@@ -11,36 +12,30 @@ function Dashboard() {
   const [loading, setLoading] = useState(false)
 
   const analyzeRoute = async () => {
-    setLoading(true)
+  setLoading(true)
+  setResult(null)
 
-    try {
-      const response = await fetch('http://127.0.0.1:8000/routes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          origin: origin,
-          destination: destination,
-          cargo_type: cargoType,
-          containers: Number(containers),
-        }),
-      })
+  try {
+    const data = await generateQuotation({
+      origin: origin,
+      destination: destination,
+      cargo_type: cargoType,
+      containers: Number(containers),
+    })
 
-      const data = await response.json()
-      setResult(data)
+    setResult(data)
 
-    } catch (error) {
-      console.error('Error:', error)
+  } catch (error) {
+    console.error('Error:', error)
 
-      setResult({
-        status: 'error',
-        message: 'Could not connect to the backend.',
-      })
-    }
-
-    setLoading(false)
+    setResult({
+      status: 'error',
+      message: 'Could not connect to the backend.',
+    })
   }
+
+  setLoading(false)
+}
 
   return (
     <div className="app">
@@ -488,55 +483,87 @@ function Dashboard() {
         {/* Score Breakdown */}
 
         <div className="score-section">
-
-          <h3>🏆 Recommended Route Score Breakdown</h3>
-
-          <div className="score-grid">
-
+          <div className="score-section-header">
             <div>
-              <small>Transit Score</small>
-
-              <strong>
-                {
-                  result.recommended_route_details
-                    .score_breakdown.transit_score
-                }
-              </strong>
+              <h3>🏆 Recommended Route Score Breakdown</h3>
+              <p>AI evaluation of the selected route</p>
             </div>
-
-
-            <div>
-              <small>Distance Score</small>
-
-              <strong>
-                {
-                  result.recommended_route_details
-                    .score_breakdown.distance_score
-                }
-              </strong>
-            </div>
-
-
-            <div>
-              <small>Transshipment Score</small>
-
-              <strong>
-                {
-                  result.recommended_route_details
-                    .score_breakdown.transshipment_score
-                }
-              </strong>
-            </div>
-
           </div>
+          
+          <div className="score-grid">
+          
+            {/* Transit Score */}
+            <div className="score-card">
+              <div className="score-card-top">
+                <span className="score-icon">⏱️</span>
+                <span className="score-label">Transit Time</span>
+              </div>
+          
+              <div className="score-value">
+                {result.recommended_route_details.score_breakdown.transit_score}
+                <span>/100</span>
+              </div>
+          
+              <div className="score-bar">
+                <div
+                  className="score-bar-fill"
+                  style={{
+                    width: `${result.recommended_route_details.score_breakdown.transit_score}%`
+                  }}
+                ></div>
+              </div>
+            </div>
+          
+            {/* Distance Score */}
+            <div className="score-card">
+              <div className="score-card-top">
+                <span className="score-icon">📍</span>
+                <span className="score-label">Distance</span>
+              </div>
+          
+              <div className="score-value">
+                {result.recommended_route_details.score_breakdown.distance_score}
+                <span>/100</span>
+              </div>
+          
+              <div className="score-bar">
+                <div
+                  className="score-bar-fill"
+                  style={{
+                    width: `${result.recommended_route_details.score_breakdown.distance_score}%`
+                  }}
+                ></div>
+              </div>
+            </div>
+          
+            {/* Transshipment Score */}
+            <div className="score-card">
+              <div className="score-card-top">
+                <span className="score-icon">🔄</span>
+                <span className="score-label">Transshipment</span>
+              </div>
+          
+              <div className="score-value">
+                {result.recommended_route_details.score_breakdown.transshipment_score}
+                <span>/100</span>
+              </div>
+          
+              <div className="score-bar">
+                <div
+                  className="score-bar-fill"
+                  style={{
+                    width: `${result.recommended_route_details.score_breakdown.transshipment_score}%`
+                  }}
+                ></div>
+              </div>
+            </div>
+          
+                    </div>
 
         </div>
-
       </>
     ) : (
-
       <p>{result.message}</p>
-
     )}
 
   </div>
@@ -548,7 +575,6 @@ function Dashboard() {
 
   </div>
 )
-
 }
 
 export default Dashboard
