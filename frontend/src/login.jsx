@@ -78,6 +78,7 @@ if (isCreatingAccount) {
     phone,
     email,
     password,
+    role: 'user',
   }
 
   users.push(newUser)
@@ -98,6 +99,34 @@ if (isCreatingAccount) {
 // SIGN IN
 const users = JSON.parse(localStorage.getItem('maritimeUsers')) || []
 
+// DEMO ADMIN LOGIN
+if (
+  email.toLowerCase() === 'admin@maritimeai.com' &&
+  password === 'admin123'
+) {
+  const adminUser = {
+    name: 'Maritime Admin',
+    email: 'admin@maritimeai.com',
+    phone: '',
+    role: 'admin',
+  }
+
+  localStorage.setItem(
+    'currentUser',
+    JSON.stringify(adminUser)
+  )
+
+  setMessageType('success')
+  setMessage('Welcome back, Maritime Admin!')
+
+  setTimeout(() => {
+    onLogin(adminUser)
+  }, 700)
+
+  return
+}
+
+// NORMAL USER LOGIN
 const user = users.find(
   (user) =>
     user.email.toLowerCase() === email.toLowerCase() &&
@@ -111,23 +140,26 @@ if (!user) {
 }
 
 // Save logged-in user
+const loggedInUser = {
+  name: user.name,
+  email: user.email,
+  phone: user.phone,
+  role: user.role || 'user',
+}
+
 localStorage.setItem(
   'currentUser',
-  JSON.stringify({
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-  })
+  JSON.stringify(loggedInUser)
 )
 
 setMessageType('success')
 setMessage(`Welcome back, ${user.name}!`)
 
 setTimeout(() => {
-  onLogin()
+  onLogin(loggedInUser)
 }, 700)
-
 }
+
 
 return ( <div className="login-page"> <div className="login-container">
 

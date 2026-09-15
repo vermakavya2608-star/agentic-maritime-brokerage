@@ -1,0 +1,691 @@
+.admin-dashboard {
+  min-height: 100vh;
+  display: flex;
+  background: #eef6ff;
+  color: #102a43;
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.admin-sidebar {
+  width: 250px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #062b49, #0b4268);
+  color: white;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-brand h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.admin-brand p {
+  margin-top: 5px;
+  color: #a9d8f5;
+  font-size: 13px;
+}
+
+.admin-sidebar nav {
+  margin-top: 45px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-sidebar nav button {
+  border: none;
+  background: transparent;
+  color: #b9d7ea;
+  text-align: left;
+  padding: 13px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.admin-sidebar nav button:hover {
+  background: rgba(79, 172, 226, 0.15);
+  color: white;
+}
+
+.admin-sidebar nav button.active {
+  background: #1479b8;
+  color: white;
+  box-shadow: 0 4px 12px rgba(20, 121, 184, 0.3);
+}
+
+.admin-status {
+  margin-top: auto;
+  color: #b9d7ea;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-status span {
+  width: 8px;
+  height: 8px;
+  background: #36d399;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(54, 211, 153, 0.7);
+}
+
+/* =========================
+   MAIN AREA
+========================= */
+
+.admin-main {
+  flex: 1;
+  padding: 35px 45px;
+}
+
+/* Header */
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-label {
+  color: #1479b8;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+}
+
+.admin-header h1 {
+  margin: 5px 0;
+  font-size: 30px;
+  color: #062b49;
+}
+
+.admin-header p {
+  color: #52708a;
+}
+
+/* Admin profile */
+
+.admin-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1479b8, #29a9df);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(20, 121, 184, 0.25);
+}
+
+.admin-profile span {
+  display: block;
+  color: #6c879c;
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+/* =========================
+   STAT CARDS
+========================= */
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-top: 35px;
+}
+
+.admin-stat-card {
+  background: white;
+  border: 1px solid #d5e8f5;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 5px 18px rgba(20, 92, 130, 0.07);
+  transition: 0.2s ease;
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(20, 92, 130, 0.12);
+}
+
+.admin-stat-card span {
+  display: block;
+  color: #628198;
+  font-size: 13px;
+}
+
+.admin-stat-card strong {
+  display: block;
+  font-size: 27px;
+  margin: 10px 0 4px;
+  color: #0b5f91;
+}
+
+.admin-stat-card small {
+  color: #8aa2b4;
+}
+
+/* =========================
+   REQUEST PANEL
+========================= */
+
+.admin-panel {
+  background: white;
+  border: 1px solid #d5e8f5;
+  border-radius: 14px;
+  margin-top: 25px;
+  padding: 25px;
+  box-shadow: 0 5px 20px rgba(20, 92, 130, 0.07);
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-heading h2 {
+  margin: 0;
+  font-size: 19px;
+  color: #103b5a;
+}
+
+.panel-heading p {
+  color: #6c879c;
+  font-size: 13px;
+}
+
+/* Refresh button */
+
+.refresh-button {
+  border: 1px solid #a9d5ed;
+  background: #e9f6ff;
+  color: #09679d;
+  padding: 9px 16px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.refresh-button:hover {
+  background: #d8efff;
+  border-color: #6db9df;
+}
+
+/* Empty state */
+
+.empty-state {
+  text-align: center;
+  padding: 70px 20px;
+}
+
+.empty-icon {
+  font-size: 34px;
+  margin-bottom: 12px;
+}
+
+.empty-state h3 {
+  margin: 5px 0;
+  color: #123d5a;
+}
+
+.empty-state p {
+  max-width: 480px;
+  margin: 10px auto;
+  color: #6c879c;
+  line-height: 1.6;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+  .admin-sidebar {
+    width: 210px;
+  }
+
+  .admin-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 650px) {
+  .admin-sidebar {
+    display: none;
+  }
+
+  .admin-main {
+    padding: 25px 18px;
+  }
+
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .admin-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   QUOTATION REQUESTS TABLE
+   ========================= */
+
+.requests-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.requests-table-header,
+.request-row {
+  display: grid;
+  grid-template-columns:
+    1.6fr
+    1.5fr
+    1fr
+    0.7fr
+    1fr
+    1fr
+    0.9fr;
+
+  align-items: center;
+  min-width: 950px;
+}
+
+.requests-table-header {
+  padding: 14px 18px;
+  background: #f4f9fd;
+  border: 1px solid #dcecf7;
+  border-radius: 10px 10px 0 0;
+
+  color: #6b8498;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+
+.request-row {
+  padding: 18px;
+  background: white;
+  border-left: 1px solid #dcecf7;
+  border-right: 1px solid #dcecf7;
+  border-bottom: 1px solid #e5eff6;
+
+  transition: background 0.2s ease;
+}
+
+.request-row:last-child {
+  border-radius: 0 0 10px 10px;
+}
+
+.request-row:hover {
+  background: #f8fcff;
+}
+
+
+/* Customer */
+
+.customer-cell {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.customer-avatar {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e4f3fc;
+  color: #0b6fa8;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.customer-cell strong {
+  display: block;
+  color: #123f5c;
+  font-size: 13px;
+}
+
+.customer-cell small {
+  display: block;
+  margin-top: 3px;
+  color: #8197a8;
+  font-size: 11px;
+}
+
+
+/* Route */
+
+.route-cell {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.route-cell strong {
+  color: #174b6a;
+  font-size: 12px;
+}
+
+.route-cell span {
+  color: #1479b8;
+  font-weight: 700;
+}
+
+.route-cell small {
+  width: 100%;
+  margin-top: 2px;
+  color: #8aa0b0;
+  font-size: 10px;
+}
+
+
+/* Cargo */
+
+.cargo-cell {
+  color: #496b80;
+  font-size: 12px;
+}
+
+
+/* Containers */
+
+.container-cell {
+  color: #174b6a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* Freight */
+
+.freight-cell {
+  color: #0b6fa8;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+
+/* Status */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 6px 9px;
+
+  border-radius: 20px;
+
+  background: #fff7df;
+  border: 1px solid #f1dfaa;
+
+  color: #9a7110;
+
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+
+/* Review */
+
+.review-button {
+  border: none;
+
+  padding: 8px 12px;
+
+  border-radius: 7px;
+
+  background: #e8f5fd;
+  color: #0b6fa8;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.review-button:hover {
+  background: #1479b8;
+  color: white;
+}
+
+/* =========================================================
+   ROUTE ANALYSIS
+   ========================================================= */
+
+.route-analysis-panel {
+  background: linear-gradient(135deg, #ffffff, #f4faff);
+  border: 1px solid #cfe6f5;
+}
+
+.route-analysis-panel .panel-heading {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2eef6;
+  margin-bottom: 18px;
+}
+
+.route-analysis-panel .request-row {
+  grid-template-columns: 2fr 1fr 1fr;
+  min-width: 0;
+  margin-bottom: 12px;
+  border: 1px solid #dcecf7;
+  border-radius: 12px;
+  background: #fafdff;
+  padding: 20px;
+  box-shadow: 0 3px 12px rgba(20, 92, 130, 0.05);
+}
+
+.route-analysis-panel .request-row:hover {
+  background: #f1f9ff;
+  transform: translateY(-2px);
+}
+
+.route-analysis-panel .route-cell strong {
+  font-size: 15px;
+  color: #174b6a;
+}
+
+.route-analysis-panel .route-cell small {
+  font-size: 11px;
+  color: #8aa0b0;
+}
+
+.route-analysis-panel .request-row > div:not(.route-cell) {
+  padding-left: 18px;
+  border-left: 1px solid #e0edf5;
+}
+
+.route-analysis-panel .request-row > div strong {
+  display: block;
+  font-size: 18px;
+  color: #0b6fa8;
+}
+
+.route-analysis-panel .request-row > div small {
+  display: block;
+  margin-top: 5px;
+  color:  #8aa2b4;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+
+/* =========================================================
+   PRICING REVIEW
+   ========================================================= */
+
+.pricing-review-panel {
+  background: linear-gradient(135deg, #ffffff, #f7fbff);
+}
+
+.pricing-review-panel .panel-heading {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e1edf5;
+  margin-bottom: 20px;
+}
+
+.pricing-review-panel .request-row {
+  display: grid;
+  grid-template-columns: 2fr repeat(4, 1fr);
+  gap: 0;
+  min-width: 0;
+  margin-bottom: 14px;
+  padding: 22px;
+  border: 1px solid #d8eaf5;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 4px 16px rgba(20, 92, 130, 0.06);
+}
+
+.pricing-review-panel .request-row:hover {
+  background: #fafdff;
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px rgba(20, 92, 130, 0.1);
+}
+
+.pricing-review-panel .request-row > div:not(.route-cell) {
+  padding-left: 18px;
+  border-left: 1px solid #e4eef5;
+}
+
+.pricing-review-panel .request-row > div strong {
+  display: block;
+  color: #0b6fa8;
+  font-size: 17px;
+}
+
+.pricing-review-panel .request-row > div small {
+  display: block;
+  margin-top: 6px;
+  color: #8aa2b4;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pricing-review-panel .route-cell strong {
+  font-size: 14px;
+  color: #174b6a;
+}
+
+
+/* =========================================================
+   MARGIN REVIEW
+   ========================================================= */
+
+.margin-review-panel {
+  background: linear-gradient(135deg, #ffffff, #f5fbff);
+}
+
+.margin-review-panel .panel-heading {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e1edf5;
+  margin-bottom: 20px;
+}
+
+.margin-review-panel .request-row {
+  display: grid;
+  grid-template-columns: 2fr repeat(4, 1fr);
+  gap: 0;
+  min-width: 0;
+  margin-bottom: 14px;
+  padding: 22px;
+  border: 1px solid #d8eaf5;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 4px 16px rgba(20, 92, 130, 0.06);
+}
+
+.margin-review-panel .request-row:hover {
+  background: #fafdff;
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px rgba(20, 92, 130, 0.1);
+}
+
+.margin-review-panel .request-row > div:not(.route-cell) {
+  padding-left: 18px;
+  border-left: 1px solid #e4eef5;
+}
+
+.margin-review-panel .request-row > div strong {
+  display: block;
+  color: #0b6fa8;
+  font-size: 17px;
+}
+
+.margin-review-panel .request-row > div small {
+  display: block;
+  margin-top: 6px;
+  color: #8aa2b4;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.margin-review-panel .route-cell strong {
+  font-size: 14px;
+  color: #174b6a;
+}
+
+
+/* =========================================================
+   MOBILE SUPPORT
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .route-analysis-panel .request-row,
+  .pricing-review-panel .request-row,
+  .margin-review-panel .request-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  .route-analysis-panel .request-row > div:not(.route-cell),
+  .pricing-review-panel .request-row > div:not(.route-cell),
+  .margin-review-panel .request-row > div:not(.route-cell) {
+    padding-left: 0;
+    border-left: none;
+  }
+}
+
+@media (max-width: 650px) {
+  .route-analysis-panel .request-row,
+  .pricing-review-panel .request-row,
+  .margin-review-panel .request-row {
+    grid-template-columns: 1fr;
+  }
+}
+
