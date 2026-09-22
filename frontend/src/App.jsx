@@ -5,8 +5,25 @@ import Dashboard from './Dashboard'
 import AdminDashboard from './AdminDashboard'
 
 function App() {
-  const [page, setPage] = useState('home')
-  const [currentUser, setCurrentUser] = useState(null)
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = localStorage.getItem('currentUser')
+
+    return savedUser ? JSON.parse(savedUser) : null
+  })
+
+  const [page, setPage] = useState(() => {
+    const savedUser = localStorage.getItem('currentUser')
+
+    if (savedUser) {
+      const user = JSON.parse(savedUser)
+
+      return user.role === 'admin'
+        ? 'admin'
+        : 'dashboard'
+    }
+
+    return 'home'
+  })
 
   const handleLogin = (user) => {
     setCurrentUser(user)
@@ -18,23 +35,43 @@ function App() {
     }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser')
+    setCurrentUser(null)
+    setPage('login')
+  }
+
   return (
     <>
-      {page === 'home' && (
+      {/* Home */}
+      {page === 'home' && !currentUser && (
         <Home onGetStarted={() => setPage('login')} />
       )}
 
-      {page === 'login' && (
+      {/* Login */}
+      {page === 'login' && !currentUser && (
         <Login onLogin={handleLogin} />
       )}
 
-      {page === 'dashboard' && (
-        <Dashboard user = {currentUser} />
-      )}
+      {/* Customer Dashboard */}
+      {page === 'dashboard' &&
+        currentUser &&
+        currentUser.role !== 'admin' && (
+          <Dashboard
+            user={currentUser}
+            onLogout={handleLogout}
+          />
+        )}
 
-      {page === 'admin' && (
-        <AdminDashboard user={currentUser} />
-      )}
+      {/* Admin Dashboard */}
+      {page === 'admin' &&
+        currentUser &&
+        currentUser.role === 'admin' && (
+          <AdminDashboard
+            user={currentUser}
+            onLogout={handleLogout}
+          />
+        )}
     </>
   )
 }

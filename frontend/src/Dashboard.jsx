@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { generateQuotation } from "./services/routeApi";
 import "./App.css";
 
-function Dashboard({ user }) {
+function Dashboard({ user, onLogout }) {
   const [customerRequests, setCustomerRequests] = useState([]);
   const [origin, setOrigin] = useState("Tokyo");
   const [destination, setDestination] = useState("Sydney");
@@ -172,6 +172,10 @@ function Dashboard({ user }) {
         </div>
 
         <div className="nav-item settings">⚙ &nbsp; Settings</div>
+
+        <button className="logout-button" onClick={onLogout}>
+          ⇥ &nbsp; Logout
+        </button>
       </aside>
 
       {/* Main content */}

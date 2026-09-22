@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./AdminDashboard.css";
 import ReviewRequest from "./ReviewRequest";
 
-function AdminDashboard({ user }) {
+function AdminDashboard({ user, onLogout }) {
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -76,6 +76,15 @@ function AdminDashboard({ user }) {
           <span></span>
           AI Engine Online
         </div>
+
+        <div className="admin-status">
+          <span></span>
+          AI Engine Online
+        </div>
+
+        <button className="admin-logout-button" onClick={onLogout}>
+          ⇥ &nbsp; Logout
+        </button>
       </aside>
 
       <main className="admin-main">
