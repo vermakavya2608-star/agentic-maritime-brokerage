@@ -1,6 +1,107 @@
 import { useEffect, useState } from "react";
 import { generateQuotation } from "./services/routeApi";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import "./App.css";
+
+// ----------------------------------------------------
+// MAP CONFIGURATION & COORDINATES
+// ----------------------------------------------------
+const portCoordinates = {
+  "Antwerp": [51.2194, 4.4025], "Barcelona": [41.3851, 2.1734], "Buenos Aires": [-34.6037, -58.3816],
+  "Busan": [35.1796, 129.0756], "Cape Town": [-33.9249, 18.4241], "Chennai": [13.0827, 80.2707],
+  "Colombo": [6.9271, 79.8612], "Dubai": [25.2048, 55.2708], "Durban": [-29.8587, 31.0218],
+  "Genoa": [44.4056, 8.9463], "Hamburg": [53.5511, 9.9937], "Hong Kong": [22.3193, 114.1694],
+  "Jebel Ali": [25.0113, 55.0560], "London": [51.5074, -0.1278], "Long Beach": [33.7701, -118.1937],
+  "Los Angeles": [34.0522, -118.2437], "Mombasa": [-4.0435, 39.6682], "Mumbai": [18.9667, 72.8333],
+  "New York": [40.7128, -74.0060], "Panama City": [8.9824, -79.5199], "Port Klang": [3.0333, 101.3667],
+  "Rotterdam": [51.9225, 4.4792], "Santos": [-23.9618, -46.3322], "Seattle": [47.6062, -122.3321],
+  "Shanghai": [31.2304, 121.4737], "Singapore": [1.3521, 103.8198], "Sydney": [-33.8688, 151.2093],
+  "Tokyo": [35.6762, 139.6503], "Valparaiso": [-33.0456, -71.6202], "Vancouver": [49.2827, -123.1207]
+};
+
+// ----------------------------------------------------
+// DYNAMIC WAYPOINT ROUTING FOR ALTERNATIVES
+// ----------------------------------------------------
+const waypoints = {
+  Gibraltar: [35.95, -5.48],
+  Suez: [29.92, 32.55],
+  BabElMandeb: [12.58, 43.33],
+  Malacca: [3.43, 99.27],
+  Panama: [9.10, -79.68],
+  CapeOfGoodHope: [-35.00, 20.00]
+};
+
+const getRegion = (port) => {
+  if (["Antwerp", "Barcelona", "Genoa", "Hamburg", "London", "Rotterdam"].includes(port)) return "EU";
+  if (["Busan", "Chennai", "Colombo", "Hong Kong", "Mumbai", "Port Klang", "Shanghai", "Singapore", "Sydney", "Tokyo"].includes(port)) return "ASIA_OCEANIA";
+  if (["Long Beach", "Los Angeles", "Seattle", "Vancouver"].includes(port)) return "NA_WEST";
+  if (["New York"].includes(port)) return "NA_EAST";
+  if (["Dubai", "Jebel Ali"].includes(port)) return "MIDDLE_EAST";
+  return "OTHER";
+};
+
+// Generates unique visual routes
+const getRealisticRoute = (orig, dest, routeObj, recommendedRouteId) => {
+  if (!routeObj) return [];
+  const origCoord = portCoordinates[orig];
+  const destCoord = portCoordinates[dest];
+  if (!origCoord || !destCoord) return [];
+
+  let path = [origCoord];
+  const rOrig = getRegion(orig);
+  const rDest = getRegion(dest);
+
+  if ((rOrig === "EU" && rDest === "ASIA_OCEANIA") || (rOrig === "ASIA_OCEANIA" && rDest === "EU")) {
+    if (routeObj.transshipments === 0) path.push(waypoints.Gibraltar, waypoints.Suez, waypoints.BabElMandeb, waypoints.Malacca);
+    else path.push(waypoints.CapeOfGoodHope, waypoints.Malacca);
+  } else if ((rOrig === "EU" && rDest === "NA_WEST") || (rOrig === "NA_WEST" && rDest === "EU")) {
+    path.push(waypoints.Panama);
+  } else if ((rOrig === "NA_EAST" && rDest === "ASIA_OCEANIA") || (rOrig === "ASIA_OCEANIA" && rDest === "NA_EAST")) {
+    path.push(waypoints.Panama);
+  }
+
+  // Visual offset so alternative routes don't overlap the main route exactly
+  const isRecommended = routeObj.route_id === recommendedRouteId;
+  const offset = isRecommended ? 0 : (routeObj.rank || 2) * 1.5;
+
+  const finalPath = path.map((point, index) => {
+    if (index === 0) return point;
+    return [point[0] + offset, point[1] - offset];
+  });
+
+  finalPath.push(destCoord);
+  return finalPath;
+};
+
+// ----------------------------------------------------
+// UI COMPONENTS
+// ----------------------------------------------------
+const originIcon = new L.DivIcon({
+  className: "custom-icon",
+  html: `<div style="background-color: #38bdf8; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(56,189,248,0.8);"></div>`,
+  iconSize: [14, 14], iconAnchor: [7, 7],
+});
+
+const destIcon = new L.DivIcon({
+  className: "custom-icon",
+  html: `<div style="background-color: #10b981; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(16,185,129,0.8);"></div>`,
+  iconSize: [14, 14], iconAnchor: [7, 7],
+});
+
+function MapBounds({ origin, destination }) {
+  const map = useMap();
+  useEffect(() => {
+    if (origin && destination) {
+      const bounds = L.latLngBounds([portCoordinates[origin], portCoordinates[destination]]);
+      map.fitBounds(bounds, { padding: [60, 60] });
+    }
+  }, [origin, destination, map]);
+  return null;
+}
+
+// ----------------------------------------------------
 
 function Dashboard({ user, onLogout }) {
   const [customerRequests, setCustomerRequests] = useState([]);
@@ -10,6 +111,7 @@ function Dashboard({ user, onLogout }) {
   const [containers, setContainers] = useState(10);
 
   const [result, setResult] = useState(null);
+  const [activeRoute, setActiveRoute] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeSection, setActiveSection] = useState("dashboard");
 
@@ -28,34 +130,37 @@ function Dashboard({ user, onLogout }) {
   const goToDashboard = () => {
     setActiveSection("dashboard");
     setResult(null);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    setActiveRoute(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goToNewQuotation = () => {
     setActiveSection("quotation");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goToQuotations = () => {
     setActiveSection("quotations");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
+  const handleRouteSelection = (route) => {
+    setActiveRoute(route);
+    document.getElementById('map-view-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined) return "—";
+    return "$" + Number(value).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
   };
 
   const analyzeRoute = async () => {
     setLoading(true);
     setResult(null);
+    setActiveRoute(null);
 
     try {
       const data = await generateQuotation({
@@ -68,6 +173,8 @@ function Dashboard({ user, onLogout }) {
       setResult(data);
 
       if (data.status === "success") {
+        setActiveRoute(data.recommended_route_details);
+
         const quotationRequest = {
           id: Date.now(),
           customer: {
@@ -82,6 +189,7 @@ function Dashboard({ user, onLogout }) {
           },
           quotation: data,
           status: "Pending Review",
+          feedback: "",
           createdAt: new Date().toLocaleString(),
         };
 
@@ -105,7 +213,6 @@ function Dashboard({ user, onLogout }) {
       }
     } catch (error) {
       console.error("Error:", error);
-
       setResult({
         status: "error",
         message: "Could not connect to the backend.",
@@ -189,7 +296,7 @@ function Dashboard({ user, onLogout }) {
           <div className="top-actions">
             <div className="search">⌕ &nbsp; Search quotations...</div>
             <div className="notification">♧</div>
-            <div className="profile">KV</div>
+            <div className="profile">{user?.name ? user.name.charAt(0).toUpperCase() : "C"}</div>
           </div>
         </header>
 
@@ -200,9 +307,7 @@ function Dashboard({ user, onLogout }) {
               <div className="page-heading">
                 <div>
                   <div className="eyebrow">✦ CUSTOMER DASHBOARD</div>
-
                   <h1>Welcome, {user?.name || "Customer"}</h1>
-
                   <p>
                     Manage your freight quotations and track their approval
                     status.
@@ -283,7 +388,7 @@ function Dashboard({ user, onLogout }) {
                 <div className="customer-request-list">
                   {customerRequests.slice(0, 3).map((request) => (
                     <div className="customer-request-card" key={request.id}>
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <strong>
                           {request.shipment.origin}
                           {" → "}
@@ -297,6 +402,25 @@ function Dashboard({ user, onLogout }) {
                         </p>
 
                         <small>Request #{request.id}</small>
+
+                        {/* Customer Dashboard Feedback Display */}
+                        {request.feedback && (
+                          <div style={{
+                            marginTop: "12px",
+                            padding: "10px 14px",
+                            background: request.status === "Rejected" ? "#fef2f2" : "#ecfdf5",
+                            borderLeft: `3px solid ${request.status === "Rejected" ? "#ef4444" : "#10b981"}`,
+                            borderRadius: "4px",
+                            fontSize: "12px",
+                            color: "#334155",
+                            maxWidth: "600px"
+                          }}>
+                            <strong style={{ color: request.status === "Rejected" ? "#b91c1c" : "#047857" }}>
+                              Admin Note:
+                            </strong>{" "}
+                            {request.feedback}
+                          </div>
+                        )}
                       </div>
 
                       <span
@@ -318,9 +442,7 @@ function Dashboard({ user, onLogout }) {
               <div className="page-heading">
                 <div>
                   <div className="eyebrow">✦ NEW QUOTATION</div>
-
                   <h1>New freight quotation</h1>
-
                   <p>
                     Enter shipment details and let the Route Agent analyze the
                     best maritime route.
@@ -535,7 +657,7 @@ function Dashboard({ user, onLogout }) {
 
               {/* Route Result */}
 
-              {result && (
+              {result && activeRoute && (
                 <div className="card result-card">
                   {result.status === "success" ? (
                     <>
@@ -556,31 +678,90 @@ function Dashboard({ user, onLogout }) {
                         </div>
                       </div>
 
-                      {/* 1. Best Recommended Route */}
+                      {/* 🗺️ INTERACTIVE MAP SHOWING ALL ROUTES */}
+                      <div id="map-view-section" style={{ height: "420px", width: "100%", borderRadius: "14px", overflow: "hidden", marginBottom: "40px", border: "1px solid #1e293b", zIndex: 0, backgroundColor: "#323232" }}>
+                        <MapContainer style={{ height: "100%", width: "100%" }} zoomControl={true} scrollWheelZoom={true}>
+                          <TileLayer
+                            url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+                            attribution='&copy; Esri'
+                          />
+                          
+                          {/* Map the main recommended route first */}
+                          <Polyline
+                            positions={getRealisticRoute(result.origin, result.destination, result.recommended_route_details, result.recommended_route)}
+                            color={activeRoute.route_id === result.recommended_route ? "#10b981" : "#64748b"}
+                            weight={activeRoute.route_id === result.recommended_route ? 4 : 2}
+                            dashArray={activeRoute.route_id === result.recommended_route ? "" : "6, 6"}
+                            opacity={activeRoute.route_id === result.recommended_route ? 1 : 0.4}
+                          >
+                            <Popup>
+                              <strong>{result.recommended_route}</strong><br/>
+                              Click to view details
+                            </Popup>
+                          </Polyline>
+
+                          {/* Map all alternative routes dynamically */}
+                          {result.alternatives.map((routeOpt) => {
+                            const isActive = activeRoute.route_id === routeOpt.route_id;
+                            return (
+                              <Polyline
+                                key={routeOpt.route_id}
+                                positions={getRealisticRoute(result.origin, result.destination, routeOpt, result.recommended_route)}
+                                color={isActive ? "#0d6efd" : "#64748b"}
+                                weight={isActive ? 4 : 2}
+                                dashArray={isActive ? "" : "6, 6"}
+                                opacity={isActive ? 1 : 0.4}
+                              >
+                                <Popup>
+                                  <strong>{routeOpt.route_id}</strong><br/>
+                                  Click to view details
+                                </Popup>
+                              </Polyline>
+                            );
+                          })}
+
+                          <Marker position={portCoordinates[result.origin]} icon={originIcon}>
+                            <Popup><strong>{result.origin}</strong><br/>Origin Port</Popup>
+                          </Marker>
+                          <Marker position={portCoordinates[result.destination]} icon={destIcon}>
+                            <Popup><strong>{result.destination}</strong><br/>Destination Port</Popup>
+                          </Marker>
+                          <MapBounds origin={result.origin} destination={result.destination} />
+                        </MapContainer>
+                      </div>
+                      <p style={{textAlign: "center", fontSize: "12px", color: "#64748b", marginTop: "-30px", marginBottom: "30px", zIndex: 10, position: "relative"}}>
+                        Map is fully interactive. Click any dashed line to select an alternative route.
+                      </p>
+
+                      {/* 1. Active Route Details */}
                       <section className="recommended-section">
                         <div className="section-heading">
                           <div>
                             <p className="section-label">
-                              BEST RECOMMENDED ROUTE
+                              {activeRoute.route_id === result.recommended_route ? "BEST RECOMMENDED ROUTE" : "SELECTED ALTERNATIVE ROUTE"}
                             </p>
-                            <h2>Best Recommended Route</h2>
+                            <h2>
+                              {activeRoute.route_id === result.recommended_route ? "Best Recommended Route" : `Details for ${activeRoute.route_id}`}
+                            </h2>
                           </div>
                         </div>
 
-                        <div className="recommended-route-card">
-                          <p className="section-label">RECOMMENDED ROUTE</p>
+                        <div className="recommended-route-card" style={{ borderColor: activeRoute.route_id === result.recommended_route ? "#e2e8f0" : "#bfdbfe" }}>
+                          <p className="section-label">
+                            {activeRoute.route_id === result.recommended_route ? "RECOMMENDED ROUTE" : "ALTERNATIVE ROUTE"}
+                          </p>
 
-                          <h3>{result.recommended_route_details.route_id}</h3>
+                          <h3>{activeRoute.route_id}</h3>
 
                           <p className="route-id">
-                            {result.recommended_route_details.route_type}
+                            {activeRoute.route_type}
                           </p>
 
                           <div className="route-metrics">
                             <div className="route-metric">
                               <span>Transit Time</span>
                               <strong>
-                                {result.recommended_route_details.transit_days}{" "}
+                                {activeRoute.transit_days}{" "}
                                 days
                               </strong>
                             </div>
@@ -588,7 +769,7 @@ function Dashboard({ user, onLogout }) {
                             <div className="route-metric">
                               <span>Distance</span>
                               <strong>
-                                {result.recommended_route_details.distance_nm}{" "}
+                                {activeRoute.distance_nm}{" "}
                                 NM
                               </strong>
                             </div>
@@ -597,8 +778,7 @@ function Dashboard({ user, onLogout }) {
                               <span>Transshipments</span>
                               <strong>
                                 {
-                                  result.recommended_route_details
-                                    .transshipments
+                                  activeRoute.transshipments
                                 }
                               </strong>
                             </div>
@@ -607,21 +787,20 @@ function Dashboard({ user, onLogout }) {
                           <div className="route-base-freight">
                             <span>Route Score</span>
                             <strong>
-                              {result.recommended_route_details.route_score}/100
+                              {activeRoute.route_score}/100
                             </strong>
                           </div>
 
                           <div className="route-base-freight">
                             <span>Base Freight</span>
                             <strong>
-                              $
-                              {result.recommended_route_details.base_freight_usd.toLocaleString()}
+                              {formatCurrency(activeRoute.base_freight_usd)}
                             </strong>
                           </div>
                         </div>
                       </section>
 
-                      {/* 2. Alternative Routes */}
+                      {/* 2. Alternative Routes List */}
                       {result.alternatives.length > 0 && (
                         <section className="alternatives-section">
                           <div className="section-heading">
@@ -633,7 +812,16 @@ function Dashboard({ user, onLogout }) {
 
                           <div className="routes-list">
                             {result.alternatives.map((route) => (
-                              <div className="route-item" key={route.route_id}>
+                              <div 
+                                className="route-item" 
+                                key={route.route_id}
+                                onClick={() => handleRouteSelection(route)}
+                                style={{ 
+                                  cursor: "pointer", 
+                                  border: activeRoute.route_id === route.route_id ? "2px solid #0d6efd" : "1px solid #e2e8f0",
+                                  backgroundColor: activeRoute.route_id === route.route_id ? "#f0f6ff" : "white"
+                                }}
+                              >
                                 <div className="route-rank">
                                   {route.rank === 2
                                     ? "🥈"
@@ -670,7 +858,7 @@ function Dashboard({ user, onLogout }) {
                                 <div className="route-info freight">
                                   <small>Base Freight</small>
                                   <strong>
-                                    ${route.base_freight_usd.toLocaleString()}
+                                    {formatCurrency(route.base_freight_usd)}
                                   </strong>
                                 </div>
                               </div>
@@ -689,9 +877,9 @@ function Dashboard({ user, onLogout }) {
                         </div>
 
                         <div className="score-breakdown-card">
-                          <h3>🏆 Route Score</h3>
+                          <h3>🏆 Route Score ({activeRoute.route_id})</h3>
 
-                          <p>AI evaluation of the selected route</p>
+                          <p>AI evaluation of the currently selected route</p>
 
                           {/* Transit */}
                           <div className="score-item">
@@ -700,8 +888,7 @@ function Dashboard({ user, onLogout }) {
 
                               <strong>
                                 {
-                                  result.recommended_route_details
-                                    .score_breakdown.transit_score
+                                  activeRoute.score_breakdown.transit_score
                                 }
                                 /100
                               </strong>
@@ -711,7 +898,7 @@ function Dashboard({ user, onLogout }) {
                               <div
                                 className="score-bar-fill"
                                 style={{
-                                  width: `${result.recommended_route_details.score_breakdown.transit_score}%`,
+                                  width: `${activeRoute.score_breakdown.transit_score}%`,
                                 }}
                               ></div>
                             </div>
@@ -724,8 +911,7 @@ function Dashboard({ user, onLogout }) {
 
                               <strong>
                                 {
-                                  result.recommended_route_details
-                                    .score_breakdown.distance_score
+                                  activeRoute.score_breakdown.distance_score
                                 }
                                 /100
                               </strong>
@@ -735,7 +921,7 @@ function Dashboard({ user, onLogout }) {
                               <div
                                 className="score-bar-fill"
                                 style={{
-                                  width: `${result.recommended_route_details.score_breakdown.distance_score}%`,
+                                  width: `${activeRoute.score_breakdown.distance_score}%`,
                                 }}
                               ></div>
                             </div>
@@ -748,8 +934,7 @@ function Dashboard({ user, onLogout }) {
 
                               <strong>
                                 {
-                                  result.recommended_route_details
-                                    .score_breakdown.transshipment_score
+                                  activeRoute.score_breakdown.transshipment_score
                                 }
                                 /100
                               </strong>
@@ -759,7 +944,7 @@ function Dashboard({ user, onLogout }) {
                               <div
                                 className="score-bar-fill"
                                 style={{
-                                  width: `${result.recommended_route_details.score_breakdown.transshipment_score}%`,
+                                  width: `${activeRoute.score_breakdown.transshipment_score}%`,
                                 }}
                               ></div>
                             </div>
@@ -789,10 +974,10 @@ function Dashboard({ user, onLogout }) {
                           </div>
 
                           <div className="final-price">
-                            <span>Total Freight</span>
+                            <span>Total Freight Cost</span>
 
                             <strong>
-                              ${result.total_freight_usd.toLocaleString()}
+                              {formatCurrency(result.total_freight_usd)}
                             </strong>
                           </div>
                         </div>
@@ -823,7 +1008,7 @@ function Dashboard({ user, onLogout }) {
                   <div className="customer-request-list">
                     {customerRequests.map((request) => (
                       <div className="customer-request-card" key={request.id}>
-                        <div>
+                        <div style={{ flex: 1 }}>
                           <strong>
                             {request.shipment.origin}
                             {" → "}
@@ -837,6 +1022,25 @@ function Dashboard({ user, onLogout }) {
                           </p>
 
                           <small>Request #{request.id}</small>
+
+                          {/* Customer Quotation Creation Feedback Display */}
+                          {request.feedback && (
+                            <div style={{
+                              marginTop: "12px",
+                              padding: "10px 14px",
+                              background: request.status === "Rejected" ? "#fef2f2" : "#ecfdf5",
+                              borderLeft: `3px solid ${request.status === "Rejected" ? "#ef4444" : "#10b981"}`,
+                              borderRadius: "4px",
+                              fontSize: "12px",
+                              color: "#334155",
+                              maxWidth: "600px"
+                            }}>
+                              <strong style={{ color: request.status === "Rejected" ? "#b91c1c" : "#047857" }}>
+                                Admin Note:
+                              </strong>{" "}
+                              {request.feedback}
+                            </div>
+                          )}
                         </div>
 
                         <span
@@ -884,7 +1088,7 @@ function Dashboard({ user, onLogout }) {
                 <div className="customer-request-list">
                   {customerRequests.map((request) => (
                     <div className="customer-request-card" key={request.id}>
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <strong>
                           {request.shipment.origin}
                           {" → "}
@@ -900,6 +1104,25 @@ function Dashboard({ user, onLogout }) {
                         <small>
                           Request #{request.id} • {request.createdAt}
                         </small>
+
+                        {/* Customer All Quotations Feedback Display */}
+                        {request.feedback && (
+                          <div style={{
+                            marginTop: "12px",
+                            padding: "10px 14px",
+                            background: request.status === "Rejected" ? "#fef2f2" : "#ecfdf5",
+                            borderLeft: `3px solid ${request.status === "Rejected" ? "#ef4444" : "#10b981"}`,
+                            borderRadius: "4px",
+                            fontSize: "12px",
+                            color: "#334155",
+                            maxWidth: "600px"
+                          }}>
+                            <strong style={{ color: request.status === "Rejected" ? "#b91c1c" : "#047857" }}>
+                              Admin Note:
+                            </strong>{" "}
+                            {request.feedback}
+                          </div>
+                        )}
                       </div>
 
                       <span

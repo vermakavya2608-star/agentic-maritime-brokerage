@@ -175,3 +175,29 @@
     flex-direction: column;
   }
 }
+
+/* Feedback Input Styling */
+.feedback-input {
+  width: 100%;
+  min-height: 100px;
+  padding: 16px;
+  background: #f5faff;
+  border: 1px solid #e1eef7;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #123f5c;
+  resize: vertical;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.feedback-input:focus {
+  border-color: #1479b8;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(20, 121, 184, 0.1);
+}
+
+.feedback-input::placeholder {
+  color: #71899c;
+}
