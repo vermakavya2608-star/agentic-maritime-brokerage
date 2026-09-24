@@ -4,7 +4,11 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
   background: #f4f6f9;
   color: #1e293b;
 }
@@ -18,13 +22,25 @@ body {
 
 .sidebar {
   width: 260px;
-  min-height: 100vh;
-  background: linear-gradient(180deg, #071325 0%, #0b1b35 100%);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  overflow-y: auto;
+  /* Updated Background for Nautical Grid Vibe */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(7, 19, 37, 0.98) 0%,
+      rgba(11, 27, 53, 0.98) 100%
+    ),
+    url('data:image/svg+xml,%3Csvg width="20" height="20" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h20v20H0z" fill="none"/%3E%3Cpath d="M19 1H1v18h18V1zM0 0h20v20H0V0z" fill="rgba(255,255,255,0.03)"/%3E%3C/svg%3E');
   color: white;
   padding: 24px 16px;
   display: flex;
   flex-direction: column;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+  z-index: 1030;
 }
 
 .brand {
@@ -186,21 +202,52 @@ body {
 
 /* MAIN */
 
+/* =========================================
+   MAIN LAYOUT & BACKGROUND
+========================================= */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #f8fafc;
+  /* Cool, premium slate gradient */
+  background: linear-gradient(135deg, #f4f7fa 0%, #e2e8f0 100%);
+  position: relative;
+}
+
+/* Adds a subtle logistical coordinate grid */
+.main-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 24px 24px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Keep content above the grid */
+.page {
+  position: relative;
+  z-index: 1;
+  padding: 35px 40px;
+  max-width: 1300px;
+  width: 100%;
 }
 
 .topbar {
   height: 72px;
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
+  /* Glassmorphism effect */
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 40px;
+  position: sticky;
+  top: 0;
+  z-index: 1020; /* Stays above the map */
 }
 
 .breadcrumb {
@@ -283,6 +330,13 @@ body {
   font-size: 14px;
 }
 
+/* Update your existing .page-heading block */
+.page-heading {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
 /* WORKSPACE */
 
 .workspace {
@@ -293,11 +347,14 @@ body {
 }
 
 .card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 28px;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.6); /* Soften the border */
+  border-radius: 16px;
+  padding: 32px;
+  /* Deeper, softer shadow to separate from the grid background */
+  box-shadow:
+    0 10px 40px rgba(15, 23, 42, 0.06),
+    0 2px 6px rgba(15, 23, 42, 0.03);
 }
 
 .card-heading {
@@ -348,62 +405,73 @@ body {
   margin-bottom: 6px;
 }
 
+/* =========================================
+   FORM INPUTS (LOGISTICS STYLING)
+========================================= */
 .form-group input,
 .form-group select {
   width: 100%;
-  height: 46px;
-  padding: 0 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 9px;
-  background: #f8fafc;
+  height: 48px;
+  padding: 0 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
   color: #0f172a;
   font-size: 14px;
+  font-weight: 500;
   outline: none;
   transition: all 0.2s ease;
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.02);
 }
 
 .form-group input:focus,
 .form-group select:focus {
-  border-color: #0d6efd;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+  border-color: #38bdf8;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 4px rgba(56, 189, 248, 0.15),
+    inset 0 2px 4px rgba(15, 23, 42, 0.02);
 }
 
 /* SUMMARY */
 
+/* =========================================
+   SHIPMENT SUMMARY (FREIGHT TICKET STYLE)
+========================================= */
 .shipment-summary {
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 2px dashed #cbd5e1; /* Dashed line like a tear-off ticket */
+  border-left: 6px solid #0d6efd;
+  border-radius: 8px;
   margin-top: 24px;
-  padding: 16px 20px;
+  padding: 20px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
+  box-shadow: inset 0 2px 10px rgba(15, 23, 42, 0.02);
 }
 
 .shipment-summary div {
-  display: grid;
-  grid-template-columns: 24px 1fr;
-  column-gap: 8px;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .shipment-summary span {
-  grid-row: span 2;
-  color: #0d6efd;
-  font-size: 16px;
+  display: none; /* Hide the generic icons for a cleaner manifest look */
 }
 
 .shipment-summary small {
   color: #64748b;
   font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
 }
 
 .shipment-summary strong {
-  font-size: 13px;
+  font-size: 14px;
   color: #0f172a;
-  margin-top: 2px;
 }
 
 /* BUTTON */
@@ -430,18 +498,65 @@ body {
 
 /* AGENT */
 
+/* =========================================
+   AI AGENT CARD (DARK TERMINAL THEME)
+========================================= */
 .agent-card {
-  align-self: start;
+  background: linear-gradient(180deg, #0a192f 0%, #112240 100%);
+  border: 1px solid #1e293b;
+  color: #e2e8f0;
+  box-shadow: 0 12px 30px rgba(10, 25, 47, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle blueprint grid overlay for the agent card */
+.agent-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.2) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+}
+
+.agent-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.agent-card .agent-icon {
+  background: rgba(14, 165, 233, 0.1);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.2);
 }
 
 .agent-card h2 {
-  margin-top: 16px;
+  color: #ffffff;
 }
 
 .agent-card > p {
-  color: #475569;
-  font-size: 13px;
-  line-height: 1.6;
+  color: #94a3b8;
+}
+
+.agent-steps div {
+  color: #cbd5e1;
+}
+
+.agent-steps b {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.milestone-note {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #1e293b;
+  border-left: 3px solid #38bdf8;
+  color: #94a3b8;
 }
 
 .agent-steps {
@@ -487,41 +602,150 @@ body {
 .dashboard-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 24px;
+  margin-bottom: 40px;
 }
 
 .dashboard-stat-card {
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);
+  border: 1px solid #e2e8f0; /* Restores the full card border */
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  position: relative;
+  overflow: hidden; /* Ensures the top color bar clips cleanly to the rounded corners */
+  transition: all 0.2s ease;
 }
+
+.dashboard-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* Create a crisp color bar using a pseudo-element instead of border-top */
+.dashboard-stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+}
+
+/* Color assignments for the top bar */
+.dashboard-stat-card:nth-child(1)::before {
+  background: #0d6efd;
+} /* Total - Blue */
+.dashboard-stat-card:nth-child(2)::before {
+  background: #f59e0b;
+} /* Pending - Amber */
+.dashboard-stat-card:nth-child(3)::before {
+  background: #10b981;
+} /* Approved - Green */
+.dashboard-stat-card:nth-child(4)::before {
+  background: #ef4444;
+} /* Rejected - Red */
 
 .dashboard-stat-card span {
   display: block;
   color: #64748b;
   font-size: 12px;
-  font-weight: 500;
-  margin-bottom: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 12px;
 }
 
 .dashboard-stat-card strong {
   color: #0f172a;
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .dashboard-overview-card {
-  margin-bottom: 28px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(7, 19, 37, 0.95) 0%,
+      rgba(17, 42, 77, 0.8) 100%
+    ),
+    url("https://images.unsplash.com/photo-1494412519320-aa613dfb7738?q=80&w=2070&auto=format&fit=crop")
+      center/cover no-repeat;
+  border: none;
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 40px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 40px;
+  box-shadow: 0 12px 24px rgba(7, 19, 37, 0.15);
+
+  /* These two lines fix the extra scroll space */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Adds a subtle watermark graphic to the right side */
+.dashboard-overview-card::after {
+  content: "⚓";
+  position: absolute;
+  right: -20px;
+  bottom: -40px;
+  font-size: 160px;
+  opacity: 0.03;
+  color: white;
+  pointer-events: none;
+}
+
+.dashboard-overview-card .section-heading {
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0;
+}
+
+.dashboard-overview-card .section-label {
+  color: #38bdf8;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.dashboard-overview-card .section-heading h2 {
+  color: #ffffff !important;
+  font-size: 28px;
+  margin: 8px 0 0;
 }
 
 .dashboard-overview-card p {
-  color: #64748b;
+  grid-column: 1;
+  grid-row: 2;
+  color: #cbd5e1;
+  max-width: 540px;
+  margin: 12px 0 0;
   font-size: 14px;
   line-height: 1.6;
-  margin-bottom: 20px;
+}
+
+.dashboard-overview-card .analyze-button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  margin: 0;
+  height: 54px;
+  padding: 0 32px;
+  background: #38bdf8;
+  color: #071325;
+  font-weight: 700;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
+}
+
+.dashboard-overview-card .analyze-button:hover {
+  background: #ffffff;
+  color: #0d6efd;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
 }
 
 /* CUSTOMER REQUESTS */
@@ -556,36 +780,67 @@ body {
 }
 
 .customer-request-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-left: 5px solid #0d6efd; /* Simulates a container edge */
+  border-radius: 12px;
+  padding: 22px 26px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 18px 22px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle ship watermark behind the text */
+.customer-request-card::before {
+  content: "🚢";
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 32px;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+.customer-request-card > div {
+  padding-left: 40px; /* Pushes text past the watermark */
+  position: relative;
+  z-index: 1;
 }
 
 .customer-request-card:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  background: #f8fafc;
+  transform: translateX(6px);
+  box-shadow: -4px 8px 16px rgba(15, 23, 42, 0.04);
 }
 
 .customer-request-card strong {
   color: #0f172a;
-  font-size: 15px;
+  font-size: 16px;
+  letter-spacing: -0.3px;
 }
 
 .customer-request-card p {
-  margin: 4px 0;
-  color: #64748b;
+  margin: 6px 0;
+  color: #475569;
   font-size: 13px;
+  font-weight: 500;
 }
 
+/* Make the Request ID look like a tracking number */
 .customer-request-card small {
-  color: #94a3b8;
-  font-size: 11px;
+  font-family: "Courier New", Courier, monospace;
+  color: #64748b;
+  font-size: 12px;
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
 }
 
 .customer-status {
@@ -755,7 +1010,7 @@ body {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(15,23,42,0.02);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
 }
 
 .route-metric span {
@@ -951,7 +1206,11 @@ body {
   top: -50px;
   width: 200px;
   height: 200px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(56, 189, 248, 0.15) 0%,
+    transparent 70%
+  );
   border-radius: 50%;
 }
 
@@ -1020,4 +1279,63 @@ body {
   .final-price {
     text-align: left;
   }
+}
+
+/* Mobile fix for the Grid banner */
+@media (max-width: 800px) {
+  .dashboard-overview-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 30px 24px;
+  }
+  .dashboard-overview-card .analyze-button {
+    margin-top: 24px;
+    width: 100%;
+  }
+}
+
+
+/* =========================================
+   ADMIN FEEDBACK NOTE (CUSTOMER VIEW)
+========================================= */
+.admin-feedback-note {
+  margin-top: 14px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 600px;
+  position: relative;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.admin-feedback-note strong {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+/* Approved State */
+.admin-feedback-note.approved {
+  background: rgba(16, 185, 129, 0.05);
+  border-left: 4px solid #10b981;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+.admin-feedback-note.approved strong { 
+  color: #047857; 
+}
+
+/* Rejected State */
+.admin-feedback-note.rejected {
+  background: rgba(239, 68, 68, 0.05);
+  border-left: 4px solid #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+.admin-feedback-note.rejected strong { 
+  color: #b91c1c; 
 }

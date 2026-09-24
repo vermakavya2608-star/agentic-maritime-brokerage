@@ -12,4 +12,10 @@ class QuotationRequest(BaseModel):
    cargo_type:str
    containers:int
 
-   
+# --- New OTP Models ---
+class OTPRequest(BaseModel):
+    email: str
+
+class OTPVerify(BaseModel):
+    email: str
+    otp: str
