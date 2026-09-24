@@ -1,156 +1,266 @@
+/* =========================================
+   REVIEW REQUEST PAGE (DARK COMMAND THEME)
+========================================= */
 .review-page {
   min-height: 100vh;
-  background: #eef6ff;
-  padding: 40px 55px;
-  color: #12344d;
+  background: linear-gradient(135deg, #071325 0%, #0a1930 100%);
+  padding: 40px 50px;
+  color: #cbd5e1;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  position: relative;
+  z-index: 1;
 }
 
+/* Add the subtle technical grid background */
+.review-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(56, 189, 248, 0.1) 1px, transparent 1px);
+  background-size: 24px 24px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* =========================================
+   HEADER & ACTIONS
+========================================= */
 .review-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .review-label {
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  color: #1479b8;
+  color: #38bdf8;
 }
 
 .review-header h1 {
   margin: 0;
   font-size: 32px;
-  color: #0b4268;
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .review-header p {
-  margin-top: 8px;
-  color: #648097;
+  margin-top: 6px;
+  color: #94a3b8;
+  font-size: 14px;
 }
 
 .back-button {
-  border: 1px solid #b9d8ec;
-  background: white;
-  color: #0b5f91;
-  padding: 11px 18px;
-  border-radius: 9px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(15, 23, 42, 0.6);
+  color: #38bdf8;
+  padding: 10px 18px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
 }
 
 .back-button:hover {
-  background: #e7f3fc;
+  background: #38bdf8;
+  color: #071325;
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
 }
 
+/* =========================================
+   REVIEW CARDS / PANELS
+========================================= */
 .review-section {
-  background: white;
-  border: 1px solid #d5e7f3;
-  border-radius: 14px;
-  padding: 25px;
-  margin-bottom: 20px;
-  box-shadow: 0 5px 18px rgba(11, 66, 104, 0.07);
+  background: rgba(11, 27, 53, 0.7);
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .section-title {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 16px;
 }
 
 .section-title h2 {
   margin: 0;
-  font-size: 19px;
-  color: #0b4268;
+  font-size: 18px;
+  color: #ffffff;
+  font-weight: 700;
 }
 
+.section-title span {
+  display: block;
+  color: #94a3b8;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+/* =========================================
+   DATA GRIDS
+========================================= */
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
+  gap: 16px;
 }
 
-.detail-grid div {
-  background: #f5faff;
-  border: 1px solid #e1eef7;
-  border-radius: 10px;
-  padding: 15px;
+.detail-grid div,
+.route-highlight div {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.detail-grid div:hover,
+.route-highlight div:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #334155;
 }
 
 .detail-grid span,
 .route-highlight span {
   display: block;
-  font-size: 12px;
-  color: #71899c;
-  margin-bottom: 7px;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
-.detail-grid strong,
-.route-highlight strong {
+.detail-grid strong {
   display: block;
-  color: #123f5c;
-  font-size: 15px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
 }
 
+/* Specialized highlight for the best route */
 .route-highlight {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin-bottom: 18px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .route-highlight div {
-  background: #eaf6ff;
-  border: 1px solid #c9e4f5;
-  border-radius: 11px;
-  padding: 18px;
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%);
+  border: 1px solid rgba(13, 110, 253, 0.3);
 }
 
 .route-highlight strong {
-  color: #0b6fa8;
-  font-size: 20px;
+  color: #38bdf8;
+  font-size: 24px;
+  font-weight: 800;
 }
 
+/* =========================================
+   ADMIN FEEDBACK TEXTAREA (SECURE TERMINAL)
+========================================= */
+.feedback-input {
+  width: 100%;
+  min-height: 120px;
+  padding: 18px;
+  background: rgba(7, 19, 37, 0.8);
+  border: 1px solid #1e293b;
+  border-left: 4px solid #38bdf8;
+  border-radius: 8px;
+  /* Monospace font gives it a tech/terminal feel */
+  font-family: 'Courier New', Courier, monospace; 
+  font-size: 14px;
+  color: #38bdf8;
+  resize: vertical;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.feedback-input:focus {
+  border-color: #38bdf8;
+  background: rgba(7, 19, 37, 1);
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15), inset 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.feedback-input::placeholder {
+  color: #475569;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* =========================================
+   ACTION BUTTONS
+========================================= */
 .review-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 14px;
-  margin-top: 25px;
+  gap: 16px;
+  margin-top: 32px;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .reject-button,
 .approve-button {
-  padding: 13px 22px;
-  border-radius: 9px;
-  font-weight: 700;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
   border: none;
+  transition: all 0.2s ease;
 }
 
 .reject-button {
-  background: #fff1f1;
-  color: #c0392b;
-  border: 1px solid #f0c5c0;
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.reject-button:hover {
+  background: #ef4444;
+  color: white;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
 }
 
 .approve-button {
-  background: #1479b8;
-  color: white;
+  background: #10b981;
+  color: #071325;
+  border: 1px solid #10b981;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2);
 }
 
 .approve-button:hover {
-  background: #0b5f91;
+  background: #34d399;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
 }
 
-.review-page > button {
-  margin-top: 20px;
-}
-
+/* =========================================
+   RESPONSIVE DESIGN
+========================================= */
 @media (max-width: 900px) {
   .review-page {
-    padding: 30px 25px;
+    padding: 30px 24px;
   }
-
   .detail-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -158,46 +268,21 @@
 
 @media (max-width: 600px) {
   .review-page {
-    padding: 22px 16px;
+    padding: 24px 16px;
   }
-
   .review-header {
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
   }
-
   .detail-grid,
   .route-highlight {
     grid-template-columns: 1fr;
   }
-
   .review-actions {
     flex-direction: column;
   }
-}
-
-/* Feedback Input Styling */
-.feedback-input {
-  width: 100%;
-  min-height: 100px;
-  padding: 16px;
-  background: #f5faff;
-  border: 1px solid #e1eef7;
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 14px;
-  color: #123f5c;
-  resize: vertical;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.feedback-input:focus {
-  border-color: #1479b8;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(20, 121, 184, 0.1);
-}
-
-.feedback-input::placeholder {
-  color: #71899c;
+  .reject-button,
+  .approve-button {
+    width: 100%;
+  }
 }

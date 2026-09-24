@@ -28,7 +28,10 @@ function AdminDashboard({ user, onLogout }) {
     return (
       <ReviewRequest
         request={selectedRequest}
-        onBack={() => setSelectedRequest(null)}
+        onBack={() => {
+          setSelectedRequest(null);
+          loadRequests(); /* This forces the table to update immediately! */
+        }}
       />
     );
   }
