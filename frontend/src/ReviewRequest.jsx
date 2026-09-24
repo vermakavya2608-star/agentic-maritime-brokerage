@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./ReviewRequest.css";
 
 function ReviewRequest({ request, onBack }) {
-  // 1. Add state for the feedback text
-  const [feedback, setFeedback] = useState("");
+  // Load saved feedback or default to empty
+  const [feedback, setFeedback] = useState(request?.feedback || "");
+
+  // Check if it's still pending
+  const isPending = request?.status === "Pending Review";
+
+  // Force the text box to sync up with the saved data
+  useEffect(() => {
+    setFeedback(request?.feedback || "");
+  }, [request]);
 
   const updateStatus = (newStatus) => {
     const existingRequests =
@@ -128,7 +136,7 @@ function ReviewRequest({ request, onBack }) {
               $
               {Number(request.quotation.total_freight_usd).toLocaleString(
                 "en-US",
-                { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                { minimumFractionDigits: 2, maximumFractionDigits: 2 },
               )}
             </strong>
           </div>
@@ -209,24 +217,44 @@ function ReviewRequest({ request, onBack }) {
           className="feedback-input"
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
-          placeholder="Enter feedback for the customer here..."
+          placeholder={
+            isPending
+              ? "Enter feedback for the customer here..."
+              : "No feedback was provided."
+          }
+          readOnly={!isPending}
         />
       </section>
 
       {/* Actions */}
       <section className="review-actions">
-        <button
-          className="reject-button"
-          onClick={() => updateStatus("Rejected")}
-        >
-          Reject Request
-        </button>
-        <button
-          className="approve-button"
-          onClick={() => updateStatus("Approved")}
-        >
-          Approve Quotation
-        </button>
+        {isPending ? (
+          <>
+            <button
+              className="reject-button"
+              onClick={() => updateStatus("Rejected")}
+            >
+              Reject Request
+            </button>
+            <button
+              className="approve-button"
+              onClick={() => updateStatus("Approved")}
+            >
+              Approve Quotation
+            </button>
+          </>
+        ) : (
+          <div
+            style={{
+              color: "#94a3b8",
+              fontWeight: "600",
+              fontSize: "14px",
+              padding: "12px 0",
+            }}
+          >
+            ✦ This request has already been {request.status.toLowerCase()}.
+          </div>
+        )}
       </section>
     </div>
   );

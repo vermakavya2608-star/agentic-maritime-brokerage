@@ -2,11 +2,17 @@
   box-sizing: border-box;
 }
 
+/* 1. Full Page Background */
 .login-page {
   min-height: 100vh;
   width: 100%;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: #f4f6f9;
+  
+  /* Deep dark blue/slate background with an image overlay */
+  background: 
+    linear-gradient(135deg, rgba(7, 19, 37, 0.9) 0%, rgba(11, 27, 53, 0.95) 100%),
+    url('https://images.unsplash.com/photo-1586528116311-ad8ed7f66909?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat !important;
+  
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,59 +21,47 @@
   padding: 30px;
 }
 
+/* Submarine/Radar Grid Overlay */
 .login-page::before {
   content: "";
   position: absolute;
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(circle, rgba(13, 110, 253, 0.08) 0%, rgba(255,255,255,0) 70%);
-  top: -300px;
-  left: -200px;
+  inset: 0;
+  background-image: radial-gradient(rgba(56, 189, 248, 0.15) 1px, transparent 1px);
+  background-size: 30px 30px;
   z-index: 0;
+  pointer-events: none;
 }
 
-.login-page::after {
-  content: "";
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(13, 110, 253, 0.05) 0%, rgba(255,255,255,0) 70%);
-  bottom: -200px;
-  right: -100px;
-  z-index: 0;
-}
-
+/* 2. The Glass Card */
 .login-container {
   width: 100%;
   max-width: 1050px;
   min-height: 640px;
   display: flex;
-  background: white;
+  
+  /* Forcing dark glass - NO WHITE BACKGROUND */
+  background: rgba(11, 27, 53, 0.6) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  
   overflow: hidden;
   position: relative;
   z-index: 2;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
+/* 3. Left Side (Brand) */
 .brand-section {
   width: 45%;
-  background: linear-gradient(180deg, #071325 0%, #0b1b35 100%);
+  background: rgba(7, 19, 37, 0.5) !important; /* Darker panel for contrast */
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
   color: white;
   display: flex;
   align-items: center;
   padding: 60px;
   position: relative;
-}
-
-.brand-section::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  opacity: 0.5;
-  z-index: 0;
 }
 
 .brand-content {
@@ -79,14 +73,16 @@
 .login-logo {
   width: 54px;
   height: 54px;
-  background: linear-gradient(135deg, #1599e8, #0077b6);
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  color: #38bdf8;
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
   margin-bottom: 32px;
-  box-shadow: 0 8px 20px rgba(21, 153, 232, 0.25);
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.2);
 }
 
 .brand-section h1 {
@@ -94,21 +90,22 @@
   margin: 0 0 12px;
   font-weight: 800;
   letter-spacing: -1px;
+  color: #ffffff !important;
 }
 
 .brand-section h1 span {
-  color: #0d6efd;
+  color: #38bdf8 !important;
 }
 
 .brand-section h2 {
   font-size: 20px;
   margin: 0 0 20px;
   font-weight: 500;
-  color: #e2e8f0;
+  color: #cbd5e1 !important;
 }
 
 .brand-section p {
-  color: #94a3b8;
+  color: #94a3b8 !important;
   line-height: 1.7;
   margin: 0 0 40px;
   font-size: 15px;
@@ -130,13 +127,13 @@
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-  color: #e2e8f0;
-  backdrop-filter: blur(10px);
+  color: #cbd5e1 !important;
 }
 
 .login-features span {
   font-size: 18px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #1e293b;
   width: 32px;
   height: 32px;
   display: flex;
@@ -145,12 +142,14 @@
   border-radius: 8px;
 }
 
+/* 4. Right Side (Form) */
 .login-form-section {
   width: 55%;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 60px;
+  background: transparent !important; /* Ensure it stays dark */
 }
 
 .login-form-container {
@@ -160,14 +159,14 @@
 
 .login-form-container h2 {
   font-size: 32px;
-  color: #0f172a;
+  color: #ffffff !important; /* FORCE WHITE TEXT */
   margin: 0 0 8px;
   font-weight: 700;
   letter-spacing: -0.5px;
 }
 
 .login-subtitle {
-  color: #64748b;
+  color: #94a3b8 !important;
   margin: 0 0 36px;
   line-height: 1.6;
   font-size: 15px;
@@ -180,25 +179,26 @@
 }
 
 .login-form-container form > label {
-  color: #334155;
+  color: #cbd5e1 !important;
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 8px;
 }
 
+/* 5. Dark Terminal Inputs */
 .login-form-container input[type="text"],
 .login-form-container input[type="email"],
 .login-form-container input[type="tel"] {
   width: 100%;
   height: 52px;
   padding: 0 16px;
-  border: 1px solid #cbd5e1;
+  background: rgba(7, 19, 37, 0.6) !important; /* Force dark background */
+  border: 1px solid #1e293b !important;
   border-radius: 12px;
   font-size: 15px;
   margin-bottom: 24px;
+  color: #ffffff !important;
   outline: none;
-  background: #f8fafc;
-  color: #0f172a;
   transition: all 0.2s ease;
 }
 
@@ -212,23 +212,24 @@
   width: 100%;
   height: 52px;
   padding: 0 50px 0 16px;
-  border: 1px solid #cbd5e1;
+  background: rgba(7, 19, 37, 0.6) !important;
+  border: 1px solid #1e293b !important;
   border-radius: 12px;
   font-size: 15px;
+  color: #ffffff !important;
   outline: none;
-  background: #f8fafc;
-  color: #0f172a;
   margin: 0;
   transition: all 0.2s ease;
 }
 
+/* Input Focus States */
 .login-form-container input[type="text"]:focus,
 .login-form-container input[type="email"]:focus,
 .login-form-container input[type="tel"]:focus,
 .password-wrapper input:focus {
-  border-color: #0d6efd;
-  background: white;
-  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.12);
+  border-color: #38bdf8 !important;
+  background: rgba(7, 19, 37, 0.9) !important;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
 }
 
 .password-toggle {
@@ -250,9 +251,11 @@
 }
 
 .password-toggle:hover {
-  background: #f1f5f9;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
 }
 
+/* 6. Auth Messages */
 .auth-message {
   padding: 14px;
   border-radius: 10px;
@@ -263,17 +266,18 @@
 }
 
 .auth-message.error {
-  color: #b91c1c;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .auth-message.success {
-  color: #047857;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+/* 7. Login Options */
 .login-options {
   width: 100%;
   display: flex;
@@ -288,7 +292,7 @@
   flex-direction: row;
   align-items: center;
   gap: 8px;
-  color: #475569;
+  color: #94a3b8;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -299,14 +303,14 @@
   height: 18px;
   margin: 0;
   cursor: pointer;
-  accent-color: #0d6efd;
+  accent-color: #38bdf8;
   border-radius: 4px;
 }
 
 .forgot-password {
   border: none;
   background: transparent;
-  color: #0d6efd;
+  color: #38bdf8;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -317,36 +321,40 @@
   text-decoration: underline;
 }
 
+/* 8. Login Button */
 .login-button {
   width: 100%;
   height: 52px;
-  background: linear-gradient(135deg, #0d6efd, #0b5ed7);
-  color: white;
+  background: #38bdf8 !important;
+  color: #071325 !important;
   border: none;
   border-radius: 12px;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(13, 110, 253, 0.3);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
 }
 
 .login-button:hover {
+  background: #ffffff !important;
+  color: #0d6efd !important;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
 }
 
+/* 9. Sign Up Text */
 .signup-text {
   text-align: center;
   margin-top: 32px;
   font-size: 15px;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .signup-text button {
   border: none;
   background: transparent;
-  color: #0d6efd;
+  color: #38bdf8;
   font-weight: 600;
   cursor: pointer;
   margin-left: 6px;
@@ -355,8 +363,10 @@
 
 .signup-text button:hover {
   text-decoration: underline;
+  color: #ffffff;
 }
 
+/* Responsive Design */
 @media (max-width: 950px) {
   .brand-section {
     padding: 40px;
@@ -379,6 +389,10 @@
   .brand-section,
   .login-form-section {
     width: 100%;
+  }
+  .brand-section {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
   .login-form-section {
     padding: 40px 24px;
