@@ -3,4 +3,5 @@ frontend/node_modules/
 __pycache__/
 *.pyc
 .env
-frontend/dist/
+frontend/dist/*.db
+*.db

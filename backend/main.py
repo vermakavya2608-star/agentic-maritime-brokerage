@@ -2,17 +2,30 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import random
 import smtplib
+import os
 from email.mime.text import MIMEText
+from dotenv import load_dotenv
 
 from app.models import RouteRequest, QuotationRequest, OTPRequest, OTPVerify
 from app.services.quotation_service import QuotationService
 from app.agents.route_agent import RouteAgent
+
+from app.database import Base, engine
+from app.user_model import User
+from app.otp_model import OTPCode
+from app.auth_routes import router as auth_router
+
+load_dotenv()
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Agentic Maritime Brokerage Platform",
     description="AI-powered maritime freight quotation platform",
     version="1.0.0"
 )
+
+app.include_router(auth_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -77,8 +90,8 @@ def send_otp(request: OTPRequest):
     # ---------------------------------------------------------
     # EMAIL CONFIGURATION
     # ---------------------------------------------------------
-    sender_email = "divyamagarwal0123@gmail.com" # <--- ENTER YOUR GMAIL HERE
-    app_password = "[REDACTED]" # <--- ENTER YOUR APP PASSWORD HERE
+    sender_email = os.getenv("SMTP_EMAIL")
+    app_password = os.getenv("SMTP_APP_PASSWORD")
     
     try:
         # Create the email content
