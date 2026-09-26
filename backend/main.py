@@ -234,10 +234,18 @@ def verify_otp(
             detail="Invalid or expired OTP."
         )
 
+    # Mark the user's email as verified
+    user = (
+        db.query(User)
+        .filter(User.email == email)
+        .first()
+    )
+    if user:
+        user.is_email_verified = True
+        db.commit()
     # OTP successfully verified — one-time use
     db.delete(otp_record)
     db.commit()
-
     return {
         "status": "success",
         "message": "OTP verified successfully."

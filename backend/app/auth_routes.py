@@ -113,6 +113,11 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
             status_code=401,
             detail="Invalid email or password."
         )
+    if not user.is_email_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Please verify your email before logging in."
+        )
 
     if not user.is_active:
         raise HTTPException(
