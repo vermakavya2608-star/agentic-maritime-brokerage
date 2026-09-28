@@ -20,3 +20,20 @@ export async function generateQuotation(quotationRequest) {
 
   return await response.json();
 }
+
+export async function getLiveInsight(origin, destination, cargo_type) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/llm/insight`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ origin, destination, cargo_type })
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch AI insight");
+  }
+
+  return await response.json();
+}

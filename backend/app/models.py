@@ -19,3 +19,8 @@ class OTPRequest(BaseModel):
 class OTPVerify(BaseModel):
     email: str
     otp: str
+
+class InsightRequest(BaseModel):
+    origin: str
+    destination: str
+    cargo_type: str

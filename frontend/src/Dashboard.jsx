@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { generateQuotation } from "./services/routeApi";
+import { generateQuotation, getLiveInsight } from "./services/routeApi";
 import {
   MapContainer,
   TileLayer,
@@ -187,6 +187,9 @@ function Dashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(false);
   const [activeSection, setActiveSection] = useState("dashboard");
 
+  const [llmInsight, setLlmInsight] = useState("Initializing AI trade lane analysis...");
+  const [isLlmLoading, setIsLlmLoading] = useState(false);
+
   useEffect(() => {
     const savedRequests =
       JSON.parse(localStorage.getItem("quotationRequests")) || [];
@@ -198,6 +201,30 @@ function Dashboard({ user, onLogout }) {
 
     setCustomerRequests(userRequests);
   }, [user]);
+
+  useEffect(() => {
+    // Fetch a new insight whenever the route or cargo changes
+    const fetchInsight = async () => {
+      setIsLlmLoading(true);
+      try {
+        const data = await getLiveInsight(origin, destination, cargoType);
+        if (data.status === "success") {
+          setLlmInsight(data.insight);
+        }
+      } catch (error) {
+        console.error("LLM Error:", error);
+        setLlmInsight("AI connection unavailable. Running standard deterministic routing.");
+      }
+      setIsLlmLoading(false);
+    };
+
+    // Add a slight debounce so it doesn't spam the API while typing/clicking
+    const timeoutId = setTimeout(() => {
+      fetchInsight();
+    }, 800);
+
+    return () => clearTimeout(timeoutId);
+  }, [origin, destination, cargoType]);
 
   const goToDashboard = () => {
     setActiveSection("dashboard");
@@ -348,8 +375,6 @@ function Dashboard({ user, onLogout }) {
           >
             ▤ &nbsp; Quotations
           </div>
-
-          
         </nav>
 
         <div className="platform">
@@ -436,6 +461,51 @@ function Dashboard({ user, onLogout }) {
                 </div>
               </div>
 
+              {/* --- 3D AI AGENTS DISPLAY --- */}
+              <div className="section-heading" style={{ marginTop: '12px' }}>
+                <div>
+                  <p className="section-label">SYSTEM CORE</p>
+                  <h2>Live AI Agents</h2>
+                </div>
+              </div>
+
+              <div className="upcoming-modules-grid">
+                {/* 1. Route Agent */}
+                <div className="construction-card">
+                  <div className="card-3d-visual">
+                    <div className="radar-pulse-visual">⌖</div>
+                  </div>
+                  <h3>Route Intelligence</h3>
+                  <p>Scanning global maritime networks for optimal transit paths and transshipment hubs.</p>
+                </div>
+
+                {/* 2. Weather Agent */}
+                <div className="construction-card">
+                  <div className="card-3d-visual">
+                    <div className="holo-globe">🌐</div>
+                  </div>
+                  <h3>Weather Routing</h3>
+                  <p>Monitoring live satellite telemetry and marine risk factors across all active ports.</p>
+                </div>
+
+                {/* 3. Pricing Agent */}
+                <div className="construction-card">
+                  <div className="card-3d-visual">
+                    <div className="cube-container">
+                      <div className="cube-face face-front">📊</div>
+                      <div className="cube-face face-back">📈</div>
+                      <div className="cube-face face-right">💰</div>
+                      <div className="cube-face face-left">⚓</div>
+                      <div className="cube-face face-top">⚡</div>
+                      <div className="cube-face face-bottom">🚢</div>
+                    </div>
+                  </div>
+                  <h3>Dynamic Pricing</h3>
+                  <p>Calculating live fuel surcharges, port fees, and margin optimization factors.</p>
+                </div>
+              </div>
+              {/* --------------------------- */}
+
               <div className="card dashboard-overview-card">
                 <div className="section-heading">
                   <div>
@@ -506,17 +576,8 @@ function Dashboard({ user, onLogout }) {
                   ))}
                 </div>
               )}
-
-              
-
-
-
             </>
           )}
-
-          
-
-          
 
           {activeSection === "quotation" && (
             <>
@@ -694,47 +755,43 @@ function Dashboard({ user, onLogout }) {
                   </button>
                 </div>
 
-                {/* Route Agent */}
+                {/* Live LLM Route Agent Card */}
                 <div className="card agent-card">
-                  <div className="agent-icon">✦</div>
-
-                  <h2>Route Agent</h2>
-
-                  <p>
-                    The AI agent will compare maritime route alternatives and
-                    score them using transit time, distance, transshipment, and
-                    route factors.
-                  </p>
-
-                  <div className="agent-steps">
+                  <div className="card-heading" style={{ marginBottom: '16px' }}>
+                    <div className="agent-icon">✦</div>
                     <div>
-                      <b>1</b>
-                      <span>Find available routes</span>
-                    </div>
-
-                    <div>
-                      <b>2</b>
-                      <span>Estimate transit time</span>
-                    </div>
-
-                    <div>
-                      <b>3</b>
-                      <span>Compare alternatives</span>
-                    </div>
-
-                    <div>
-                      <b>4</b>
-                      <span>Recommend best route</span>
+                      <h2>Route Intelligence AI</h2>
+                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#38bdf8' }}>
+                        LIVE ANALYSIS: {origin.toUpperCase()} TO {destination.toUpperCase()}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="milestone-note">
-                    Milestone 1 uses the foundational route intelligence engine.
-                    Dynamic pricing, weather, customs and margin agents will be
-                    added in later milestones.
+                  <div className={`llm-terminal-box ${isLlmLoading ? 'pulse-loading' : ''}`}>
+                    <div className="terminal-header">
+                      <span className="dot red"></span>
+                      <span className="dot yellow"></span>
+                      <span className="dot green"></span>
+                      <small>maritime_llm_core.sh</small>
+                    </div>
+                    <div className="terminal-content">
+                      <span className="prompt-arrow">❯</span>
+                      {isLlmLoading ? (
+                        <span className="typing-text">Generating custom trade lane analysis...</span>
+                      ) : (
+                        <p className="insight-text">{llmInsight}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="milestone-note" style={{ marginTop: '24px' }}>
+                    <strong>System Status:</strong> Generative AI active. Insights are specific to {cargoType} transit constraints.
                   </div>
                 </div>
-              </div>
+              </div> {/* <-- ADD THIS EXACT LINE HERE */}
+              
+
+
 
               {/* Route Result */}
 
@@ -1029,6 +1086,11 @@ function Dashboard({ user, onLogout }) {
 
                       {/* 3. Route Score */}
                       <section className="route-score-section">
+                        {/* <div className="milestone-note">
+                          Milestone 2 integration: Live Weather Agent is now
+                          active alongside Route Intelligence. Dynamic customs
+                          and margin agents will be added in later milestones.
+                        </div> */}
                         <div className="section-heading">
                           <div>
                             <p className="section-label">ROUTE SCORE</p>
@@ -1108,6 +1170,139 @@ function Dashboard({ user, onLogout }) {
                           </div>
                         </div>
                       </section>
+
+                      {/* 3.5 Maritime Weather Intelligence */}
+                      {result.weather && (
+                        <section className="weather-section">
+                          <div className="section-heading">
+                            <div>
+                              <p className="section-label">
+                                LIVE SATELLITE DATA
+                              </p>
+                              <h2>Maritime Weather Intelligence</h2>
+                            </div>
+                          </div>
+
+                          <div className="weather-card">
+                            <div className="weather-grid">
+                              {/* Origin Port */}
+                              <div className="weather-port">
+                                <div className="weather-header">
+                                  <div className="weather-icon">
+                                    {result.weather.origin_weather.icon}
+                                  </div>
+                                  <div>
+                                    <strong>
+                                      {result.weather.origin_weather.port}
+                                    </strong>
+                                    <span>Origin Port</span>
+                                  </div>
+                                </div>
+                                <div className="weather-stats">
+                                  <div>
+                                    <small>Temperature</small>
+                                    <strong>
+                                      {result.weather.origin_weather.temp_c}°C
+                                    </strong>
+                                  </div>
+                                  <div>
+                                    <small>Wind (Knots)</small>
+                                    <strong>
+                                      {result.weather.origin_weather.wind_knots}{" "}
+                                      kn
+                                    </strong>
+                                  </div>
+                                  <div>
+                                    <small>Condition</small>
+                                    <strong>
+                                      {result.weather.origin_weather.condition}
+                                    </strong>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Weather Graphics / Globe */}
+                              <div className="weather-center-graphic">
+                                <div
+                                  className="card-3d-visual"
+                                  style={{
+                                    width: "80px",
+                                    height: "80px",
+                                    marginBottom: "8px",
+                                  }}
+                                >
+                                  <div
+                                    className="holo-globe"
+                                    style={{
+                                      width: "50px",
+                                      height: "50px",
+                                      fontSize: "24px",
+                                    }}
+                                  >
+                                    🌐
+                                  </div>
+                                </div>
+                                <div
+                                  className={`risk-badge ${result.weather.marine_risk_level.toLowerCase()}`}
+                                >
+                                  {result.weather.marine_risk_level} Risk
+                                </div>
+                              </div>
+
+                              {/* Destination Port */}
+                              <div className="weather-port">
+                                <div className="weather-header">
+                                  <div className="weather-icon">
+                                    {result.weather.destination_weather.icon}
+                                  </div>
+                                  <div>
+                                    <strong>
+                                      {result.weather.destination_weather.port}
+                                    </strong>
+                                    <span>Destination Port</span>
+                                  </div>
+                                </div>
+                                <div className="weather-stats">
+                                  <div>
+                                    <small>Temperature</small>
+                                    <strong>
+                                      {
+                                        result.weather.destination_weather
+                                          .temp_c
+                                      }
+                                      °C
+                                    </strong>
+                                  </div>
+                                  <div>
+                                    <small>Wind (Knots)</small>
+                                    <strong>
+                                      {
+                                        result.weather.destination_weather
+                                          .wind_knots
+                                      }{" "}
+                                      kn
+                                    </strong>
+                                  </div>
+                                  <div>
+                                    <small>Condition</small>
+                                    <strong>
+                                      {
+                                        result.weather.destination_weather
+                                          .condition
+                                      }
+                                    </strong>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="weather-advisory">
+                              <strong>✦ Marine Agent Advisory:</strong>{" "}
+                              {result.weather.advisory}
+                            </div>
+                          </div>
+                        </section>
+                      )}
 
                       {/* 4. Final Quotation */}
                       <section className="final-quotation-section">

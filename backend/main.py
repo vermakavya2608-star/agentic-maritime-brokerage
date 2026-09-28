@@ -1,3 +1,4 @@
+from app.agents.llm_agent import LLMAgent
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import random
@@ -26,6 +27,7 @@ app.add_middleware(
 )
 
 route_agent = RouteAgent()
+llm_agent = LLMAgent()
 quotation_service = QuotationService()
 
 # In-memory temporary storage for OTPs
@@ -111,3 +113,19 @@ def verify_otp(request: OTPVerify):
         return {"status": "success", "message": "OTP verified successfully"}
         
     return {"status": "error", "message": "Invalid or expired OTP"}
+
+from pydantic import BaseModel
+
+class InsightRequest(BaseModel):
+    origin: str
+    destination: str
+    cargo_type: str
+
+@app.post("/api/llm/insight")
+def generate_llm_insight(request: InsightRequest):
+    insight = llm_agent.get_route_insight(
+        request.origin, 
+        request.destination, 
+        request.cargo_type
+    )
+    return {"status": "success", "insight": insight}

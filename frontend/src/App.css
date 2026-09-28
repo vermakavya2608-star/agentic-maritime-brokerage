@@ -1553,3 +1553,548 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================
+   MARITIME WEATHER INTELLIGENCE (NEW AGENT)
+========================================= */
+.weather-section {
+  margin-top: 40px;
+}
+
+.weather-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+}
+
+.weather-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 32px;
+  align-items: center;
+}
+
+.weather-port {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.weather-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.weather-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.weather-header strong {
+  display: block;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.weather-header span {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.weather-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.weather-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weather-stats small {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.weather-stats strong {
+  font-size: 16px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.weather-center-graphic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-width: 140px;
+}
+
+.risk-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.risk-badge.low {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.risk-badge.moderate {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.risk-badge.high {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.weather-advisory {
+  margin-top: 32px;
+  padding: 18px;
+  background: #f0f6ff;
+  border-left: 4px solid #0d6efd;
+  border-radius: 8px;
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.weather-advisory strong {
+  color: #0d6efd;
+}
+
+@media (max-width: 900px) {
+  .weather-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   DARK MARITIME COMMAND CENTER OVERRIDES (APPENDED AT BOTTOM)
+   ========================================================================== */
+
+/* 1. Global Dark Backgrounds & Grid */
+body, .app {
+  background: #050b14;
+  color: #cbd5e1;
+}
+
+.main-content {
+  background: 
+    radial-gradient(circle at 15% 15%, rgba(14, 165, 233, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(56, 189, 248, 0.05) 0%, transparent 50%),
+    linear-gradient(135deg, #050b14 0%, #0a1930 50%, #071325 100%);
+}
+
+.main-content::before {
+  background-image: radial-gradient(rgba(56, 189, 248, 0.12) 1px, transparent 1px);
+}
+
+.topbar {
+  background: rgba(7, 19, 37, 0.75);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+.breadcrumb strong { color: #38bdf8; }
+
+.search {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #94a3b8;
+}
+
+.notification {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+/* 2. Text Color Corrections */
+.page-heading h1, .card h2, .result-header h2, .section-heading h2, 
+.score-breakdown-card h3, .weather-header strong, .weather-stats strong, 
+.recommended-route-card h3 {
+  color: #ffffff;
+}
+
+.page-heading {
+  border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+}
+
+/* 3. Cards & Workspaces */
+.card {
+  background: rgba(11, 27, 53, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.dashboard-stat-card {
+  background: rgba(11, 27, 53, 0.65);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  backdrop-filter: blur(16px);
+}
+.dashboard-stat-card strong { color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+
+.dashboard-overview-card {
+  background: 
+    linear-gradient(90deg, rgba(7, 19, 37, 0.95) 0%, rgba(14, 38, 74, 0.85) 100%),
+    url("https://images.unsplash.com/photo-1494412519320-aa613dfb7738?q=80&w=2070&auto=format&fit=crop") center/cover no-repeat;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.customer-request-card {
+  background: rgba(11, 27, 53, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  border-left: 5px solid #38bdf8;
+}
+.customer-request-card strong { color: #ffffff; }
+.customer-request-card small {
+  background: rgba(7, 19, 37, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+.customer-empty-state {
+  background: rgba(11, 27, 53, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+/* 4. Form Elements */
+.form-group input, .form-group select {
+  background: rgba(7, 19, 37, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #ffffff;
+}
+.form-group select option { background: #0a1930; color: #ffffff; }
+
+.form-group input:focus, .form-group select:focus {
+  background: rgba(7, 19, 37, 0.95);
+}
+
+.shipment-summary {
+  background: rgba(7, 19, 37, 0.6);
+  border: 1px dashed rgba(56, 189, 248, 0.3);
+  border-left: 5px solid #38bdf8;
+}
+.shipment-summary strong { color: #ffffff; }
+
+/* 5. Results & Route Intelligence */
+.result-card, .weather-card {
+  background: rgba(11, 27, 53, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.result-header { border-bottom: 1px solid rgba(56, 189, 248, 0.15); }
+
+.best-route-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.recommended-route-card {
+  background: rgba(7, 19, 37, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.route-metric {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+.route-metric strong { color: #ffffff; }
+
+.route-base-freight { border-top: 1px solid rgba(56, 189, 248, 0.15); }
+.route-base-freight strong { color: #38bdf8; }
+
+/* Override React Inline styles with !important */
+.route-item {
+  background: rgba(7, 19, 37, 0.6) !important;
+  border: 1px solid rgba(56, 189, 248, 0.15) !important;
+}
+.route-item:hover { 
+  border-color: #38bdf8 !important; 
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(56, 189, 248, 0.2) !important;
+}
+.route-info strong { color: #ffffff; }
+.route-info.freight strong { color: #38bdf8; }
+
+.route-rank {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+/* 6. Score & Weather Modules */
+.score-breakdown-card {
+  background: rgba(7, 19, 37, 0.65);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+.score-item-header strong { color: #38bdf8; }
+.score-bar {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.weather-port {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+.weather-header { border-bottom: 1px solid rgba(56, 189, 248, 0.1); }
+.weather-advisory {
+  background: rgba(15, 23, 42, 0.6);
+  border-left: 4px solid #38bdf8;
+  color: #cbd5e1;
+}
+
+.final-quotation-card {
+  background: linear-gradient(135deg, #071325 0%, #0c2347 100%);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(56, 189, 248, 0.15);
+}
+.final-price strong {
+  color: #38bdf8;
+  text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+}
+
+/* 7. Animations (Status Radar) */
+.engine-status {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+.engine-status strong { color: #f1f5f9; }
+
+.status-dot {
+  animation: radar-pulse 2s infinite;
+}
+
+@keyframes radar-pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Fix for white hover flash on request cards */
+.customer-request-card:hover {
+  background: rgba(15, 35, 70, 0.9) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ==========================================================================
+   3D UI ENHANCEMENTS & CONTINUOUS ANIMATIONS (APPENDED)
+   ========================================================================== */
+
+/* Add a continuous slow breathing/floating effect to the overview banner */
+.dashboard-overview-card {
+  animation: slow-float 8s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
+@keyframes slow-float {
+  0% { transform: translateY(0px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); }
+  50% { transform: translateY(-8px); box-shadow: 0 30px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.1); }
+  100% { transform: translateY(0px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); }
+}
+
+/* Ensure the 3D Agent Cards match the dark theme */
+.construction-card {
+  background: rgba(11, 27, 53, 0.7) !important;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.15) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+.construction-card:hover {
+  transform: translateY(-10px) scale(1.02) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.2) !important;
+}
+
+/* Enhance the 3D Cube Colors for Dark Mode */
+.cube-face {
+  background: rgba(14, 165, 233, 0.15) !important;
+  border: 2px solid rgba(56, 189, 248, 0.5) !important;
+  box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.4) !important;
+  color: #38bdf8;
+}
+
+/* Enhance the Radar & Globe Glow */
+.radar-pulse-visual {
+  background: rgba(16, 185, 129, 0.1) !important;
+  border: 2px solid rgba(16, 185, 129, 0.5) !important;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.3), inset 0 0 15px rgba(16, 185, 129, 0.3) !important;
+  color: #10b981;
+}
+
+.radar-pulse-visual::before {
+  background: conic-gradient(from 0deg, transparent 60%, rgba(16, 185, 129, 0.6) 100%) !important;
+}
+
+.holo-globe {
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(11, 27, 53, 0.9) 80%) !important;
+  border: 2px solid rgba(56, 189, 248, 0.6) !important;
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.5), inset 0 0 25px rgba(56, 189, 248, 0.5) !important;
+}
+
+/* ==========================================================================
+   DASHBOARD ALIGNMENT FIX & QUICK ACTION CARD UPGRADE
+   ========================================================================== */
+
+/* 1. Fix CSS bleeding from Home.css causing centered text in the Dashboard */
+.page .section-heading,
+.dashboard-overview-card .section-heading {
+  text-align: left !important;
+}
+
+/* 2. Upgrade the Quick Action (Overview) Card */
+.dashboard-overview-card {
+  padding: 44px 50px !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  background: 
+    linear-gradient(90deg, rgba(6, 15, 30, 0.95) 0%, rgba(14, 38, 74, 0.75) 100%),
+    url("https://images.unsplash.com/photo-1494412519320-aa613dfb7738?q=80&w=2070&auto=format&fit=crop") center/cover no-repeat !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 2px 20px rgba(56, 189, 248, 0.1) !important;
+  align-items: center;
+}
+
+/* Make the typography punchier */
+.dashboard-overview-card .section-label {
+  font-size: 12px !important;
+  letter-spacing: 2px !important;
+  color: #38bdf8 !important;
+}
+
+.dashboard-overview-card h2 {
+  font-size: 32px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.5px !important;
+  margin-top: 8px !important;
+  color: #ffffff !important;
+}
+
+.dashboard-overview-card p {
+  font-size: 15px !important;
+  color: #cbd5e1 !important;
+  line-height: 1.6 !important;
+  max-width: 580px !important;
+}
+
+/* Enhance the CTA Button with a 3D Glass Pill effect */
+.dashboard-overview-card .analyze-button {
+  height: 56px !important;
+  padding: 0 36px !important;
+  font-size: 16px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(56, 189, 248, 0.5) !important;
+}
+
+.dashboard-overview-card .analyze-button:hover {
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9) !important;
+  box-shadow: 0 12px 30px rgba(56, 189, 248, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-3px) !important;
+}
+
+/* ==========================================================================
+   LIVE LLM TERMINAL UI (APPENDED)
+   ========================================================================== */
+
+.llm-terminal-box {
+  background: rgba(4, 10, 20, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 16px;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+}
+
+.pulse-loading {
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(56, 189, 248, 0.3);
+  border-color: rgba(56, 189, 248, 0.6);
+}
+
+.terminal-header {
+  background: rgba(15, 23, 42, 0.9);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.terminal-header .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.terminal-header .red { background: #ef4444; }
+.terminal-header .yellow { background: #f59e0b; }
+.terminal-header .green { background: #10b981; }
+
+.terminal-header small {
+  margin-left: auto;
+  color: #64748b;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+}
+
+.terminal-content {
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 140px;
+}
+
+.prompt-arrow {
+  color: #38bdf8;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  font-size: 16px;
+  animation: blink 1s infinite;
+}
+
+.typing-text {
+  color: #94a3b8;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+}
+
+.insight-text {
+  margin: 0 !important;
+  color: #e2e8f0 !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  text-shadow: 0 0 8px rgba(226, 232, 240, 0.2);
+}

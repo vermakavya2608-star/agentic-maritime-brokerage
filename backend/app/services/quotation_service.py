@@ -1,6 +1,7 @@
 from app.agents.route_agent import RouteAgent
 from app.agents.pricing_agent import PricingAgent
 from app.agents.margin_agent import MarginAgent
+from app.agents.weather_agent import WeatherAgent
 
 
 class QuotationService:
@@ -9,6 +10,7 @@ class QuotationService:
         self.route_agent = RouteAgent()
         self.pricing_agent = PricingAgent()
         self.margin_agent = MarginAgent()
+        self.weather_agent = WeatherAgent()
 
     def generate_quotation(
         self,
@@ -62,8 +64,16 @@ class QuotationService:
 
         selling_price = margin_result["selling_price"]
 
-        # Step 4: Final quotation
+        # Step 4: Weather Agent (NEW)
+        weather_result = self.weather_agent.get_route_weather(
+            origin=origin, 
+            destination=destination
+        )
+
+        # Step 5: Final quotation
         total_freight = selling_price * containers
+
+
 
         quotation = {
             "status": "success",
@@ -89,6 +99,9 @@ class QuotationService:
 
             "margin":
                 margin_result,
+
+            "weather":
+                weather_result,
 
             "freight_per_container_usd":
                 selling_price,
