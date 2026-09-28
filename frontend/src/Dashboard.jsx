@@ -348,6 +348,8 @@ function Dashboard({ user, onLogout }) {
           >
             ▤ &nbsp; Quotations
           </div>
+
+          
         </nav>
 
         <div className="platform">
@@ -504,8 +506,17 @@ function Dashboard({ user, onLogout }) {
                   ))}
                 </div>
               )}
+
+              
+
+
+
             </>
           )}
+
+          
+
+          
 
           {activeSection === "quotation" && (
             <>
