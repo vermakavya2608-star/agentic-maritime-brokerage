@@ -265,7 +265,48 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
     handleProfileUpdate("phoneNumber", formatted);
   };
 
-  // 3. INTERNATIONAL PHONE RENDERER (ULTRA-PREMIUM UX)
+  // 3. PREMIUM INPUT RENDERER (UX ENHANCER)
+  const renderPremiumInput = (label, field, type, icon, placeholder, customHandler = null) => (
+    <div className="form-group">
+      <label>{label}</label>
+      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+        <span style={{ position: "absolute", left: "16px", color: "#64748b", fontSize: "15px", pointerEvents: "none" }}>
+          {icon}
+        </span>
+        <input
+          type={type}
+          className="settings-input"
+          style={{
+            paddingLeft: "44px",
+            paddingRight: profileData[field] ? "40px" : "16px",
+            fontFamily: "inherit",
+            fontWeight: "500",
+          }}
+          value={profileData[field]}
+          onChange={customHandler ? customHandler : (e) => handleProfileUpdate(field, e.target.value)}
+          placeholder={placeholder}
+        />
+        {/* Dynamic Clear Button */}
+        {profileData[field] && (
+          <span
+            onClick={() => handleProfileUpdate(field, "")}
+            title="Clear field"
+            style={{
+              position: "absolute", right: "14px", color: "#94a3b8", cursor: "pointer",
+              fontSize: "10px", background: "rgba(255,255,255,0.08)",
+              width: "18px", height: "18px", display: "flex", alignItems: "center",
+              justifyContent: "center", borderRadius: "50%", fontWeight: "bold",
+              transition: "all 0.2s ease",
+            }}
+            onMouseOver={(e) => { e.target.style.background = "#ef4444"; e.target.style.color = "#fff"; }}
+            onMouseOut={(e) => { e.target.style.background = "rgba(255,255,255,0.08)"; e.target.style.color = "#94a3b8"; }}
+          >✕</span>
+        )}
+      </div>
+    </div>
+  );
+
+  // 4. INTERNATIONAL PHONE RENDERER (ULTRA-PREMIUM UX)
   const renderInternationalPhoneInput = () => (
     <div className="form-group">
       <label>Phone Number</label>
@@ -285,7 +326,6 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
           value={profileData.phoneCode}
           onChange={(e) => {
             handleProfileUpdate("phoneCode", e.target.value);
-            // Re-trigger formatting slightly to adjust to new country rules
             handleProfileUpdate("phoneNumber", profileData.phoneNumber.replace(/[^\d]/g, "")); 
           }}
           style={{
