@@ -20,7 +20,11 @@ class OTPVerify(BaseModel):
     email: str
     otp: str
 
+from typing import Optional
+
 class InsightRequest(BaseModel):
     origin: str
     destination: str
     cargo_type: str
+    route_id: Optional[str] = None
+    transit_days: Optional[int] = None

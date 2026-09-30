@@ -4,6 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import random
 import smtplib
 from email.mime.text import MIMEText
+from pydantic import BaseModel
+from typing import Optional
+import socket
+import os
 
 from app.models import RouteRequest, QuotationRequest, OTPRequest, OTPVerify
 from app.services.quotation_service import QuotationService
@@ -35,6 +39,36 @@ otp_database = {}
 
 
 @app.get("/")
+
+@app.get("/api/health")
+def check_system_health():
+    # 1. Check local agents (Route & Pricing agents require their databases to be active)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    routes_path = os.path.join(base_dir, "app", "data", "routes.csv")
+    pricing_path = os.path.join(base_dir, "app", "data", "pricing.csv")
+    
+    route_status = "online" if os.path.exists(routes_path) else "offline"
+    pricing_status = "online" if os.path.exists(pricing_path) else "offline"
+    
+    # 2. Check Weather agent (Requires external Open-Meteo satellite connectivity)
+    weather_status = "offline"
+    try:
+        # Pings the weather API with a 1-second timeout
+        socket.setdefaulttimeout(1.0)
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(("api.open-meteo.com", 80))
+        weather_status = "online"
+    except Exception:
+        weather_status = "offline"
+
+    return {
+        "status": "success",
+        "agents": {
+            "route": route_status,
+            "weather": weather_status,
+            "pricing": pricing_status
+        }
+    }
+
 def home():
     return {
         "message": "Agentic Maritime Brokerage API is running",
@@ -114,18 +148,22 @@ def verify_otp(request: OTPVerify):
         
     return {"status": "error", "message": "Invalid or expired OTP"}
 
-from pydantic import BaseModel
+
 
 class InsightRequest(BaseModel):
     origin: str
     destination: str
     cargo_type: str
+    route_id: Optional[str] = None
+    transit_days: Optional[int] = None
 
 @app.post("/api/llm/insight")
 def generate_llm_insight(request: InsightRequest):
     insight = llm_agent.get_route_insight(
-        request.origin, 
-        request.destination, 
-        request.cargo_type
+        origin=request.origin, 
+        destination=request.destination, 
+        cargo_type=request.cargo_type,
+        route_id=request.route_id,
+        transit_days=request.transit_days
     )
     return {"status": "success", "insight": insight}

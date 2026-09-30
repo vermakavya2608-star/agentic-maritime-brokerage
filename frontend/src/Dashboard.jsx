@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { generateQuotation, getLiveInsight } from "./services/routeApi";
+import {
+  generateQuotation,
+  getLiveInsight,
+  getSystemHealth,
+} from "./services/routeApi";
 import {
   MapContainer,
   TileLayer,
@@ -170,6 +174,7 @@ function MapBounds({ origin, destination }) {
       map.fitBounds(bounds, { padding: [60, 60] });
     }
   }, [origin, destination, map]);
+
   return null;
 }
 
@@ -187,8 +192,69 @@ function Dashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(false);
   const [activeSection, setActiveSection] = useState("dashboard");
 
-  const [llmInsight, setLlmInsight] = useState("Initializing AI trade lane analysis...");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [highlightedRequestId, setHighlightedRequestId] = useState(null);
+
+  // Settings Page State
+  const [settingsTab, setSettingsTab] = useState("profile");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  
+  const [profileData, setProfileData] = useState({
+    name: user?.name || "divyam agarwal",
+    email: user?.email || "divyam7246@gmail.com",
+    company: "Maritime Brokerage Inc.",
+    role: "Operations Manager",
+    phone: "+91 98765 43210",
+    timezone: "Asia/Kolkata (IST)"
+  });
+
+  const handleProfileUpdate = (field, value) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const saveSettings = () => {
+    setIsSaving(true);
+    setSaveMessage("");
+    // Simulate a backend API call
+    setTimeout(() => {
+      setIsSaving(false);
+      setSaveMessage("Settings saved successfully.");
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveMessage(""), 3000);
+    }, 1200);
+  };
+
+  const [llmInsight, setLlmInsight] = useState(
+    "Initializing AI trade lane analysis...",
+  );
   const [isLlmLoading, setIsLlmLoading] = useState(false);
+
+  const [agentHealth, setAgentHealth] = useState({
+    route: "loading",
+    weather: "loading",
+    pricing: "loading",
+  });
+
+  // Poll the backend every 10 seconds for real-time agent health
+  useEffect(() => {
+    const checkHealth = async () => {
+      const health = await getSystemHealth();
+      setAgentHealth(
+        health.agents || {
+          route: "offline",
+          weather: "offline",
+          pricing: "offline",
+        },
+      );
+    };
+
+    checkHealth(); // Check immediately on load
+    const interval = setInterval(checkHealth, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const savedRequests =
@@ -203,28 +269,40 @@ function Dashboard({ user, onLogout }) {
   }, [user]);
 
   useEffect(() => {
-    // Fetch a new insight whenever the route or cargo changes
     const fetchInsight = async () => {
       setIsLlmLoading(true);
       try {
-        const data = await getLiveInsight(origin, destination, cargoType);
+        // Extract specific route details if a route has been clicked/analyzed
+        const routeId = activeRoute ? activeRoute.route_id : null;
+        const transitDays = activeRoute ? activeRoute.transit_days : null;
+
+        const data = await getLiveInsight(
+          origin,
+          destination,
+          cargoType,
+          routeId,
+          transitDays,
+        );
         if (data.status === "success") {
           setLlmInsight(data.insight);
         }
       } catch (error) {
         console.error("LLM Error:", error);
-        setLlmInsight("AI connection unavailable. Running standard deterministic routing.");
+        setLlmInsight(
+          "AI connection unavailable. Running standard deterministic routing.",
+        );
       }
       setIsLlmLoading(false);
     };
 
-    // Add a slight debounce so it doesn't spam the API while typing/clicking
+    // Debounce prevents spamming the API when clicking rapidly
     const timeoutId = setTimeout(() => {
       fetchInsight();
     }, 800);
 
+    // Now it listens to activeRoute changes as well!
     return () => clearTimeout(timeoutId);
-  }, [origin, destination, cargoType]);
+  }, [origin, destination, cargoType, activeRoute]);
 
   const goToDashboard = () => {
     setActiveSection("dashboard");
@@ -240,6 +318,21 @@ function Dashboard({ user, onLogout }) {
 
   const goToQuotations = () => {
     setActiveSection("quotations");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const goToSettings = () => {
+    setActiveSection("settings");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const goToApi = () => {
+    setActiveSection("api");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const goToDocs = () => {
+    setActiveSection("docs");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -326,6 +419,80 @@ function Dashboard({ user, onLogout }) {
     setLoading(false);
   };
 
+  // 1. Dynamic Search Logic
+  const filteredRequests = customerRequests.filter((req) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      req.id.toString().includes(q) ||
+      req.shipment.origin.toLowerCase().includes(q) ||
+      req.shipment.destination.toLowerCase().includes(q) ||
+      req.shipment.cargo_type.toLowerCase().includes(q)
+    );
+  });
+
+  // 2. Notification Logic (Tracks read/unread state & newest first)
+  const notifications = customerRequests
+    .filter((req) => req.status !== "Pending Review")
+    .sort((a, b) => b.id - a.id) // Show newest notifications at the top
+    .slice(0, 5);
+
+  const unreadCount = notifications.filter((req) => !req.read).length;
+
+  const markAsReadAndNavigate = (id) => {
+    // 1. Mark as read in local state
+    const updatedRequests = customerRequests.map((req) =>
+      req.id === id ? { ...req, read: true } : req,
+    );
+    setCustomerRequests(updatedRequests);
+
+    // 2. Sync read status to localStorage so it persists
+    const allRequests =
+      JSON.parse(localStorage.getItem("quotationRequests")) || [];
+    const syncedAllRequests = allRequests.map((req) =>
+      req.id === id ? { ...req, read: true } : req,
+    );
+    localStorage.setItem(
+      "quotationRequests",
+      JSON.stringify(syncedAllRequests),
+    );
+
+    // 3. Navigate & Highlight
+    setHighlightedRequestId(id);
+    goToQuotations();
+    closeMenus();
+
+    // 4. Scroll to the specific card after React renders the page
+    setTimeout(() => {
+      document
+        .getElementById(`request-${id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+
+    // 5. Turn off the highlight effect after 3 seconds
+    setTimeout(() => setHighlightedRequestId(null), 3000);
+  };
+
+  const markAllAsRead = () => {
+    // BUG FIX: Only mark items as read if they are ALREADY in the notification tray (Approved/Rejected)
+    // This prevents "Pending" requests from being secretly marked as read before they are processed.
+    const updatedRequests = customerRequests.map((req) =>
+      req.status !== "Pending Review" ? { ...req, read: true } : req
+    );
+    setCustomerRequests(updatedRequests);
+
+    const allRequests = JSON.parse(localStorage.getItem("quotationRequests")) || [];
+    const syncedAllRequests = allRequests.map((req) =>
+      req.status !== "Pending Review" ? { ...req, read: true } : req
+    );
+    localStorage.setItem("quotationRequests", JSON.stringify(syncedAllRequests));
+  };
+
+  // 3. Click outside handler
+  const closeMenus = () => {
+    setShowNotifications(false);
+    setShowProfileMenu(false);
+  };
+
   return (
     <div className="app">
       {/* Sidebar */}
@@ -398,10 +565,197 @@ function Dashboard({ user, onLogout }) {
           </div>
 
           <div className="top-actions">
-            <div className="search">⌕ &nbsp; Search quotations...</div>
-            <div className="notification">♧</div>
-            <div className="profile">
-              {user?.name ? user.name.charAt(0).toUpperCase() : "C"}
+            {/* Live Search Omnibox */}
+            <div className="search-container">
+              <span className="search-icon">⌕</span>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search ports, ID, or cargo..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={closeMenus}
+              />
+
+              {/* Dynamic Right Side: Clear Button OR Shortcut Hint */}
+              {searchQuery.length > 0 ? (
+                <span
+                  className="search-clear"
+                  onClick={() => setSearchQuery("")}
+                >
+                  ✕
+                </span>
+              ) : (
+                <div className="search-shortcut">
+                  <kbd>Ctrl</kbd>
+                  <kbd>K</kbd>
+                </div>
+              )}
+
+              {/* Floating Search Results Dropdown */}
+              {searchQuery.length > 0 && (
+                <div className="dropdown-menu search-dropdown">
+                  <h4>Search Results ({filteredRequests.length})</h4>
+
+                  {filteredRequests.length > 0 ? (
+                    filteredRequests.slice(0, 5).map((req) => (
+                      <div
+                        key={req.id}
+                        className="dropdown-item notif-item"
+                        onClick={() => {
+                          setSearchQuery(""); // Clear the search
+                          goToQuotations(); // Jump to the quotations page
+                        }}
+                      >
+                        <div
+                          className="notif-dot"
+                          style={{
+                            background: "#38bdf8",
+                            boxShadow: "0 0 8px #38bdf8",
+                          }}
+                        ></div>
+                        <div>
+                          <strong>
+                            {req.shipment.origin} → {req.shipment.destination}
+                          </strong>
+                          <small>
+                            Req #{req.id} • {req.shipment.cargo_type}
+                          </small>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="dropdown-item" style={{ color: "#64748b" }}>
+                      No matches found for "{searchQuery}".
+                    </div>
+                  )}
+
+                  {/* Show a "View All" button if there are more than 5 results */}
+                  {filteredRequests.length > 5 && (
+                    <div
+                      className="dropdown-item"
+                      style={{
+                        justifyContent: "center",
+                        color: "#38bdf8",
+                        fontSize: "11px",
+                        fontWeight: "800",
+                      }}
+                      onClick={() => {
+                        goToQuotations();
+                        setSearchQuery("");
+                      }}
+                    >
+                      View all {filteredRequests.length} results →
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Notification Center */}
+            <div className="notification-wrapper">
+              <div
+                className="notification"
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setShowProfileMenu(false);
+                }}
+              >
+                🔔
+                {unreadCount > 0 && (
+                  <span className="notification-badge">{unreadCount}</span>
+                )}
+              </div>
+
+              {showNotifications && (
+                <div className="dropdown-menu notifications-menu">
+                  <div className="notif-header">
+                    <h4>Recent Updates</h4>
+                    {unreadCount > 0 && (
+                      <span className="mark-all-read" onClick={markAllAsRead}>Mark all as read ✓</span>
+                    )}
+                  </div>
+                  
+                  <div className="notif-list">
+                    {notifications.length > 0 ? (
+                      notifications.map(notif => (
+                        <div 
+                          key={notif.id} 
+                          className={`dropdown-item notif-item ${notif.read ? 'read' : 'unread'}`}
+                          onClick={() => markAsReadAndNavigate(notif.id)}
+                        >
+                          {/* Colored dot for unread, gray dot for read */}
+                          <div className={`notif-dot ${notif.read ? 'gray' : (notif.status === 'Approved' ? 'green' : 'red')}`}></div>
+                          
+                          <div className="notif-content">
+                            <strong>Request #{notif.id} {notif.status}</strong>
+                            <small>{notif.shipment.origin} → {notif.shipment.destination}</small>
+                          </div>
+
+                          {/* Blue indicator dot on the far right for unread items */}
+                          {!notif.read && <div className="unread-indicator"></div>}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="dropdown-item empty-notif">No recent updates.</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Premium Profile Menu */}
+            <div className="profile-wrapper">
+              <div
+                className="profile"
+                onClick={() => {
+                  setShowProfileMenu(!showProfileMenu);
+                  setShowNotifications(false);
+                }}
+              >
+                {user?.name ? user.name.charAt(0).toUpperCase() : "D"}
+                <span className="profile-online-dot"></span>
+              </div>
+
+              {showProfileMenu && (
+                <div className="dropdown-menu profile-menu">
+                  <div className="profile-header">
+                    <strong>
+                      {user?.name || "Customer"}
+                      {/* Dynamic Role Badge */}
+                      <span className={`role-badge ${user?.role === 'admin' ? 'admin' : 'customer'}`}>
+                        {user?.role?.toUpperCase() || "CUSTOMER"}
+                      </span>
+                    </strong>
+                    <small>{user?.email || "No email"}</small>
+                  </div>
+                  
+                  <div className="profile-section-label">Workspace</div>
+                  <div className="dropdown-item" onClick={() => { goToDashboard(); closeMenus(); }}>
+                    <span style={{ width: '16px' }}>▦</span> Dashboard
+                  </div>
+                  <div className="dropdown-item" onClick={() => { goToQuotations(); closeMenus(); }}>
+                    <span style={{ width: '16px' }}>▤</span> My Quotations
+                  </div>
+                  <div className="dropdown-item" onClick={() => { goToSettings(); closeMenus(); }}>
+                    <span style={{ width: '16px' }}>⚙</span> Account Settings
+                  </div>
+
+                  <div className="profile-section-label">Developers</div>
+                  <div className="dropdown-item" onClick={() => { goToApi(); closeMenus(); }}>
+                    <span style={{ width: '16px' }}>⌨</span> API & Python SDK
+                  </div>
+                  <div className="dropdown-item" onClick={() => { goToDocs(); closeMenus(); }}>
+                    <span style={{ width: '16px' }}>📖</span> Documentation
+                  </div>
+
+                  <div className="profile-menu-footer">
+                    <div className="dropdown-item text-danger" onClick={onLogout}>
+                      <span style={{ width: '16px' }}>⇥</span> Sign Out
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -462,7 +816,7 @@ function Dashboard({ user, onLogout }) {
               </div>
 
               {/* --- 3D AI AGENTS DISPLAY --- */}
-              <div className="section-heading" style={{ marginTop: '12px' }}>
+              <div className="section-heading" style={{ marginTop: "12px" }}>
                 <div>
                   <p className="section-label">SYSTEM CORE</p>
                   <h2>Live AI Agents</h2>
@@ -471,25 +825,53 @@ function Dashboard({ user, onLogout }) {
 
               <div className="upcoming-modules-grid">
                 {/* 1. Route Agent */}
-                <div className="construction-card">
+                <div
+                  className={`construction-card ${agentHealth.route === "offline" ? "offline" : ""}`}
+                >
                   <div className="card-3d-visual">
                     <div className="radar-pulse-visual">⌖</div>
                   </div>
+                  <div className={`agent-status-badge ${agentHealth.route}`}>
+                    {agentHealth.route === "loading"
+                      ? "⏳ CHECKING"
+                      : agentHealth.route === "online"
+                        ? "🟢 ONLINE"
+                        : "🔴 OFFLINE"}
+                  </div>
                   <h3>Route Intelligence</h3>
-                  <p>Scanning global maritime networks for optimal transit paths and transshipment hubs.</p>
+                  <p>
+                    {agentHealth.route === "offline"
+                      ? "Agent offline. Unable to access routing network database."
+                      : "Scanning global maritime networks for optimal transit paths and transshipment hubs."}
+                  </p>
                 </div>
 
                 {/* 2. Weather Agent */}
-                <div className="construction-card">
+                <div
+                  className={`construction-card ${agentHealth.weather === "offline" ? "offline" : ""}`}
+                >
                   <div className="card-3d-visual">
                     <div className="holo-globe">🌐</div>
                   </div>
+                  <div className={`agent-status-badge ${agentHealth.weather}`}>
+                    {agentHealth.weather === "loading"
+                      ? "⏳ CHECKING"
+                      : agentHealth.weather === "online"
+                        ? "🟢 ONLINE"
+                        : "🔴 OFFLINE"}
+                  </div>
                   <h3>Weather Routing</h3>
-                  <p>Monitoring live satellite telemetry and marine risk factors across all active ports.</p>
+                  <p>
+                    {agentHealth.weather === "offline"
+                      ? "Agent offline. Satellite telemetry connection lost."
+                      : "Monitoring live satellite telemetry and marine risk factors across all active ports."}
+                  </p>
                 </div>
 
                 {/* 3. Pricing Agent */}
-                <div className="construction-card">
+                <div
+                  className={`construction-card ${agentHealth.pricing === "offline" ? "offline" : ""}`}
+                >
                   <div className="card-3d-visual">
                     <div className="cube-container">
                       <div className="cube-face face-front">📊</div>
@@ -500,8 +882,19 @@ function Dashboard({ user, onLogout }) {
                       <div className="cube-face face-bottom">🚢</div>
                     </div>
                   </div>
+                  <div className={`agent-status-badge ${agentHealth.pricing}`}>
+                    {agentHealth.pricing === "loading"
+                      ? "⏳ CHECKING"
+                      : agentHealth.pricing === "online"
+                        ? "🟢 ONLINE"
+                        : "🔴 OFFLINE"}
+                  </div>
                   <h3>Dynamic Pricing</h3>
-                  <p>Calculating live fuel surcharges, port fees, and margin optimization factors.</p>
+                  <p>
+                    {agentHealth.pricing === "offline"
+                      ? "Agent offline. Core pricing engine unreachable."
+                      : "Calculating live fuel surcharges, port fees, and margin optimization factors."}
+                  </p>
                 </div>
               </div>
               {/* --------------------------- */}
@@ -537,8 +930,12 @@ function Dashboard({ user, onLogout }) {
                 </div>
               ) : (
                 <div className="customer-request-list">
-                  {customerRequests.slice(0, 3).map((request) => (
-                    <div className="customer-request-card" key={request.id}>
+                  {filteredRequests.slice(0, 3).map((request) => (
+                    <div
+                      className={`customer-request-card ${highlightedRequestId === request.id ? "highlight-pulse" : ""}`}
+                      key={request.id}
+                      id={`request-${request.id}`}
+                    >
                       <div style={{ flex: 1 }}>
                         <strong>
                           {request.shipment.origin}
@@ -554,13 +951,10 @@ function Dashboard({ user, onLogout }) {
 
                         <small>Request #{request.id}</small>
 
-                        {/* Customer Dashboard Feedback Display */}
+                        {/* Dark-Mode Friendly Admin Note */}
                         {request.feedback && (
-                          <div
-                            className={`admin-feedback-note ${request.status === "Rejected" ? "rejected" : "approved"}`}
-                          >
-                            <strong>✦ Admin Dispatch Note</strong>
-                            <p>{request.feedback}</p>
+                          <div className={`admin-note ${request.status === "Rejected" ? "rejected" : "approved"}`}>
+                            <strong>Admin Note:</strong> {request.feedback}
                           </div>
                         )}
                       </div>
@@ -591,7 +985,6 @@ function Dashboard({ user, onLogout }) {
                   </p>
                 </div>
               </div>
-
               <div className="workspace">
                 {/* Quotation form */}
                 <div className="card quotation-card">
@@ -757,17 +1150,30 @@ function Dashboard({ user, onLogout }) {
 
                 {/* Live LLM Route Agent Card */}
                 <div className="card agent-card">
-                  <div className="card-heading" style={{ marginBottom: '16px' }}>
+                  <div
+                    className="card-heading"
+                    style={{ marginBottom: "16px" }}
+                  >
                     <div className="agent-icon">✦</div>
                     <div>
                       <h2>Route Intelligence AI</h2>
-                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#38bdf8' }}>
-                        LIVE ANALYSIS: {origin.toUpperCase()} TO {destination.toUpperCase()}
+                      <p
+                        style={{
+                          margin: "2px 0 0",
+                          fontSize: "12px",
+                          color: "#38bdf8",
+                        }}
+                      >
+                        LIVE ANALYSIS: {origin.toUpperCase()} TO{" "}
+                        {destination.toUpperCase()}
+                        {activeRoute ? ` (ROUTE ${activeRoute.route_id})` : ""}
                       </p>
                     </div>
                   </div>
 
-                  <div className={`llm-terminal-box ${isLlmLoading ? 'pulse-loading' : ''}`}>
+                  <div
+                    className={`llm-terminal-box ${isLlmLoading ? "pulse-loading" : ""}`}
+                  >
                     <div className="terminal-header">
                       <span className="dot red"></span>
                       <span className="dot yellow"></span>
@@ -777,24 +1183,18 @@ function Dashboard({ user, onLogout }) {
                     <div className="terminal-content">
                       <span className="prompt-arrow">❯</span>
                       {isLlmLoading ? (
-                        <span className="typing-text">Generating custom trade lane analysis...</span>
+                        <span className="typing-text">
+                          Generating custom trade lane analysis...
+                        </span>
                       ) : (
                         <p className="insight-text">{llmInsight}</p>
                       )}
                     </div>
                   </div>
-
-                  <div className="milestone-note" style={{ marginTop: '24px' }}>
-                    <strong>System Status:</strong> Generative AI active. Insights are specific to {cargoType} transit constraints.
-                  </div>
                 </div>
-              </div> {/* <-- ADD THIS EXACT LINE HERE */}
-              
-
-
-
+              </div>{" "}
+              {/* <-- ADD THIS EXACT LINE HERE */}
               {/* Route Result */}
-
               {result && activeRoute && (
                 <div className="card result-card">
                   {result.status === "success" ? (
@@ -802,7 +1202,6 @@ function Dashboard({ user, onLogout }) {
                       {/* Result Header */}
                       <div className="result-header">
                         <div>
-                          <p className="section-label">ROUTE INTELLIGENCE</p>
                           <h2>Quotation Analysis</h2>
                           <p>
                             {result.candidate_routes} route
@@ -948,11 +1347,6 @@ function Dashboard({ user, onLogout }) {
                       <section className="recommended-section">
                         <div className="section-heading">
                           <div>
-                            <p className="section-label">
-                              {activeRoute.route_id === result.recommended_route
-                                ? "BEST RECOMMENDED ROUTE"
-                                : "SELECTED ALTERNATIVE ROUTE"}
-                            </p>
                             <h2>
                               {activeRoute.route_id === result.recommended_route
                                 ? "Best Recommended Route"
@@ -1016,7 +1410,6 @@ function Dashboard({ user, onLogout }) {
                         <section className="alternatives-section">
                           <div className="section-heading">
                             <div>
-                              <p className="section-label">ALTERNATIVES</p>
                               <h2>Alternative Routes</h2>
                             </div>
                           </div>
@@ -1093,7 +1486,6 @@ function Dashboard({ user, onLogout }) {
                         </div> */}
                         <div className="section-heading">
                           <div>
-                            <p className="section-label">ROUTE SCORE</p>
                             <h2>Route Score</h2>
                           </div>
                         </div>
@@ -1176,9 +1568,6 @@ function Dashboard({ user, onLogout }) {
                         <section className="weather-section">
                           <div className="section-heading">
                             <div>
-                              <p className="section-label">
-                                LIVE SATELLITE DATA
-                              </p>
                               <h2>Maritime Weather Intelligence</h2>
                             </div>
                           </div>
@@ -1308,7 +1697,6 @@ function Dashboard({ user, onLogout }) {
                       <section className="final-quotation-section">
                         <div className="section-heading">
                           <div>
-                            <p className="section-label">FINAL QUOTATION</p>
                             <h2>Final Quotation</h2>
                           </div>
                         </div>
@@ -1340,14 +1728,10 @@ function Dashboard({ user, onLogout }) {
                   )}
                 </div>
               )}
-
               {/* Customer Quotation Status */}
-
               <section className="customer-status-section">
                 <div className="section-heading">
                   <div>
-                    <p className="section-label">QUOTATION STATUS</p>
-
                     <h2>My Requests</h2>
                   </div>
                 </div>
@@ -1358,8 +1742,12 @@ function Dashboard({ user, onLogout }) {
                   </div>
                 ) : (
                   <div className="customer-request-list">
-                    {customerRequests.map((request) => (
-                      <div className="customer-request-card" key={request.id}>
+                    {filteredRequests.map((request) => (
+                      <div
+                        className={`customer-request-card ${highlightedRequestId === request.id ? "highlight-pulse" : ""}`}
+                        key={request.id}
+                        id={`request-${request.id}`}
+                      >
                         <div style={{ flex: 1 }}>
                           <strong>
                             {request.shipment.origin}
@@ -1375,34 +1763,10 @@ function Dashboard({ user, onLogout }) {
 
                           <small>Request #{request.id}</small>
 
-                          {/* Customer Quotation Creation Feedback Display */}
+                          {/* Dark-Mode Friendly Admin Note */}
                           {request.feedback && (
-                            <div
-                              style={{
-                                marginTop: "12px",
-                                padding: "10px 14px",
-                                background:
-                                  request.status === "Rejected"
-                                    ? "#fef2f2"
-                                    : "#ecfdf5",
-                                borderLeft: `3px solid ${request.status === "Rejected" ? "#ef4444" : "#10b981"}`,
-                                borderRadius: "4px",
-                                fontSize: "12px",
-                                color: "#334155",
-                                maxWidth: "600px",
-                              }}
-                            >
-                              <strong
-                                style={{
-                                  color:
-                                    request.status === "Rejected"
-                                      ? "#b91c1c"
-                                      : "#047857",
-                                }}
-                              >
-                                Admin Note:
-                              </strong>{" "}
-                              {request.feedback}
+                            <div className={`admin-note ${request.status === "Rejected" ? "rejected" : "approved"}`}>
+                              <strong>Admin Note:</strong> {request.feedback}
                             </div>
                           )}
                         </div>
@@ -1450,8 +1814,12 @@ function Dashboard({ user, onLogout }) {
                 </div>
               ) : (
                 <div className="customer-request-list">
-                  {customerRequests.map((request) => (
-                    <div className="customer-request-card" key={request.id}>
+                  {filteredRequests.map((request) => (
+                    <div
+                      className={`customer-request-card ${highlightedRequestId === request.id ? "highlight-pulse" : ""}`}
+                      key={request.id}
+                      id={`request-${request.id}`}
+                    >
                       <div style={{ flex: 1 }}>
                         <strong>
                           {request.shipment.origin}
@@ -1469,34 +1837,10 @@ function Dashboard({ user, onLogout }) {
                           Request #{request.id} • {request.createdAt}
                         </small>
 
-                        {/* Customer All Quotations Feedback Display */}
+                        {/* Dark-Mode Friendly Admin Note */}
                         {request.feedback && (
-                          <div
-                            style={{
-                              marginTop: "12px",
-                              padding: "10px 14px",
-                              background:
-                                request.status === "Rejected"
-                                  ? "#fef2f2"
-                                  : "#ecfdf5",
-                              borderLeft: `3px solid ${request.status === "Rejected" ? "#ef4444" : "#10b981"}`,
-                              borderRadius: "4px",
-                              fontSize: "12px",
-                              color: "#334155",
-                              maxWidth: "600px",
-                            }}
-                          >
-                            <strong
-                              style={{
-                                color:
-                                  request.status === "Rejected"
-                                    ? "#b91c1c"
-                                    : "#047857",
-                              }}
-                            >
-                              Admin Note:
-                            </strong>{" "}
-                            {request.feedback}
+                          <div className={`admin-note ${request.status === "Rejected" ? "rejected" : "approved"}`}>
+                            <strong>Admin Note:</strong> {request.feedback}
                           </div>
                         )}
                       </div>
@@ -1514,6 +1858,256 @@ function Dashboard({ user, onLogout }) {
               )}
             </>
           )}
+
+          {/* --- ADVANCED SETTINGS SCREEN --- */}
+          {activeSection === "settings" && (
+            <>
+              <div className="page-heading">
+                <div>
+                  <div className="eyebrow">✦ ACCOUNT</div>
+                  <h1>Settings</h1>
+                  <p>Manage your preferences, security, and workspace configuration.</p>
+                </div>
+              </div>
+
+              <div className="settings-layout">
+                {/* Settings Sidebar Navigation */}
+                <aside className="settings-sidebar">
+                  <div 
+                    className={`settings-nav-item ${settingsTab === 'profile' ? 'active' : ''}`}
+                    onClick={() => setSettingsTab('profile')}
+                  >
+                    <span>👤</span> Profile Information
+                  </div>
+                  <div 
+                    className={`settings-nav-item ${settingsTab === 'preferences' ? 'active' : ''}`}
+                    onClick={() => setSettingsTab('preferences')}
+                  >
+                    <span>⚙️</span> System Preferences
+                  </div>
+                  <div 
+                    className={`settings-nav-item ${settingsTab === 'security' ? 'active' : ''}`}
+                    onClick={() => setSettingsTab('security')}
+                  >
+                    <span>🔒</span> Security & 2FA
+                  </div>
+                  <div 
+                    className={`settings-nav-item ${settingsTab === 'billing' ? 'active' : ''}`}
+                    onClick={() => setSettingsTab('billing')}
+                  >
+                    <span>💳</span> Billing & Plan
+                  </div>
+                </aside>
+
+                {/* Settings Content Area */}
+                <div className="settings-content">
+                  {settingsTab === 'profile' && (
+                    <div className="card settings-card">
+                      <h3>Personal Information</h3>
+                      <p className="settings-desc">Update your personal details and public profile.</p>
+                      
+                      <div className="settings-avatar-row">
+                        <div className="settings-avatar-large">
+                          {profileData.name.charAt(0).toUpperCase()}
+                        </div>
+                        <button className="analyze-button outline">Upload New Avatar</button>
+                      </div>
+
+                      <div className="form-grid-2">
+                        <div className="form-group">
+                          <label>Full Name</label>
+                          <input type="text" className="settings-input" value={profileData.name} onChange={(e) => handleProfileUpdate('name', e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                          <label>Email Address</label>
+                          <input type="email" className="settings-input" value={profileData.email} onChange={(e) => handleProfileUpdate('email', e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                          <label>Company</label>
+                          <input type="text" className="settings-input" value={profileData.company} onChange={(e) => handleProfileUpdate('company', e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                          <label>Job Role</label>
+                          <input type="text" className="settings-input" value={profileData.role} onChange={(e) => handleProfileUpdate('role', e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                          <label>Phone Number</label>
+                          <input type="text" className="settings-input" value={profileData.phone} onChange={(e) => handleProfileUpdate('phone', e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                          <label>Timezone</label>
+                          <select className="settings-input" value={profileData.timezone} onChange={(e) => handleProfileUpdate('timezone', e.target.value)}>
+                            <option>Asia/Kolkata (IST)</option>
+                            <option>America/New_York (EST)</option>
+                            <option>Europe/London (GMT)</option>
+                            <option>Asia/Tokyo (JST)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {settingsTab === 'preferences' && (
+                    <div className="card settings-card">
+                      <h3>System Preferences</h3>
+                      <p className="settings-desc">Customize how the Agentic Routing engine displays data.</p>
+                      
+                      <div className="preference-row">
+                        <div>
+                          <strong>Measurement Units</strong>
+                          <small>Toggle between Metric (Kilometers, Celsius) and Imperial (Miles, Fahrenheit).</small>
+                        </div>
+                        <select className="settings-input" style={{ width: '150px' }}>
+                          <option>Metric (NM / °C)</option>
+                          <option>Imperial (MI / °F)</option>
+                        </select>
+                      </div>
+
+                      <div className="preference-row">
+                        <div>
+                          <strong>Default Currency</strong>
+                          <small>The base currency used for generating freight quotations.</small>
+                        </div>
+                        <select className="settings-input" style={{ width: '150px' }}>
+                          <option>USD ($)</option>
+                          <option>EUR (€)</option>
+                          <option>INR (₹)</option>
+                        </select>
+                      </div>
+
+                      <div className="preference-row borderless">
+                        <div>
+                          <strong>Email Notifications</strong>
+                          <small>Receive email alerts when a quotation is Approved or Rejected by Admin.</small>
+                        </div>
+                        <label className="toggle-switch">
+                          <input type="checkbox" defaultChecked />
+                          <span className="slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {settingsTab === 'security' && (
+                    <div className="card settings-card">
+                      <h3>Security & Authentication</h3>
+                      <p className="settings-desc">Keep your maritime brokerage account secure.</p>
+
+                      <div className="form-grid-2">
+                        <div className="form-group">
+                          <label>Current Password</label>
+                          <input type="password" className="settings-input" placeholder="••••••••" />
+                        </div>
+                        <div></div>
+                        <div className="form-group">
+                          <label>New Password</label>
+                          <input type="password" className="settings-input" placeholder="Enter new password" />
+                        </div>
+                        <div className="form-group">
+                          <label>Confirm Password</label>
+                          <input type="password" className="settings-input" placeholder="Confirm new password" />
+                        </div>
+                      </div>
+
+                      <hr className="settings-divider" />
+
+                      <div className="preference-row borderless">
+                        <div>
+                          <strong>Two-Factor Authentication (2FA)</strong>
+                          <small>Require an authenticator code in addition to your password when logging in.</small>
+                        </div>
+                        <button className="analyze-button outline" style={{ width: 'auto', padding: '8px 16px' }}>Enable 2FA</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {settingsTab === 'billing' && (
+                    <div className="card settings-card">
+                      <h3>Billing & Subscription</h3>
+                      <p className="settings-desc">Manage your Agentic Platform subscription tier.</p>
+
+                      <div className="billing-banner">
+                        <div className="billing-info">
+                          <span className="plan-badge">PRO TIER</span>
+                          <h4>Agentic Platform Pro</h4>
+                          <p>Unlimited route analyses, live weather intelligence, and priority LLM processing.</p>
+                        </div>
+                        <div className="billing-price">
+                          <h2>$299<span>/mo</span></h2>
+                        </div>
+                      </div>
+
+                      <div className="preference-row borderless">
+                        <div>
+                          <strong>Payment Method</strong>
+                          <small>Visa ending in **** 4242 (Expires 12/28)</small>
+                        </div>
+                        <button className="analyze-button outline" style={{ width: 'auto', padding: '8px 16px' }}>Update Card</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Universal Save Footer */}
+                  <div className="settings-footer">
+                    {saveMessage && <span className="save-success-msg">✓ {saveMessage}</span>}
+                    <button 
+                      className="analyze-button" 
+                      onClick={saveSettings}
+                      disabled={isSaving}
+                      style={{ width: '160px', margin: 0 }}
+                    >
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeSection === "api" && (
+            <div className="workspace">
+              <div className="page-heading">
+                <div>
+                  <div className="eyebrow">✦ DEVELOPERS</div>
+                  <h1>API & Python SDK</h1>
+                  <p>Generate API keys and connect your backend infrastructure.</p>
+                </div>
+              </div>
+              <div className="card">
+                <h3 style={{ margin: '0 0 16px 0', color: '#fff' }}>Production API Key</h3>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <input type="password" value="sk_live_51M..." readOnly className="search-input" style={{ width: '300px', borderRadius: '8px' }} />
+                  <button className="analyze-button" style={{ width: 'auto', background: '#334155' }}>Reveal</button>
+                </div>
+                <div className="llm-terminal-box" style={{ marginTop: '24px' }}>
+                  <div className="terminal-header"><small>python_integration.py</small></div>
+                  <div className="terminal-content">
+                    <p style={{ color: '#a78bfa', margin: 0 }}>import <span style={{ color: '#cbd5e1' }}>maritime_brokerage</span></p>
+                    <p style={{ color: '#cbd5e1', margin: '8px 0 0' }}>client = maritime_brokerage.Client(api_key=<span style={{ color: '#a3e635' }}>"sk_live_..."</span>)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeSection === "docs" && (
+            <div className="workspace">
+              <div className="page-heading">
+                <div>
+                  <div className="eyebrow">✦ DEVELOPERS</div>
+                  <h1>Documentation</h1>
+                  <p>Learn how to integrate the Agentic Routing engine.</p>
+                </div>
+              </div>
+              <div className="card">
+                <h3 style={{ color: '#fff' }}>Quickstart Guide</h3>
+                <p style={{ color: '#94a3b8', lineHeight: '1.6' }}>The Agentic Maritime platform exposes RESTful endpoints for Route Analysis, Dynamic Pricing, and Weather Risk Assessment. Navigate to the API tab to generate your credentials.</p>
+              </div>
+            </div>
+          )}
+
+
+
         </section>
       </main>
     </div>

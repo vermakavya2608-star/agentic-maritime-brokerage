@@ -56,66 +56,21 @@ class RouteAgent:
         # -----------------------------------
         # 1. Calculate Transit Score
         # -----------------------------------
-
-        max_transit = matching_routes[
-            "transit_days"
-        ].max()
-
-        matching_routes["transit_score"] = (
-
-    100
-
-    - (
-
-        matching_routes["transit_days"]
-
-        / max_transit
-
-        * 100
-
-    )
-
-)
+        # Benchmark against the fastest route: fastest gets 100, slower options scale down proportionally
+        min_transit = matching_routes["transit_days"].min()
+        matching_routes["transit_score"] = (min_transit / matching_routes["transit_days"]) * 100
 
         # -----------------------------------
         # 2. Calculate Distance Score
         # -----------------------------------
-
-        max_distance = matching_routes[
-            "distance_nm"
-        ].max()
-
-        matching_routes["distance_score"] = (
-
-    100
-
-    - (
-
-        matching_routes["distance_nm"]
-
-        / max_distance
-
-        * 100
-
-    )
-
-)
+        # Benchmark against the shortest route: shortest gets 100, longer options scale down proportionally
+        min_distance = matching_routes["distance_nm"].min()
+        matching_routes["distance_score"] = (min_distance / matching_routes["distance_nm"]) * 100
 
         # -----------------------------------
         # 3. Calculate Transshipment Score
         # -----------------------------------
-
-        matching_routes["transshipment_score"] = (
-
-    100
-
-    - (
-
-        matching_routes["transshipments"] * 20
-
-    )
-
-)
+        matching_routes["transshipment_score"] = (100 - (matching_routes["transshipments"] * 20)).clip(lower=0)
         # -----------------------------------
         # 4. Calculate Overall Route Score
         # -----------------------------------

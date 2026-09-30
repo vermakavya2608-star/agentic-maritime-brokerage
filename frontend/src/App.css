@@ -779,30 +779,33 @@ body {
   gap: 12px;
 }
 
+/* ==========================================================================
+   QUOTATION REQUEST CARDS
+   ========================================================================== */
+
 .customer-request-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-left: 5px solid #0d6efd; /* Simulates a container edge */
-  border-radius: 12px;
-  padding: 22px 26px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: all 0.25s ease;
   position: relative;
-  overflow: hidden;
+  display: flex;
+  align-items: flex-start; /* Aligns content to the top */
+  padding: 20px 24px 20px 60px; /* 60px left padding makes room for the icon */
+  background: rgba(11, 27, 53, 0.4);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-left: 4px solid #38bdf8; /* The cyan left border */
+  border-radius: 8px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  overflow: hidden; /* Keeps the icon inside the card */
 }
 
-/* Subtle ship watermark behind the text */
+/* The new, clearly visible ship icon */
 .customer-request-card::before {
   content: "🚢";
   position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 32px;
-  opacity: 0.04;
-  pointer-events: none;
+  left: 16px;
+  top: 20px;
+  font-size: 24px;
+  opacity: 0.85; /* Bright and visible, not fading away */
+  filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.4)); /* Subtle cyan glow */
 }
 
 .customer-request-card > div {
@@ -812,10 +815,9 @@ body {
 }
 
 .customer-request-card:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
-  transform: translateX(6px);
-  box-shadow: -4px 8px 16px rgba(15, 23, 42, 0.04);
+  background: rgba(11, 27, 53, 0.8);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px);
 }
 
 .customer-request-card strong {
@@ -2097,4 +2099,894 @@ body, .app {
   font-size: 14px !important;
   line-height: 1.7 !important;
   text-shadow: 0 0 8px rgba(226, 232, 240, 0.2);
+}
+
+/* Prevent Home.css from centering section labels */
+.page .section-heading p.section-label {
+  margin: 0 0 6px 0 !important;
+  text-align: left !important;
+  display: block !important;
+  width: auto !important;
+}
+
+/* ==========================================================================
+   DYNAMIC AGENT HEALTH STATUS STYLES
+   ========================================================================== */
+
+.agent-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.agent-status-badge.online {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.agent-status-badge.offline {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.agent-status-badge.loading {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Offline Card State - Freezes 3D Animations & Turns Red/Gray */
+.construction-card.offline {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  opacity: 0.8;
+}
+
+.construction-card.offline .card-3d-visual * {
+  /* Kills the CSS Keyframe animations when offline */
+  animation: none !important;
+  background: rgba(239, 68, 68, 0.05) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #ef4444 !important;
+  box-shadow: none !important;
+}
+
+/* ==========================================================================
+   DYNAMIC NAVBAR MODULES (SEARCH, NOTIFICATIONS, PROFILE)
+   ========================================================================== */
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  font-size: 18px;
+  pointer-events: none;
+  font-weight: bold;
+}
+
+/* Base input styling */
+.search-input {
+  /* Force exact box model calculations */
+  box-sizing: border-box !important;
+  
+  background: rgba(15, 23, 42, 0.5) !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+  color: #ffffff !important;
+  
+  /* MASSIVE 110px right padding forced with !important to act as a physical wall */
+  padding: 10px 110px 10px 42px !important; 
+  
+  border-radius: 24px !important;
+  font-size: 13px;
+  
+  /* Increased base width to 380px so the whole placeholder fits without truncating */
+  width: 380px !important; 
+  height: 42px;
+  
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Inter', sans-serif;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.2);
+  backdrop-filter: blur(12px);
+  
+  /* Clean text cutoff */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Expand and glow on focus */
+.search-input:focus {
+  background: rgba(7, 19, 37, 0.95) !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15), 0 0 20px rgba(56, 189, 248, 0.1) !important;
+  
+  /* Smoothly expands to 420px when clicked */
+  width: 420px !important; 
+}
+
+.search-input::placeholder {
+  color: #64748b;
+}
+
+.notification-wrapper, .profile-wrapper {
+  position: relative;
+}
+
+.notification {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 18px;
+}
+
+.notification:hover, .profile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(56, 189, 248, 0.3);
+  border-color: #38bdf8 !important;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid #071325;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+/* Glassmorphic Dropdown Menus */
+.dropdown-menu {
+  position: absolute;
+  top: 54px;
+  right: 0;
+  background: rgba(11, 27, 53, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.1);
+  min-width: 260px;
+  z-index: 2000;
+  padding: 10px 0;
+  animation: drop-fade 0.2s ease-out forwards;
+}
+
+@keyframes drop-fade {
+  from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dropdown-menu h4 {
+  margin: 8px 16px 12px;
+  font-size: 11px;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 800;
+}
+
+.dropdown-item {
+  padding: 12px 18px;
+  font-size: 13px;
+  color: #cbd5e1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: #ffffff;
+  padding-left: 22px; /* Smooth slide-in hover effect */
+}
+
+.dropdown-menu hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 8px 0;
+}
+
+.profile-header {
+  padding: 10px 18px;
+}
+
+.profile-header strong {
+  display: block;
+  color: #ffffff;
+  font-size: 15px;
+  letter-spacing: -0.3px;
+}
+
+.profile-header small {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-top: 2px;
+  display: block;
+}
+
+.text-danger {
+  color: #f87171 !important;
+}
+
+.text-danger:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #ef4444 !important;
+}
+
+.notif-item {
+  align-items: flex-start;
+  line-height: 1.5;
+}
+
+.notif-item strong { display: block; color: #ffffff; font-size: 13px; }
+.notif-item small { display: block; color: #64748b; font-size: 12px; }
+
+.notif-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.notif-dot.green { background: #10b981; box-shadow: 0 0 10px #10b981; }
+.notif-dot.red { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
+
+/* ==========================================================================
+   MODERN OMNIBOX SEARCH STYLES
+   ========================================================================== */
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Base input styling */
+.search-input {
+  background: rgba(15, 23, 42, 0.5) !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+  color: #ffffff !important;
+  padding: 10px 60px 10px 42px; /* Room for icon on left, hints on right */
+  border-radius: 24px !important; /* Sleek pill shape */
+  font-size: 13px;
+  width: 260px;
+  height: 42px;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Inter', sans-serif;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.2);
+  backdrop-filter: blur(12px);
+}
+
+/* Expand and glow on focus */
+.search-input:focus {
+  background: rgba(7, 19, 37, 0.95) !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15), 0 0 20px rgba(56, 189, 248, 0.1) !important;
+  width: 340px; 
+}
+
+.search-input::placeholder {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Magnifying glass icon */
+.search-icon {
+  position: absolute;
+  left: 16px;
+  color: #64748b;
+  font-size: 16px;
+  pointer-events: none;
+  z-index: 2;
+  transition: color 0.3s ease;
+}
+
+/* Icon glows cyan when user clicks into the search bar */
+.search-input:focus ~ .search-icon {
+  color: #38bdf8;
+}
+
+/* Modern circular clear button */
+.search-clear {
+  position: absolute;
+  right: 14px;
+  width: 22px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #cbd5e1;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.search-clear:hover {
+  background: #ef4444;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Visual Ctrl+K hint (MacOS/Windows style) */
+.search-shortcut {
+  position: absolute;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.search-shortcut kbd {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  color: #94a3b8;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+}
+
+/* Floating Results Dropdown Position Fix */
+.search-dropdown {
+  left: 0;
+  right: auto;
+  top: 52px;
+  width: 100%; /* Matches the expanded width of the search bar perfectly */
+}
+
+/* ==========================================================================
+   NOTIFICATION HIGHLIGHTS & ACTIONS
+   ========================================================================== */
+
+.mark-all-read {
+  font-size: 10px;
+  color: #94a3b8;
+  cursor: pointer;
+  font-weight: 600;
+  transition: color 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mark-all-read:hover {
+  color: #38bdf8;
+}
+
+/* Draws the user's eye to the newly opened quotation */
+.highlight-pulse {
+  animation: quotationGlow 3s ease-out;
+}
+
+@keyframes quotationGlow {
+  0% { 
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); 
+    border-color: #38bdf8; 
+    background: rgba(56, 189, 248, 0.1); 
+  }
+  30% { 
+    box-shadow: 0 0 20px 4px rgba(56, 189, 248, 0.4); 
+    border-color: #38bdf8; 
+    background: rgba(56, 189, 248, 0.15); 
+  }
+  100% { 
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); 
+    border-color: rgba(255, 255, 255, 0.05); /* Returns to default card border */
+  }
+}
+
+/* ==========================================================================
+   PREMIUM NOTIFICATION UI
+   ========================================================================== */
+
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 6px;
+}
+
+.notif-header h4 {
+  margin: 0 !important;
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Individual Notification Cards */
+.notif-item {
+  position: relative;
+  padding: 10px 14px !important;
+  align-items: flex-start !important;
+  margin: 0 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* Unread State: Glowing background & border */
+.notif-item.unread {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+/* Read State: Dimmed and borderless */
+.notif-item.read {
+  opacity: 0.65;
+  border: 1px solid transparent;
+}
+
+.notif-item:hover {
+  opacity: 1;
+  background: rgba(56, 189, 248, 0.15) !important;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* Content Layout */
+.notif-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.notif-content strong { color: #ffffff; font-size: 13px; }
+.notif-content small { color: #94a3b8; font-size: 11px; }
+
+/* Status Dots */
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.notif-dot.green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+.notif-dot.red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+.notif-dot.gray { background: #475569; box-shadow: none; }
+
+/* New Blue Unread Indicator on the right side */
+.unread-indicator {
+  width: 6px;
+  height: 6px;
+  background: #38bdf8;
+  border-radius: 50%;
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 0 6px #38bdf8;
+}
+
+.empty-notif {
+  color: #64748b;
+  justify-content: center;
+  padding: 20px !important;
+}
+
+/* ==========================================================================
+   ADMIN FEEDBACK NOTES
+   ========================================================================== */
+
+.admin-note {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  max-width: 600px;
+  color: #cbd5e1; /* Soft light gray text to reduce eye strain */
+  backdrop-filter: blur(4px);
+  line-height: 1.5;
+}
+
+.admin-note.approved {
+  background: rgba(16, 185, 129, 0.1);
+  border-left: 3px solid #10b981;
+}
+
+.admin-note.approved strong {
+  color: #34d399; /* Bright, readable green for the dark theme */
+}
+
+.admin-note.rejected {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid #ef4444;
+}
+
+.admin-note.rejected strong {
+  color: #f87171; /* Bright, readable red for the dark theme */
+}
+
+/* ==========================================================================
+   PREMIUM PROFILE MENU UI
+   ========================================================================== */
+
+/* The Avatar Circle */
+.profile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.profile:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Live Presence Indicator */
+.profile-online-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border: 2px solid #0f172a; /* Matches the dark navbar background */
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+/* Menu Container Restyling */
+.profile-menu {
+  width: 250px;
+  padding: 0 !important; /* Removes default padding to allow edge-to-edge sections */
+  overflow: hidden; /* Ensures the footer obeys the rounded corners */
+}
+
+/* Header Area */
+.profile-header {
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.profile-header strong {
+  display: flex;
+  align-items: center;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+/* Dynamic Role Badge */
+.role-badge {
+  font-size: 9px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  letter-spacing: 0.5px;
+  font-weight: 800;
+}
+
+/* Customer Role Styling (Subtle Slate/Gray) */
+.role-badge.customer {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* Admin Role Styling (Glowing Cyan) */
+.role-badge.admin {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+/* Categorized Section Labels */
+.profile-section-label {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  padding: 14px 20px 4px;
+}
+
+/* Align icons perfectly inside dropdown */
+.profile-menu .dropdown-item span {
+  display: inline-block;
+  text-align: center;
+  margin-right: 4px;
+}
+
+/* Distinct Footer for Sign Out */
+.profile-menu-footer {
+  margin-top: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 6px 0;
+}
+
+.profile-menu-footer .dropdown-item {
+  margin: 0 8px;
+}
+
+/* ==========================================================================
+   ADVANCED SETTINGS PAGE UI (ULTRA-MODERN & SCROLL-FIXED)
+   ========================================================================== */
+
+/* 1. Master Layout & Definitive Scroll Fix */
+.settings-layout {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+  max-width: 1050px;
+  margin-top: 24px;
+  align-items: flex-start;
+  /* CRITICAL FIX: Forces massive space at the bottom so you can scroll past the save button */
+  padding-bottom: 150px !important; 
+  margin-bottom: 100px !important;
+}
+
+/* 2. Sidebar Navigation */
+.settings-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: sticky;
+  top: 110px; 
+  align-self: flex-start; 
+}
+
+.settings-nav-item {
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+
+.settings-nav-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+}
+
+.settings-nav-item.active {
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.12) 0%, rgba(15, 23, 42, 0) 100%);
+  color: #38bdf8;
+  font-weight: 600;
+  border-left: 3px solid #38bdf8;
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 3. Content Area & Premium Glass Card */
+.settings-content {
+  flex: 1;
+  min-width: 0; 
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  /* Secondary scroll protection */
+  padding-bottom: 60px;
+}
+
+.settings-card {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  padding: 40px !important; 
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+.settings-card h3 {
+  color: #f8fafc !important;
+  margin: 0 0 6px 0 !important;
+  font-size: 19px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.3px;
+}
+
+.settings-desc {
+  color: #94a3b8;
+  font-size: 13.5px;
+  margin-bottom: 36px;
+  letter-spacing: 0.2px;
+}
+
+/* 4. Refined Form Grid & Inset Inputs */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px 32px; 
+  width: 100%;
+}
+
+.form-group label {
+  display: block;
+  color: #64748b; 
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.settings-input {
+  width: 100%;
+  box-sizing: border-box !important; 
+  background: rgba(0, 0, 0, 0.25) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+  padding: 13px 16px;
+  border-radius: 10px !important;
+  font-size: 13.5px;
+  letter-spacing: 0.3px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.settings-input:hover {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.settings-input:focus {
+  border-color: #38bdf8 !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 0 0 4px rgba(56, 189, 248, 0.12) !important;
+}
+
+/* 5. Avatar Section - Glowing Ring Effect */
+.settings-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 36px;
+  padding-bottom: 36px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-avatar-large {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8, #2563eb);
+  color: white;
+  font-size: 30px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Creates a modern double-ring glow */
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.8), 0 0 0 6px rgba(56, 189, 248, 0.4), 0 12px 24px rgba(0,0,0,0.4);
+}
+
+.analyze-button.outline {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  width: auto;
+  transition: all 0.2s ease;
+}
+
+.analyze-button.outline:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* 6. Save Footer - Gradient Button */
+.settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20px;
+  padding-top: 28px;
+  margin-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-footer .analyze-button {
+  background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 12px 24px;
+}
+
+.settings-footer .analyze-button:hover {
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+  transform: translateY(-1px);
+}
+
+.save-success-msg {
+  color: #10b981;
+  font-size: 13.5px;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 8px 16px;
+  border-radius: 6px;
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 7. Toggles & Preference Rows */
+.preference-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.preference-row.borderless { border-bottom: none; }
+
+.preference-row strong {
+  display: block;
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  letter-spacing: 0.2px;
+}
+
+.preference-row small {
+  color: #64748b;
+  font-size: 12.5px;
+  display: block;
+  max-width: 380px;
+  line-height: 1.6;
 }
