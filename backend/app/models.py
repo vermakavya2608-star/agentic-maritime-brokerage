@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class RouteRequest(BaseModel):
    origin: str
@@ -20,8 +21,10 @@ class OTPVerify(BaseModel):
     email: str
     otp: str
 
-from typing import Optional
-
+class ResetPasswordRequest(BaseModel):
+    email: str
+    new_password: str
+    
 class InsightRequest(BaseModel):
     origin: str
     destination: str

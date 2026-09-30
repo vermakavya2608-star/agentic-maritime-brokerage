@@ -41,6 +41,18 @@ function App() {
     setPage('login')
   }
 
+  const handleUpdateUser = (updatedUser) => {
+    // 1. Update the active session
+    setCurrentUser(updatedUser);
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+
+    const users = JSON.parse(localStorage.getItem('maritimeUsers')) || [];
+    const updatedUsers = users.map(u => 
+      u.email === updatedUser.email ? updatedUser : u
+    );
+    localStorage.setItem('maritimeUsers', JSON.stringify(updatedUsers));
+  }
+
   return (
     <>
       {/* Home */}
@@ -60,6 +72,7 @@ function App() {
           <Dashboard
             user={currentUser}
             onLogout={handleLogout}
+            onUpdateUser={handleUpdateUser} /* <--- ADD THIS PROP */
           />
         )}
 

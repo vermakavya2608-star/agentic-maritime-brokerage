@@ -180,7 +180,7 @@ function MapBounds({ origin, destination }) {
 
 // ----------------------------------------------------
 
-function Dashboard({ user, onLogout }) {
+function Dashboard({ user, onLogout, onUpdateUser }) {
   const [customerRequests, setCustomerRequests] = useState([]);
   const [origin, setOrigin] = useState("Tokyo");
   const [destination, setDestination] = useState("Sydney");
@@ -201,30 +201,167 @@ function Dashboard({ user, onLogout }) {
   const [settingsTab, setSettingsTab] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
-  
+
+  // Intelligently parse the existing phone string into Code and Number
+  const initialPhoneFull = user?.phone || "+91 98765 43210";
+  const phoneMatch = initialPhoneFull.match(/^(\+\d{1,3})\s*(.*)$/);
+  const initialCode = phoneMatch ? phoneMatch[1] : "+91";
+  const initialNumber = phoneMatch ? phoneMatch[2] : initialPhoneFull;
+
   const [profileData, setProfileData] = useState({
-    name: user?.name || "divyam agarwal",
-    email: user?.email || "divyam7246@gmail.com",
-    company: "Maritime Brokerage Inc.",
-    role: "Operations Manager",
-    phone: "+91 98765 43210",
-    timezone: "Asia/Kolkata (IST)"
+    name: user?.name || "Customer",
+    email: user?.email || "",
+    company: user?.company || "Maritime Brokerage Inc.",
+    role: user?.jobRole || "Operations Manager",
+    phoneCode: initialCode,            // <--- NEW: Separated Country Code
+    phoneNumber: initialNumber,        // <--- NEW: Separated Phone Number
+    timezone: user?.timezone || "Asia/Kolkata (IST)",
+    avatar: user?.avatar || null,
   });
 
   const handleProfileUpdate = (field, value) => {
-    setProfileData(prev => ({ ...prev, [field]: value }));
+    setProfileData((prev) => ({ ...prev, [field]: value }));
   };
+
+  // 1. AVATAR UPLOAD HANDLER
+  const handleAvatarUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handleProfileUpdate("avatar", reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // 2. INTERNATIONAL SMART PHONE FORMATTER
+  const handlePhoneChange = (e) => {
+    let input = e.target.value.replace(/[^\d]/g, ""); // Strip non-digits
+    if (input.length > 15) input = input.slice(0, 15);
+
+    let formatted = input;
+    const code = profileData.phoneCode;
+
+    if (code === "+91") {
+      // India: 98765 43210
+      if (input.length > 5) formatted = `${input.slice(0, 5)} ${input.slice(5)}`;
+    } else if (code === "+1") {
+      // US/Canada: (555) 123-4567
+      if (input.length > 3 && input.length <= 6) {
+        formatted = `(${input.slice(0, 3)}) ${input.slice(3)}`;
+      } else if (input.length > 6) {
+        formatted = `(${input.slice(0, 3)}) ${input.slice(3, 6)}-${input.slice(6)}`;
+      }
+    } else {
+      // Global Generic: 1234 567 890
+      if (input.length > 4 && input.length <= 8) {
+        formatted = `${input.slice(0, 4)} ${input.slice(4)}`;
+      } else if (input.length > 8) {
+        formatted = `${input.slice(0, 4)} ${input.slice(4, 8)} ${input.slice(8)}`;
+      }
+    }
+
+    handleProfileUpdate("phoneNumber", formatted);
+  };
+
+  // 3. INTERNATIONAL PHONE RENDERER (ULTRA-PREMIUM UX)
+  const renderInternationalPhoneInput = () => (
+    <div className="form-group">
+      <label>Phone Number</label>
+      <div 
+        style={{ 
+          position: "relative", display: "flex", alignItems: "center", 
+          background: "rgba(0, 0, 0, 0.25)", border: "1px solid rgba(255, 255, 255, 0.08)", 
+          borderRadius: "10px", transition: "all 0.2s ease" 
+        }}
+        onFocus={(e) => e.currentTarget.style.borderColor = "#38bdf8"}
+        onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)"}
+      >
+        <span style={{ position: "absolute", left: "14px", color: "#64748b", fontSize: "15px", pointerEvents: "none", zIndex: 1 }}>📞</span>
+        
+        {/* Country Code Dropdown */}
+        <select
+          value={profileData.phoneCode}
+          onChange={(e) => {
+            handleProfileUpdate("phoneCode", e.target.value);
+            // Re-trigger formatting slightly to adjust to new country rules
+            handleProfileUpdate("phoneNumber", profileData.phoneNumber.replace(/[^\d]/g, "")); 
+          }}
+          style={{
+            appearance: "none", background: "transparent", border: "none",
+            borderRight: "1px solid rgba(255, 255, 255, 0.1)", color: "#38bdf8",
+            padding: "13px 26px 13px 40px", fontSize: "13.5px", fontWeight: "700",
+            cursor: "pointer", outline: "none", width: "115px", zIndex: 0
+          }}
+        >
+          <option value="+1">🇺🇸 +1</option>
+          <option value="+44">🇬🇧 +44</option>
+          <option value="+91">🇮🇳 +91</option>
+          <option value="+61">🇦🇺 +61</option>
+          <option value="+971">🇦🇪 +971</option>
+          <option value="+65">🇸🇬 +65</option>
+          <option value="+49">🇩🇪 +49</option>
+          <option value="+86">🇨🇳 +86</option>
+        </select>
+        <span style={{ position: "absolute", left: "100px", color: "#64748b", fontSize: "10px", pointerEvents: "none" }}>▼</span>
+
+        {/* Number Input */}
+        <input
+          type="text"
+          value={profileData.phoneNumber}
+          onChange={handlePhoneChange}
+          placeholder="Phone number"
+          style={{
+            flex: 1, background: "transparent", border: "none", color: "#f1f5f9",
+            padding: "13px 16px", fontSize: "14px", fontFamily: "'Courier New', monospace",
+            fontWeight: "600", letterSpacing: "1px", outline: "none"
+          }}
+        />
+
+        {/* Clear Button */}
+        {profileData.phoneNumber && (
+          <span
+            onClick={() => handleProfileUpdate("phoneNumber", "")}
+            title="Clear field"
+            style={{
+              position: "absolute", right: "14px", color: "#94a3b8", cursor: "pointer",
+              fontSize: "10px", background: "rgba(255,255,255,0.08)",
+              width: "18px", height: "18px", display: "flex", alignItems: "center",
+              justifyContent: "center", borderRadius: "50%", fontWeight: "bold",
+              transition: "all 0.2s ease",
+            }}
+            onMouseOver={(e) => { e.target.style.background = "#ef4444"; e.target.style.color = "#fff"; }}
+            onMouseOut={(e) => { e.target.style.background = "rgba(255,255,255,0.08)"; e.target.style.color = "#94a3b8"; }}
+          >✕</span>
+        )}
+      </div>
+    </div>
+  );
 
   const saveSettings = () => {
     setIsSaving(true);
     setSaveMessage("");
-    // Simulate a backend API call
+
     setTimeout(() => {
+      if (onUpdateUser) {
+        onUpdateUser({
+          ...user,
+          name: profileData.name,
+          email: profileData.email,
+          company: profileData.company,
+          jobRole: profileData.role,
+          // Re-combine the global code and the formatted number
+          phone: `${profileData.phoneCode} ${profileData.phoneNumber}`, 
+          timezone: profileData.timezone,
+          avatar: profileData.avatar,
+        });
+      }
+
       setIsSaving(false);
       setSaveMessage("Settings saved successfully.");
-      // Clear success message after 3 seconds
       setTimeout(() => setSaveMessage(""), 3000);
-    }, 1200);
+    }, 800);
   };
 
   const [llmInsight, setLlmInsight] = useState(
@@ -476,15 +613,19 @@ function Dashboard({ user, onLogout }) {
     // BUG FIX: Only mark items as read if they are ALREADY in the notification tray (Approved/Rejected)
     // This prevents "Pending" requests from being secretly marked as read before they are processed.
     const updatedRequests = customerRequests.map((req) =>
-      req.status !== "Pending Review" ? { ...req, read: true } : req
+      req.status !== "Pending Review" ? { ...req, read: true } : req,
     );
     setCustomerRequests(updatedRequests);
 
-    const allRequests = JSON.parse(localStorage.getItem("quotationRequests")) || [];
+    const allRequests =
+      JSON.parse(localStorage.getItem("quotationRequests")) || [];
     const syncedAllRequests = allRequests.map((req) =>
-      req.status !== "Pending Review" ? { ...req, read: true } : req
+      req.status !== "Pending Review" ? { ...req, read: true } : req,
     );
-    localStorage.setItem("quotationRequests", JSON.stringify(syncedAllRequests));
+    localStorage.setItem(
+      "quotationRequests",
+      JSON.stringify(syncedAllRequests),
+    );
   };
 
   // 3. Click outside handler
@@ -672,32 +813,45 @@ function Dashboard({ user, onLogout }) {
                   <div className="notif-header">
                     <h4>Recent Updates</h4>
                     {unreadCount > 0 && (
-                      <span className="mark-all-read" onClick={markAllAsRead}>Mark all as read ✓</span>
+                      <span className="mark-all-read" onClick={markAllAsRead}>
+                        Mark all as read ✓
+                      </span>
                     )}
                   </div>
-                  
+
                   <div className="notif-list">
                     {notifications.length > 0 ? (
-                      notifications.map(notif => (
-                        <div 
-                          key={notif.id} 
-                          className={`dropdown-item notif-item ${notif.read ? 'read' : 'unread'}`}
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className={`dropdown-item notif-item ${notif.read ? "read" : "unread"}`}
                           onClick={() => markAsReadAndNavigate(notif.id)}
                         >
                           {/* Colored dot for unread, gray dot for read */}
-                          <div className={`notif-dot ${notif.read ? 'gray' : (notif.status === 'Approved' ? 'green' : 'red')}`}></div>
-                          
+                          <div
+                            className={`notif-dot ${notif.read ? "gray" : notif.status === "Approved" ? "green" : "red"}`}
+                          ></div>
+
                           <div className="notif-content">
-                            <strong>Request #{notif.id} {notif.status}</strong>
-                            <small>{notif.shipment.origin} → {notif.shipment.destination}</small>
+                            <strong>
+                              Request #{notif.id} {notif.status}
+                            </strong>
+                            <small>
+                              {notif.shipment.origin} →{" "}
+                              {notif.shipment.destination}
+                            </small>
                           </div>
 
                           {/* Blue indicator dot on the far right for unread items */}
-                          {!notif.read && <div className="unread-indicator"></div>}
+                          {!notif.read && (
+                            <div className="unread-indicator"></div>
+                          )}
                         </div>
                       ))
                     ) : (
-                      <div className="dropdown-item empty-notif">No recent updates.</div>
+                      <div className="dropdown-item empty-notif">
+                        No recent updates.
+                      </div>
                     )}
                   </div>
                 </div>
@@ -713,7 +867,23 @@ function Dashboard({ user, onLogout }) {
                   setShowNotifications(false);
                 }}
               >
-                {user?.name ? user.name.charAt(0).toUpperCase() : "D"}
+                {/* NEW AVATAR LOGIC */}
+                {profileData.avatar ? (
+                  <img
+                    src={profileData.avatar}
+                    alt="Profile"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : user?.name ? (
+                  user.name.charAt(0).toUpperCase()
+                ) : (
+                  "D"
+                )}
                 <span className="profile-online-dot"></span>
               </div>
 
@@ -723,35 +893,70 @@ function Dashboard({ user, onLogout }) {
                     <strong>
                       {user?.name || "Customer"}
                       {/* Dynamic Role Badge */}
-                      <span className={`role-badge ${user?.role === 'admin' ? 'admin' : 'customer'}`}>
+                      <span
+                        className={`role-badge ${user?.role === "admin" ? "admin" : "customer"}`}
+                      >
                         {user?.role?.toUpperCase() || "CUSTOMER"}
                       </span>
                     </strong>
                     <small>{user?.email || "No email"}</small>
                   </div>
-                  
+
                   <div className="profile-section-label">Workspace</div>
-                  <div className="dropdown-item" onClick={() => { goToDashboard(); closeMenus(); }}>
-                    <span style={{ width: '16px' }}>▦</span> Dashboard
+                  <div
+                    className="dropdown-item"
+                    onClick={() => {
+                      goToDashboard();
+                      closeMenus();
+                    }}
+                  >
+                    <span style={{ width: "16px" }}>▦</span> Dashboard
                   </div>
-                  <div className="dropdown-item" onClick={() => { goToQuotations(); closeMenus(); }}>
-                    <span style={{ width: '16px' }}>▤</span> My Quotations
+                  <div
+                    className="dropdown-item"
+                    onClick={() => {
+                      goToQuotations();
+                      closeMenus();
+                    }}
+                  >
+                    <span style={{ width: "16px" }}>▤</span> My Quotations
                   </div>
-                  <div className="dropdown-item" onClick={() => { goToSettings(); closeMenus(); }}>
-                    <span style={{ width: '16px' }}>⚙</span> Account Settings
+                  <div
+                    className="dropdown-item"
+                    onClick={() => {
+                      goToSettings();
+                      closeMenus();
+                    }}
+                  >
+                    <span style={{ width: "16px" }}>⚙</span> Account Settings
                   </div>
 
                   <div className="profile-section-label">Developers</div>
-                  <div className="dropdown-item" onClick={() => { goToApi(); closeMenus(); }}>
-                    <span style={{ width: '16px' }}>⌨</span> API & Python SDK
+                  <div
+                    className="dropdown-item"
+                    onClick={() => {
+                      goToApi();
+                      closeMenus();
+                    }}
+                  >
+                    <span style={{ width: "16px" }}>⌨</span> API & Python SDK
                   </div>
-                  <div className="dropdown-item" onClick={() => { goToDocs(); closeMenus(); }}>
-                    <span style={{ width: '16px' }}>📖</span> Documentation
+                  <div
+                    className="dropdown-item"
+                    onClick={() => {
+                      goToDocs();
+                      closeMenus();
+                    }}
+                  >
+                    <span style={{ width: "16px" }}>📖</span> Documentation
                   </div>
 
                   <div className="profile-menu-footer">
-                    <div className="dropdown-item text-danger" onClick={onLogout}>
-                      <span style={{ width: '16px' }}>⇥</span> Sign Out
+                    <div
+                      className="dropdown-item text-danger"
+                      onClick={onLogout}
+                    >
+                      <span style={{ width: "16px" }}>⇥</span> Sign Out
                     </div>
                   </div>
                 </div>
@@ -953,7 +1158,9 @@ function Dashboard({ user, onLogout }) {
 
                         {/* Dark-Mode Friendly Admin Note */}
                         {request.feedback && (
-                          <div className={`admin-note ${request.status === "Rejected" ? "rejected" : "approved"}`}>
+                          <div
+                            className={`admin-note ${request.status === "Rejected" ? "rejected" : "approved"}`}
+                          >
                             <strong>Admin Note:</strong> {request.feedback}
                           </div>
                         )}
@@ -1765,7 +1972,9 @@ function Dashboard({ user, onLogout }) {
 
                           {/* Dark-Mode Friendly Admin Note */}
                           {request.feedback && (
-                            <div className={`admin-note ${request.status === "Rejected" ? "rejected" : "approved"}`}>
+                            <div
+                              className={`admin-note ${request.status === "Rejected" ? "rejected" : "approved"}`}
+                            >
                               <strong>Admin Note:</strong> {request.feedback}
                             </div>
                           )}
@@ -1839,7 +2048,9 @@ function Dashboard({ user, onLogout }) {
 
                         {/* Dark-Mode Friendly Admin Note */}
                         {request.feedback && (
-                          <div className={`admin-note ${request.status === "Rejected" ? "rejected" : "approved"}`}>
+                          <div
+                            className={`admin-note ${request.status === "Rejected" ? "rejected" : "approved"}`}
+                          >
                             <strong>Admin Note:</strong> {request.feedback}
                           </div>
                         )}
@@ -1866,34 +2077,37 @@ function Dashboard({ user, onLogout }) {
                 <div>
                   <div className="eyebrow">✦ ACCOUNT</div>
                   <h1>Settings</h1>
-                  <p>Manage your preferences, security, and workspace configuration.</p>
+                  <p>
+                    Manage your preferences, security, and workspace
+                    configuration.
+                  </p>
                 </div>
               </div>
 
               <div className="settings-layout">
                 {/* Settings Sidebar Navigation */}
                 <aside className="settings-sidebar">
-                  <div 
-                    className={`settings-nav-item ${settingsTab === 'profile' ? 'active' : ''}`}
-                    onClick={() => setSettingsTab('profile')}
+                  <div
+                    className={`settings-nav-item ${settingsTab === "profile" ? "active" : ""}`}
+                    onClick={() => setSettingsTab("profile")}
                   >
                     <span>👤</span> Profile Information
                   </div>
-                  <div 
-                    className={`settings-nav-item ${settingsTab === 'preferences' ? 'active' : ''}`}
-                    onClick={() => setSettingsTab('preferences')}
+                  <div
+                    className={`settings-nav-item ${settingsTab === "preferences" ? "active" : ""}`}
+                    onClick={() => setSettingsTab("preferences")}
                   >
                     <span>⚙️</span> System Preferences
                   </div>
-                  <div 
-                    className={`settings-nav-item ${settingsTab === 'security' ? 'active' : ''}`}
-                    onClick={() => setSettingsTab('security')}
+                  <div
+                    className={`settings-nav-item ${settingsTab === "security" ? "active" : ""}`}
+                    onClick={() => setSettingsTab("security")}
                   >
                     <span>🔒</span> Security & 2FA
                   </div>
-                  <div 
-                    className={`settings-nav-item ${settingsTab === 'billing' ? 'active' : ''}`}
-                    onClick={() => setSettingsTab('billing')}
+                  <div
+                    className={`settings-nav-item ${settingsTab === "billing" ? "active" : ""}`}
+                    onClick={() => setSettingsTab("billing")}
                   >
                     <span>💳</span> Billing & Plan
                   </div>
@@ -1901,63 +2115,102 @@ function Dashboard({ user, onLogout }) {
 
                 {/* Settings Content Area */}
                 <div className="settings-content">
-                  {settingsTab === 'profile' && (
+                  {settingsTab === "profile" && (
                     <div className="card settings-card">
                       <h3>Personal Information</h3>
-                      <p className="settings-desc">Update your personal details and public profile.</p>
-                      
+                      <p className="settings-desc">
+                        Update your personal details and public profile.
+                      </p>
+
                       <div className="settings-avatar-row">
                         <div className="settings-avatar-large">
-                          {profileData.name.charAt(0).toUpperCase()}
+                          {profileData.avatar ? (
+                            <img
+                              src={profileData.avatar}
+                              alt="Avatar"
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            profileData.name.charAt(0).toUpperCase()
+                          )}
                         </div>
-                        <button className="analyze-button outline">Upload New Avatar</button>
+
+                        {/* Hidden file input for the avatar */}
+                        <input
+                          type="file"
+                          id="avatar-upload"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={handleAvatarUpload}
+                        />
+
+                        {/* Button triggers the hidden input */}
+                        <button
+                          className="analyze-button outline"
+                          onClick={() =>
+                            document.getElementById("avatar-upload").click()
+                          }
+                        >
+                          Upload New Avatar
+                        </button>
                       </div>
 
                       <div className="form-grid-2">
-                        <div className="form-group">
-                          <label>Full Name</label>
-                          <input type="text" className="settings-input" value={profileData.name} onChange={(e) => handleProfileUpdate('name', e.target.value)} />
-                        </div>
-                        <div className="form-group">
-                          <label>Email Address</label>
-                          <input type="email" className="settings-input" value={profileData.email} onChange={(e) => handleProfileUpdate('email', e.target.value)} />
-                        </div>
-                        <div className="form-group">
-                          <label>Company</label>
-                          <input type="text" className="settings-input" value={profileData.company} onChange={(e) => handleProfileUpdate('company', e.target.value)} />
-                        </div>
-                        <div className="form-group">
-                          <label>Job Role</label>
-                          <input type="text" className="settings-input" value={profileData.role} onChange={(e) => handleProfileUpdate('role', e.target.value)} />
-                        </div>
-                        <div className="form-group">
-                          <label>Phone Number</label>
-                          <input type="text" className="settings-input" value={profileData.phone} onChange={(e) => handleProfileUpdate('phone', e.target.value)} />
-                        </div>
+                        {renderPremiumInput("Full Name", "name", "text", "👤", "Enter your full name")}
+                        {renderPremiumInput("Email Address", "email", "email", "✉️", "name@company.com")}
+                        {renderPremiumInput("Company", "company", "text", "🏢", "Your organization name")}
+                        {renderPremiumInput("Job Role", "role", "text", "💼", "Your title")}
+                        
+                        {/* THE NEW GLOBAL PHONE COMPONENT */}
+                        {renderInternationalPhoneInput()}
+                        
+                        {/* Custom Timezone Dropdown */}
                         <div className="form-group">
                           <label>Timezone</label>
-                          <select className="settings-input" value={profileData.timezone} onChange={(e) => handleProfileUpdate('timezone', e.target.value)}>
-                            <option>Asia/Kolkata (IST)</option>
-                            <option>America/New_York (EST)</option>
-                            <option>Europe/London (GMT)</option>
-                            <option>Asia/Tokyo (JST)</option>
-                          </select>
+                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <span style={{ position: 'absolute', left: '16px', color: '#64748b', fontSize: '15px', pointerEvents: 'none', zIndex: 1 }}>🌍</span>
+                            <select 
+                              className="settings-input" 
+                              style={{ paddingLeft: '44px', appearance: 'none', cursor: 'pointer' }}
+                              value={profileData.timezone} 
+                              onChange={(e) => handleProfileUpdate('timezone', e.target.value)}
+                            >
+                              <option>Asia/Kolkata (IST)</option>
+                              <option>America/New_York (EST)</option>
+                              <option>Europe/London (GMT)</option>
+                              <option>Asia/Tokyo (JST)</option>
+                            </select>
+                            <span style={{ position: 'absolute', right: '16px', color: '#38bdf8', fontSize: '10px', pointerEvents: 'none' }}>▼</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {settingsTab === 'preferences' && (
+                  {settingsTab === "preferences" && (
                     <div className="card settings-card">
                       <h3>System Preferences</h3>
-                      <p className="settings-desc">Customize how the Agentic Routing engine displays data.</p>
-                      
+                      <p className="settings-desc">
+                        Customize how the Agentic Routing engine displays data.
+                      </p>
+
                       <div className="preference-row">
                         <div>
                           <strong>Measurement Units</strong>
-                          <small>Toggle between Metric (Kilometers, Celsius) and Imperial (Miles, Fahrenheit).</small>
+                          <small>
+                            Toggle between Metric (Kilometers, Celsius) and
+                            Imperial (Miles, Fahrenheit).
+                          </small>
                         </div>
-                        <select className="settings-input" style={{ width: '150px' }}>
+                        <select
+                          className="settings-input"
+                          style={{ width: "150px" }}
+                        >
                           <option>Metric (NM / °C)</option>
                           <option>Imperial (MI / °F)</option>
                         </select>
@@ -1966,9 +2219,15 @@ function Dashboard({ user, onLogout }) {
                       <div className="preference-row">
                         <div>
                           <strong>Default Currency</strong>
-                          <small>The base currency used for generating freight quotations.</small>
+                          <small>
+                            The base currency used for generating freight
+                            quotations.
+                          </small>
                         </div>
-                        <select className="settings-input" style={{ width: '150px' }}>
+                        <select
+                          className="settings-input"
+                          style={{ width: "150px" }}
+                        >
                           <option>USD ($)</option>
                           <option>EUR (€)</option>
                           <option>INR (₹)</option>
@@ -1978,7 +2237,10 @@ function Dashboard({ user, onLogout }) {
                       <div className="preference-row borderless">
                         <div>
                           <strong>Email Notifications</strong>
-                          <small>Receive email alerts when a quotation is Approved or Rejected by Admin.</small>
+                          <small>
+                            Receive email alerts when a quotation is Approved or
+                            Rejected by Admin.
+                          </small>
                         </div>
                         <label className="toggle-switch">
                           <input type="checkbox" defaultChecked />
@@ -1988,24 +2250,38 @@ function Dashboard({ user, onLogout }) {
                     </div>
                   )}
 
-                  {settingsTab === 'security' && (
+                  {settingsTab === "security" && (
                     <div className="card settings-card">
                       <h3>Security & Authentication</h3>
-                      <p className="settings-desc">Keep your maritime brokerage account secure.</p>
+                      <p className="settings-desc">
+                        Keep your maritime brokerage account secure.
+                      </p>
 
                       <div className="form-grid-2">
                         <div className="form-group">
                           <label>Current Password</label>
-                          <input type="password" className="settings-input" placeholder="••••••••" />
+                          <input
+                            type="password"
+                            className="settings-input"
+                            placeholder="••••••••"
+                          />
                         </div>
                         <div></div>
                         <div className="form-group">
                           <label>New Password</label>
-                          <input type="password" className="settings-input" placeholder="Enter new password" />
+                          <input
+                            type="password"
+                            className="settings-input"
+                            placeholder="Enter new password"
+                          />
                         </div>
                         <div className="form-group">
                           <label>Confirm Password</label>
-                          <input type="password" className="settings-input" placeholder="Confirm new password" />
+                          <input
+                            type="password"
+                            className="settings-input"
+                            placeholder="Confirm new password"
+                          />
                         </div>
                       </div>
 
@@ -2014,47 +2290,71 @@ function Dashboard({ user, onLogout }) {
                       <div className="preference-row borderless">
                         <div>
                           <strong>Two-Factor Authentication (2FA)</strong>
-                          <small>Require an authenticator code in addition to your password when logging in.</small>
+                          <small>
+                            Require an authenticator code in addition to your
+                            password when logging in.
+                          </small>
                         </div>
-                        <button className="analyze-button outline" style={{ width: 'auto', padding: '8px 16px' }}>Enable 2FA</button>
+                        <button
+                          className="analyze-button outline"
+                          style={{ width: "auto", padding: "8px 16px" }}
+                        >
+                          Enable 2FA
+                        </button>
                       </div>
                     </div>
                   )}
 
-                  {settingsTab === 'billing' && (
+                  {settingsTab === "billing" && (
                     <div className="card settings-card">
                       <h3>Billing & Subscription</h3>
-                      <p className="settings-desc">Manage your Agentic Platform subscription tier.</p>
+                      <p className="settings-desc">
+                        Manage your Agentic Platform subscription tier.
+                      </p>
 
                       <div className="billing-banner">
                         <div className="billing-info">
                           <span className="plan-badge">PRO TIER</span>
                           <h4>Agentic Platform Pro</h4>
-                          <p>Unlimited route analyses, live weather intelligence, and priority LLM processing.</p>
+                          <p>
+                            Unlimited route analyses, live weather intelligence,
+                            and priority LLM processing.
+                          </p>
                         </div>
                         <div className="billing-price">
-                          <h2>$299<span>/mo</span></h2>
+                          <h2>
+                            $299<span>/mo</span>
+                          </h2>
                         </div>
                       </div>
 
                       <div className="preference-row borderless">
                         <div>
                           <strong>Payment Method</strong>
-                          <small>Visa ending in **** 4242 (Expires 12/28)</small>
+                          <small>
+                            Visa ending in **** 4242 (Expires 12/28)
+                          </small>
                         </div>
-                        <button className="analyze-button outline" style={{ width: 'auto', padding: '8px 16px' }}>Update Card</button>
+                        <button
+                          className="analyze-button outline"
+                          style={{ width: "auto", padding: "8px 16px" }}
+                        >
+                          Update Card
+                        </button>
                       </div>
                     </div>
                   )}
 
                   {/* Universal Save Footer */}
                   <div className="settings-footer">
-                    {saveMessage && <span className="save-success-msg">✓ {saveMessage}</span>}
-                    <button 
-                      className="analyze-button" 
+                    {saveMessage && (
+                      <span className="save-success-msg">✓ {saveMessage}</span>
+                    )}
+                    <button
+                      className="analyze-button"
                       onClick={saveSettings}
                       disabled={isSaving}
-                      style={{ width: '160px', margin: 0 }}
+                      style={{ width: "160px", margin: 0 }}
                     >
                       {isSaving ? "Saving..." : "Save Changes"}
                     </button>
@@ -2070,20 +2370,45 @@ function Dashboard({ user, onLogout }) {
                 <div>
                   <div className="eyebrow">✦ DEVELOPERS</div>
                   <h1>API & Python SDK</h1>
-                  <p>Generate API keys and connect your backend infrastructure.</p>
+                  <p>
+                    Generate API keys and connect your backend infrastructure.
+                  </p>
                 </div>
               </div>
               <div className="card">
-                <h3 style={{ margin: '0 0 16px 0', color: '#fff' }}>Production API Key</h3>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <input type="password" value="sk_live_51M..." readOnly className="search-input" style={{ width: '300px', borderRadius: '8px' }} />
-                  <button className="analyze-button" style={{ width: 'auto', background: '#334155' }}>Reveal</button>
+                <h3 style={{ margin: "0 0 16px 0", color: "#fff" }}>
+                  Production API Key
+                </h3>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <input
+                    type="password"
+                    value="sk_live_51M..."
+                    readOnly
+                    className="search-input"
+                    style={{ width: "300px", borderRadius: "8px" }}
+                  />
+                  <button
+                    className="analyze-button"
+                    style={{ width: "auto", background: "#334155" }}
+                  >
+                    Reveal
+                  </button>
                 </div>
-                <div className="llm-terminal-box" style={{ marginTop: '24px' }}>
-                  <div className="terminal-header"><small>python_integration.py</small></div>
+                <div className="llm-terminal-box" style={{ marginTop: "24px" }}>
+                  <div className="terminal-header">
+                    <small>python_integration.py</small>
+                  </div>
                   <div className="terminal-content">
-                    <p style={{ color: '#a78bfa', margin: 0 }}>import <span style={{ color: '#cbd5e1' }}>maritime_brokerage</span></p>
-                    <p style={{ color: '#cbd5e1', margin: '8px 0 0' }}>client = maritime_brokerage.Client(api_key=<span style={{ color: '#a3e635' }}>"sk_live_..."</span>)</p>
+                    <p style={{ color: "#a78bfa", margin: 0 }}>
+                      import{" "}
+                      <span style={{ color: "#cbd5e1" }}>
+                        maritime_brokerage
+                      </span>
+                    </p>
+                    <p style={{ color: "#cbd5e1", margin: "8px 0 0" }}>
+                      client = maritime_brokerage.Client(api_key=
+                      <span style={{ color: "#a3e635" }}>"sk_live_..."</span>)
+                    </p>
                   </div>
                 </div>
               </div>
@@ -2100,14 +2425,15 @@ function Dashboard({ user, onLogout }) {
                 </div>
               </div>
               <div className="card">
-                <h3 style={{ color: '#fff' }}>Quickstart Guide</h3>
-                <p style={{ color: '#94a3b8', lineHeight: '1.6' }}>The Agentic Maritime platform exposes RESTful endpoints for Route Analysis, Dynamic Pricing, and Weather Risk Assessment. Navigate to the API tab to generate your credentials.</p>
+                <h3 style={{ color: "#fff" }}>Quickstart Guide</h3>
+                <p style={{ color: "#94a3b8", lineHeight: "1.6" }}>
+                  The Agentic Maritime platform exposes RESTful endpoints for
+                  Route Analysis, Dynamic Pricing, and Weather Risk Assessment.
+                  Navigate to the API tab to generate your credentials.
+                </p>
               </div>
             </div>
           )}
-
-
-
         </section>
       </main>
     </div>

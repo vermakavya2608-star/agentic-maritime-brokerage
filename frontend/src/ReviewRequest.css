@@ -6,7 +6,11 @@
   background: linear-gradient(135deg, #071325 0%, #0a1930 100%);
   padding: 40px 50px;
   color: #cbd5e1;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
   position: relative;
   z-index: 1;
 }
@@ -16,7 +20,10 @@
   content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(56, 189, 248, 0.1) 1px, transparent 1px);
+  background-image: radial-gradient(
+    rgba(56, 189, 248, 0.1) 1px,
+    transparent 1px
+  );
   background-size: 24px 24px;
   z-index: -1;
   pointer-events: none;
@@ -163,7 +170,11 @@
 }
 
 .route-highlight div {
-  background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(13, 110, 253, 0.1) 0%,
+    rgba(15, 23, 42, 0.5) 100%
+  );
   border: 1px solid rgba(13, 110, 253, 0.3);
 }
 
@@ -185,24 +196,26 @@
   border-left: 4px solid #38bdf8;
   border-radius: 8px;
   /* Monospace font gives it a tech/terminal feel */
-  font-family: 'Courier New', Courier, monospace; 
+  font-family: "Courier New", Courier, monospace;
   font-size: 14px;
   color: #38bdf8;
   resize: vertical;
   outline: none;
   transition: all 0.2s ease;
-  box-shadow: inset 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .feedback-input:focus {
   border-color: #38bdf8;
   background: rgba(7, 19, 37, 1);
-  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15), inset 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow:
+    0 0 0 4px rgba(56, 189, 248, 0.15),
+    inset 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .feedback-input::placeholder {
   color: #475569;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
 }
 
 /* =========================================
@@ -285,4 +298,433 @@
   .approve-button {
     width: 100%;
   }
+}
+
+.review-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.download-button {
+  padding: 11px 16px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 9px;
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.download-button:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.5);
+  transform: translateY(-1px);
+}
+
+/* =========================================
+   QUOTATION BRAND HEADER
+========================================= */
+
+.quotation-brand {
+  max-width: 1400px;
+  margin: 0 auto 28px;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(11, 27, 53, 0.7);
+  border: 1px solid #1e293b;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.quotation-brand h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.quotation-brand > div:first-child span {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.quotation-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.quotation-meta strong {
+  margin-bottom: 3px;
+  color: #38bdf8;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.quotation-meta span {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+/* =========================================
+   PRINT / PDF QUOTATION
+========================================= */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  .review-page {
+    min-height: auto;
+    padding: 0;
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  .review-page::before {
+    display: none;
+  }
+
+  /* Hide buttons and admin-only actions */
+  .review-header-actions,
+  .review-actions,
+  .feedback-input {
+    display: none !important;
+  }
+
+  /* Clean quotation header */
+  .review-header {
+    max-width: none;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #0f172a;
+  }
+
+  .review-label {
+    color: #0369a1 !important;
+  }
+
+  .review-header h1 {
+    color: #111827 !important;
+    font-size: 28px;
+  }
+
+  .review-header p {
+    color: #475569 !important;
+  }
+
+  /* Clean white sections */
+  .review-section {
+    max-width: none;
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: none !important;
+    backdrop-filter: none;
+    break-inside: avoid;
+  }
+
+  .section-title {
+    border-bottom: 1px solid #d1d5db;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+
+  .section-title h2 {
+    color: #111827 !important;
+    font-size: 16px;
+  }
+
+  .section-title span {
+    color: #64748b !important;
+    font-size: 11px;
+  }
+
+  .detail-grid {
+    gap: 10px;
+  }
+
+  .detail-grid div,
+  .route-highlight div {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 12px;
+  }
+
+  .detail-grid div:hover,
+  .route-highlight div:hover {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  .detail-grid span,
+  .route-highlight span {
+    color: #64748b !important;
+    font-size: 9px;
+  }
+
+  .detail-grid strong {
+    color: #111827 !important;
+    font-size: 13px;
+  }
+
+  .route-highlight {
+    gap: 10px;
+  }
+
+  .route-highlight div {
+    background: #f0f9ff !important;
+    border: 1px solid #bae6fd !important;
+  }
+
+  .route-highlight strong {
+    color: #0369a1 !important;
+    font-size: 18px;
+  }
+
+  .admin-feedback-section {
+    display: none !important;
+  }
+
+  .quotation-brand {
+    max-width: none;
+    margin: 0 0 20px;
+    padding: 0 0 14px;
+    background: #ffffff !important;
+    border: none;
+    border-bottom: 2px solid #0f172a;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .quotation-brand h2 {
+    color: #111827 !important;
+    font-size: 22px;
+  }
+
+  .quotation-brand > div:first-child span {
+    color: #64748b !important;
+  }
+
+  .quotation-meta strong {
+    color: #0369a1 !important;
+  }
+
+  .quotation-meta span {
+    color: #475569 !important;
+  }
+}
+
+/* =========================================
+   QUOTATION SUMMARY
+========================================= */
+
+.quotation-summary {
+  max-width: 1400px;
+  margin: 0 auto 20px;
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 18px;
+  background: linear-gradient(
+    135deg,
+    rgba(56, 189, 248, 0.12),
+    rgba(11, 27, 53, 0.85)
+  );
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.quotation-summary div {
+  padding: 16px 20px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 12px;
+  background: rgba(7, 19, 37, 0.5);
+}
+
+.quotation-summary span {
+  display: block;
+  margin-bottom: 7px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+}
+
+.quotation-summary strong {
+  display: block;
+  color: #38bdf8;
+  font-size: 25px;
+  font-weight: 800;
+}
+
+@media (max-width: 600px) {
+  .quotation-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.route-quotation-group {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media print {
+  .route-quotation-group {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* =========================================
+   COMPACT 2-PAGE QUOTATION
+========================================= */
+
+.review-page {
+  padding: 12px 24px !important;
+}
+
+.quotation-brand {
+  margin-bottom: 14px !important;
+  padding-bottom: 10px !important;
+}
+
+.review-header {
+  margin-bottom: 14px !important;
+}
+
+.review-header h1 {
+  font-size: 26px !important;
+}
+
+.review-header p {
+  margin-top: 3px !important;
+  font-size: 11px !important;
+}
+
+.review-section {
+  padding: 16px 20px !important;
+  margin-bottom: 12px !important;
+  border-radius: 10px !important;
+}
+
+.section-title {
+  margin-bottom: 12px !important;
+  padding-bottom: 8px !important;
+}
+
+.section-title h2 {
+  font-size: 15px !important;
+}
+
+.section-title span {
+  font-size: 10px !important;
+  margin-top: 3px !important;
+}
+
+.detail-grid {
+  gap: 8px !important;
+}
+
+.detail-grid div,
+.route-highlight div {
+  padding: 10px 12px !important;
+  border-radius: 8px !important;
+}
+
+.detail-grid span,
+.route-highlight span {
+  font-size: 8px !important;
+  margin-bottom: 3px !important;
+}
+
+.detail-grid strong {
+  font-size: 12px !important;
+}
+
+.route-highlight {
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.route-highlight strong {
+  font-size: 18px !important;
+}
+
+.quotation-summary {
+  padding: 14px 18px !important;
+  margin-bottom: 12px !important;
+  gap: 10px !important;
+}
+
+.quotation-summary div {
+  padding: 10px 14px !important;
+}
+
+.quotation-summary span {
+  font-size: 8px !important;
+  margin-bottom: 3px !important;
+}
+
+.quotation-summary strong {
+  font-size: 19px !important;
+}
+
+.quotation-notes {
+  padding: 14px 18px !important;
+  margin-bottom: 12px !important;
+}
+
+.quotation-notes h2 {
+  font-size: 14px !important;
+}
+
+.quotation-notes > p {
+  font-size: 9px !important;
+  line-height: 1.4 !important;
+}
+
+.quotation-note-grid {
+  gap: 8px !important;
+  margin-top: 10px !important;
+}
+
+.quotation-note-grid div {
+  padding: 8px 10px !important;
+}
+
+.quotation-note-grid span {
+  font-size: 7px !important;
+}
+
+.quotation-note-grid strong {
+  font-size: 10px !important;
+}
+
+.route-quotation-group {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 }

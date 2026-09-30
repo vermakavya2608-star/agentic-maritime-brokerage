@@ -45,15 +45,43 @@ function ReviewRequest({ request, onBack }) {
 
   return (
     <div className="review-page">
+      <div className="quotation-brand">
+        <div>
+          <h2>MARITIME AI</h2>
+          <span>Brokerage Intelligence</span>
+        </div>
+
+        <div className="quotation-meta">
+          <strong>FREIGHT QUOTATION</strong>
+          <span>Quotation ID: #{request.id}</span>
+          <span>Status: {request.status}</span>
+          <span>
+            Generated:{" "}
+            {new Date().toLocaleDateString("en-IN", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            })}
+          </span>
+        </div>
+      </div>
+
       <header className="review-header">
         <div>
-          <p className="review-label">QUOTATION REVIEW</p>
-          <h1>Review Request</h1>
-          <p>Review the customer's shipment and quotation details.</p>
+          <p className="review-label">MARITIME FREIGHT QUOTATION</p>
+          <h1>Freight Quotation</h1>
+          <p>AI-generated maritime freight quotation and shipment details.</p>
         </div>
-        <button className="back-button" onClick={onBack}>
-          ← Back
-        </button>
+
+        <div className="review-header-actions">
+          <button className="download-button" onClick={() => window.print()}>
+            ↓ Download Quotation
+          </button>
+
+          <button className="back-button" onClick={onBack}>
+            ← Back
+          </button>
+        </div>
       </header>
 
       {/* Customer Details */}
@@ -106,42 +134,65 @@ function ReviewRequest({ request, onBack }) {
         </div>
       </section>
 
-      {/* Route Details */}
-      <section className="review-section">
-        <div className="section-title">
-          <h2>Route Intelligence</h2>
-        </div>
-        <div className="route-highlight">
-          <div>
-            <span>Recommended Route</span>
-            <strong>{request.quotation.recommended_route}</strong>
+      {/* Route + Quotation Summary */}
+      <div className="route-quotation-group">
+        {/* Route Details */}
+        <section className="review-section">
+          <div className="section-title">
+            <h2>Route Intelligence</h2>
           </div>
-          <div>
-            <span>Route Score</span>
-            <strong>{request.quotation.route_score}</strong>
+          <div className="route-highlight">
+            <div>
+              <span>Recommended Route</span>
+              <strong>{request.quotation.recommended_route}</strong>
+            </div>
+            <div>
+              <span>Route Score</span>
+              <strong>{request.quotation.route_score}</strong>
+            </div>
           </div>
-        </div>
-        <div className="detail-grid">
-          <div>
-            <span>Transit Time</span>
-            <strong>{request.quotation.transit_time_days} days</strong>
+          <div className="detail-grid">
+            <div>
+              <span>Transit Time</span>
+              <strong>{request.quotation.transit_time_days} days</strong>
+            </div>
+            <div>
+              <span>Freight / Container</span>
+              <strong>${request.quotation.freight_per_container_usd}</strong>
+            </div>
           </div>
+        </section>
+
+        {/* Quotation Summary */}
+        <section className="quotation-summary">
           <div>
-            <span>Freight / Container</span>
-            <strong>${request.quotation.freight_per_container_usd}</strong>
-          </div>
-          <div>
-            <span>Total Freight</span>
+            <span>TOTAL QUOTATION VALUE</span>
             <strong>
               $
               {Number(request.quotation.total_freight_usd).toLocaleString(
                 "en-US",
-                { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                },
               )}
             </strong>
           </div>
-        </div>
-      </section>
+
+          <div>
+            <span>FREIGHT / CONTAINER</span>
+            <strong>
+              $
+              {Number(
+                request.quotation.freight_per_container_usd,
+              ).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </strong>
+          </div>
+        </section>
+      </div>
 
       {/* Pricing Agent */}
       <section className="review-section">
@@ -208,7 +259,7 @@ function ReviewRequest({ request, onBack }) {
       </section>
 
       {/* 3. New Feedback Section */}
-      <section className="review-section">
+      <section className="review-section admin-feedback-section">
         <div className="section-title">
           <h2>Admin Feedback</h2>
           <span>Provide a reason for approving or rejecting this request.</span>
