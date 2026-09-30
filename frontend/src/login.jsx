@@ -115,9 +115,8 @@ function Login({ onLogin }) {
           `Verification successful. Welcome back, ${pendingUser.name}!`,
         );
 
-        setTimeout(() => {
-          onLogin(pendingUser);
-        }, 800);
+        // Removed the artificial 800ms delay for instant dashboard loading
+        onLogin(pendingUser);
       } else {
         setMessageType("error");
         setMessage("Invalid or expired OTP. Please try again.");
