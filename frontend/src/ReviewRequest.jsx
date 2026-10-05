@@ -258,6 +258,151 @@ function ReviewRequest({ request, onBack }) {
         </div>
       </section>
 
+      {/* Customs & Risk Agent */}
+      {request.quotation.customs && request.quotation.shipment_risk_report && (
+        <section className="review-section">
+          <div className="section-title">
+            <h2>Customs & Regulatory Intelligence Agent</h2>
+            <span>
+              Live Route Compliance, Interactive Audit & Tariff Assessment
+            </span>
+          </div>
+
+          <div
+            className="route-highlight"
+            style={{ gridTemplateColumns: "1fr 1fr 1fr", marginBottom: "16px" }}
+          >
+            <div
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%)",
+                borderColor: "rgba(56, 189, 248, 0.3)",
+              }}
+            >
+              <span>Readiness Metric</span>
+              <strong style={{ color: "#38bdf8" }}>
+                {request.quotation.customs.audit_metric?.score_out_of_10 || 10}
+                /10 •{" "}
+                {request.quotation.customs.audit_metric?.grade || "Verified"}
+              </strong>
+            </div>
+
+            <div
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%)",
+                borderColor: "rgba(245, 158, 11, 0.3)",
+              }}
+            >
+              <span>Estimated Duty (USD)</span>
+              <strong style={{ color: "#fcd34d" }}>
+                $
+                {request.quotation.customs.estimated_duties_usd?.toLocaleString(
+                  "en-US",
+                ) || "—"}
+              </strong>
+            </div>
+
+            <div
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%)",
+                borderColor: "rgba(16, 185, 129, 0.3)",
+              }}
+            >
+              <span>Clearance Window</span>
+              <strong style={{ color: "#10b981", fontSize: "18px" }}>
+                {request.quotation.customs.estimated_clearance_time ||
+                  "Standard"}
+              </strong>
+            </div>
+          </div>
+
+          <div
+            className="detail-grid"
+            style={{ gridTemplateColumns: "1fr 1fr" }}
+          >
+            <div>
+              <span>
+                Verified In-Hand Documents (
+                {request.quotation.customs.provided_documents?.length || 0})
+              </span>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "6px",
+                  marginTop: "8px",
+                }}
+              >
+                {request.quotation.customs.provided_documents?.map(
+                  (doc, idx) => (
+                    <span
+                      key={idx}
+                      style={{
+                        background: "rgba(16, 185, 129, 0.15)",
+                        color: "#34d399",
+                        padding: "4px 8px",
+                        borderRadius: "6px",
+                        fontSize: "11px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      ✓ {doc}
+                    </span>
+                  ),
+                )}
+              </div>
+            </div>
+
+            <div>
+              <span>
+                Pending / Missing Documents (
+                {request.quotation.customs.missing_documents?.length || 0})
+              </span>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "6px",
+                  marginTop: "8px",
+                }}
+              >
+                {request.quotation.customs.missing_documents?.length > 0 ? (
+                  request.quotation.customs.missing_documents.map(
+                    (doc, idx) => (
+                      <span
+                        key={idx}
+                        style={{
+                          background: "rgba(239, 68, 68, 0.15)",
+                          color: "#fca5a5",
+                          padding: "4px 8px",
+                          borderRadius: "6px",
+                          fontSize: "11px",
+                          fontWeight: "600",
+                        }}
+                      >
+                        ✕ {doc}
+                      </span>
+                    ),
+                  )
+                ) : (
+                  <span
+                    style={{
+                      color: "#10b981",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    All documents submitted!
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* 3. New Feedback Section */}
       <section className="review-section admin-feedback-section">
         <div className="section-title">

@@ -1,19 +1,31 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class RouteRequest(BaseModel):
-   origin: str
-   destination: str
-   cargo_type: str
-   containers: int
+    origin: str
+    destination: str
+    cargo_type: str
+    containers: int
 
 class QuotationRequest(BaseModel):
-   origin:str
-   destination:str
-   cargo_type:str
-   containers:int
+    origin: str
+    destination: str
+    cargo_type: str
+    containers: int
+    transshipments: Optional[int] = 0
+    route_type: Optional[str] = "Direct"
+    provided_documents: List[str] = []
 
-# --- New OTP Models ---
+class CustomsAuditRequest(BaseModel):
+    origin: str
+    destination: str
+    cargo_type: str
+    containers: int
+    transshipments: Optional[int] = 0
+    route_type: Optional[str] = "Direct"
+    provided_documents: List[str] = []
+
+# --- OTP & Other Models remain unchanged ---
 class OTPRequest(BaseModel):
     email: str
 

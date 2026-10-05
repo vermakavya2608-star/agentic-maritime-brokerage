@@ -3,6 +3,7 @@ import {
   generateQuotation,
   getLiveInsight,
   getSystemHealth,
+  auditCustoms,
 } from "./services/routeApi";
 import {
   MapContainer,
@@ -12,8 +13,34 @@ import {
   Polyline,
   useMap,
 } from "react-leaflet";
+
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+
+// UPDATE YOUR IMPORTS TO INCLUDE Plus AND Star
+import {
+  User,
+  Mail,
+  Building2,
+  Briefcase,
+  Phone,
+  Globe,
+  Camera,
+  Trash2,
+  Save,
+  CheckCircle2,
+  Shield,
+  CreditCard,
+  SlidersHorizontal,
+  X,
+  MapPin,
+  Lock,
+  Plus,
+  Star,
+  Smartphone,
+} from "lucide-react";
+
+import { QRCodeSVG } from "qrcode.react";
 import "./App.css";
 
 // ----------------------------------------------------
@@ -55,6 +82,7 @@ const portCoordinates = {
 // ----------------------------------------------------
 // DYNAMIC WAYPOINT ROUTING FOR ALTERNATIVES
 // ----------------------------------------------------
+
 const waypoints = {
   Gibraltar: [35.95, -5.48],
   Suez: [29.92, 32.55],
@@ -63,6 +91,63 @@ const waypoints = {
   Panama: [9.1, -79.68],
   CapeOfGoodHope: [-35.0, 20.0],
 };
+
+// ----------------------------------------------------
+// GLOBAL CURRENCIES
+// ----------------------------------------------------
+const WORLD_CURRENCIES = [
+  "USD ($) - US Dollar",
+  "EUR (€) - Euro",
+  "GBP (£) - British Pound",
+  "JPY (¥) - Japanese Yen",
+  "AUD (A$) - Australian Dollar",
+  "CAD (C$) - Canadian Dollar",
+  "CHF (Fr) - Swiss Franc",
+  "CNY (¥) - Chinese Yuan",
+  "INR (₹) - Indian Rupee",
+  "SGD (S$) - Singapore Dollar",
+  "NZD (NZ$) - New Zealand Dollar",
+  "MXN ($) - Mexican Peso",
+  "HKD (HK$) - Hong Kong Dollar",
+  "ZAR (R) - South African Rand",
+  "BRL (R$) - Brazilian Real",
+  "RUB (₽) - Russian Ruble",
+  "KRW (₩) - South Korean Won",
+  "TRY (₺) - Turkish Lira",
+  "SEK (kr) - Swedish Krona",
+  "NOK (kr) - Norwegian Krone",
+  "DKK (kr) - Danish Krone",
+  "PLN (zł) - Polish Zloty",
+  "THB (฿) - Thai Baht",
+  "IDR (Rp) - Indonesian Rupiah",
+  "MYR (RM) - Malaysian Ringgit",
+  "PHP (₱) - Philippine Peso",
+  "VND (₫) - Vietnamese Dong",
+  "AED (د.إ) - UAE Dirham",
+  "SAR (﷼) - Saudi Riyal",
+  "ILS (₪) - Israeli New Shekel",
+  "EGP (E£) - Egyptian Pound",
+  "NGN (₦) - Nigerian Naira",
+  "KES (KSh) - Kenyan Shilling",
+  "GHS (GH₵) - Ghanaian Cedi",
+  "PKR (₨) - Pakistani Rupee",
+  "BDT (৳) - Bangladeshi Taka",
+  "LKR (Rs) - Sri Lankan Rupee",
+  "ARS ($) - Argentine Peso",
+  "CLP ($) - Chilean Peso",
+  "COP ($) - Colombian Peso",
+  "PEN (S/) - Peruvian Sol",
+  "UAH (₴) - Ukrainian Hryvnia",
+  "CZK (Kč) - Czech Koruna",
+  "HUF (Ft) - Hungarian Forint",
+  "RON (lei) - Romanian Leu",
+  "BGN (лв) - Bulgarian Lev",
+  "MAD (MAD) - Moroccan Dirham",
+  "QAR (QR) - Qatari Riyal",
+  "KWD (KD) - Kuwaiti Dinar",
+  "BHD (BD) - Bahraini Dinar",
+  "OMR (OR) - Omani Rial",
+];
 
 const getRegion = (port) => {
   if (
@@ -190,17 +275,369 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
   const [result, setResult] = useState(null);
   const [activeRoute, setActiveRoute] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [activeSection, setActiveSection] = useState("dashboard");
+
+  // Holds currently checked document names
+  const [checkedDocs, setCheckedDocs] = useState([]);
+  const [isAuditingDocs, setIsAuditingDocs] = useState(false);
+
+  // 👉 2. PASTE THE NEW CUSTOMS EFFECT HERE
+  useEffect(() => {
+    if (result?.customs?.required_documents) {
+      const initialChecked = result.customs.required_documents.filter(
+        (doc) =>
+          doc.includes("Commercial Invoice") ||
+          doc.includes("Packing List") ||
+          doc.includes("Ocean Bill of Lading"),
+      );
+      setCheckedDocs(initialChecked);
+    }
+  }, [result?.recommended_route]);
+
+  // Handler for checking/unchecking documents dynamically
+  const toggleDocument = async (docName) => {
+    const updatedDocs = checkedDocs.includes(docName)
+      ? checkedDocs.filter((d) => d !== docName)
+      : [...checkedDocs, docName];
+
+    setCheckedDocs(updatedDocs);
+    setIsAuditingDocs(true);
+
+    try {
+      const auditedCustoms = await auditCustoms({
+        origin: result.origin,
+        destination: result.destination,
+        cargo_type: result.cargo_type,
+        containers: Number(result.containers),
+        transshipments: activeRoute?.transshipments || 0,
+        route_type: activeRoute?.route_type || "Direct",
+        provided_documents: updatedDocs,
+      });
+
+      // Update the result object in state with the new customs audit
+      setResult((prev) => {
+        // --- NEW: Recalculate Overall Risk dynamically! ---
+        const wRisk = prev.shipment_risk_report.weather_risk || "Low";
+
+        // If they score a perfect 10/10 on docs, lower the customs risk automatically
+        let cRisk = auditedCustoms.customs_risk_level || "Low";
+        if (auditedCustoms.audit_metric.score_out_of_10 === 10) {
+          cRisk = "Low";
+        }
+
+        const riskWeights = { Low: 1, Moderate: 2, High: 3 };
+        const maxRisk = Math.max(
+          riskWeights[wRisk] || 1,
+          riskWeights[cRisk] || 1,
+        );
+
+        let newOverallRisk = "Low";
+        if (maxRisk === 2) newOverallRisk = "Moderate";
+        if (maxRisk === 3) newOverallRisk = "High";
+
+        return {
+          ...prev,
+          customs: auditedCustoms,
+          shipment_risk_report: {
+            ...prev.shipment_risk_report,
+            customs_risk: auditedCustoms.customs_risk_level,
+            overall_risk: newOverallRisk, // <--- This updates the text pill & ring color!
+            readiness_grade: auditedCustoms.audit_metric.grade,
+            readiness_score: auditedCustoms.audit_metric.score_out_of_10,
+            summary: `Customs status: ${auditedCustoms.validation_status} (${auditedCustoms.audit_metric.grade} Readiness).`,
+          },
+        };
+      });
+
+      // Update the stored record in localStorage as well
+      const savedRequests =
+        JSON.parse(localStorage.getItem("quotationRequests")) || [];
+      if (savedRequests.length > 0) {
+        const wRisk =
+          savedRequests[0].quotation.shipment_risk_report.weather_risk || "Low";
+
+        let cRisk = auditedCustoms.customs_risk_level || "Low";
+        if (auditedCustoms.audit_metric.score_out_of_10 === 10) {
+          cRisk = "Low";
+        }
+
+        const riskWeights = { Low: 1, Moderate: 2, High: 3 };
+        const maxRisk = Math.max(
+          riskWeights[wRisk] || 1,
+          riskWeights[cRisk] || 1,
+        );
+
+        let newOverallRisk = "Low";
+        if (maxRisk === 2) newOverallRisk = "Moderate";
+        if (maxRisk === 3) newOverallRisk = "High";
+
+        savedRequests[0].quotation.customs = auditedCustoms;
+        savedRequests[0].quotation.shipment_risk_report.customs_risk =
+          auditedCustoms.customs_risk_level;
+        savedRequests[0].quotation.shipment_risk_report.overall_risk =
+          newOverallRisk; // <--- Save it
+        savedRequests[0].quotation.shipment_risk_report.readiness_grade =
+          auditedCustoms.audit_metric.grade;
+        localStorage.setItem(
+          "quotationRequests",
+          JSON.stringify(savedRequests),
+        );
+      }
+    } catch (err) {
+      console.error("Customs audit update failed:", err);
+    } finally {
+      setIsAuditingDocs(false);
+    }
+  };
+
+  // Initialize state from sessionStorage so it survives a refresh
+  const [activeSection, setActiveSection] = useState(() => {
+    return sessionStorage.getItem("currentDashboardSection") || "dashboard";
+  });
+
+  // Automatically save the current section to sessionStorage whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem("currentDashboardSection", activeSection);
+  }, [activeSection]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [highlightedRequestId, setHighlightedRequestId] = useState(null);
 
-  // Settings Page State
-  const [settingsTab, setSettingsTab] = useState("profile");
+  // Settings Page State (Persisted on refresh)
+  const [settingsTab, setSettingsTab] = useState(() => {
+    return sessionStorage.getItem("currentSettingsTab") || "profile";
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem("currentSettingsTab", settingsTab);
+  }, [settingsTab]);
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
+
+  // Custom Glassmorphic Dropdown States
+  const [unitsMenuOpen, setUnitsMenuOpen] = useState(false);
+  const [currencyMenuOpen, setCurrencyMenuOpen] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState(
+    user?.preferences?.unit || "Metric (NM / °C)",
+  );
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    user?.preferences?.currency || "USD ($)",
+  );
+
+  // New Interactive Settings States
+  const [emailNotifications, setEmailNotifications] = useState(
+    user?.preferences?.emailNotifications ?? true,
+  );
+
+  const [passwords, setPasswords] = useState({
+    current: "",
+    new: "",
+    confirm: "",
+  });
+
+  // Look directly at the backend's is_2fa_enabled flag first
+  const [twoFactorAuth, setTwoFactorAuth] = useState(
+    user?.is_2fa_enabled || user?.security?.twoFactorAuth || false,
+  );
+  const [securityMsg, setSecurityMsg] = useState("");
+
+  // 2FA Real-world Provisioning State
+  const [setup2fa, setSetup2fa] = useState({
+    active: false,
+    uri: "",
+    secret: "",
+    token: "",
+    error: "",
+    loading: false,
+  });
+
+  // CRITICAL FIX: Reset the security UI completely when a new user logs in
+  useEffect(() => {
+    setTwoFactorAuth(
+      user?.is_2fa_enabled || user?.security?.twoFactorAuth || false,
+    );
+    setSetup2fa({
+      active: false,
+      uri: "",
+      secret: "",
+      token: "",
+      error: "",
+      loading: false,
+    });
+    setSecurityMsg("");
+    setPasswords({ current: "", new: "", confirm: "" });
+  }, [user?.email, user?.is_2fa_enabled]);
+
+  // Enterprise Billing & Subscription State
+  const [billingData, setBillingData] = useState(null);
+  const [isAddingCard, setIsAddingCard] = useState(false);
+  const [newCard, setNewCard] = useState({
+    brand: "Visa",
+    last4: "",
+    exp_date: "",
+    is_primary: false,
+    upi_id: "",
+  });
+
+  const fetchBilling = () => {
+    if (user?.email) {
+      fetch(`http://127.0.0.1:8000/api/auth/billing/${user.email}`)
+        .then((res) => res.json())
+        .then((data) => setBillingData(data))
+        .catch((err) => console.error("Failed to fetch billing", err));
+    }
+  };
+
+  useEffect(() => {
+    if (settingsTab === "billing") fetchBilling();
+  }, [settingsTab, user]);
+
+  const handleAddPaymentMethod = async () => {
+    let payload = { ...newCard };
+
+    // Dynamic validation and formatting based on selected payment type
+    if (["Visa", "Mastercard", "American Express"].includes(newCard.brand)) {
+      if (newCard.last4.length !== 4 || newCard.exp_date.length < 5) {
+        setSaveMessage("Please enter valid card details.");
+        return;
+      }
+    } else if (newCard.brand === "PayPal") {
+      payload.last4 = "Acct";
+      payload.exp_date = "Linked";
+    } else if (newCard.brand === "Bank Transfer") {
+      if (newCard.last4.length !== 4) {
+        setSaveMessage("Please enter last 4 digits of account.");
+        return;
+      }
+      payload.exp_date = "Verified";
+    } else if (["Apple Pay", "Google Pay"].includes(newCard.brand)) {
+      payload.last4 = "Devc";
+      payload.exp_date = "Active";
+    } else if (newCard.brand === "UPI") {
+      if (!newCard.upi_id || !newCard.upi_id.includes("@")) {
+        setSaveMessage("Please enter a valid UPI ID (e.g., name@okbank).");
+        return;
+      }
+      // Sends only the last 4 characters of the UPI handle to fit the database schema securely
+      payload.last4 = newCard.upi_id.slice(-4);
+      payload.exp_date = "Active";
+    }
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/auth/billing/methods/add",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email, ...payload }),
+        },
+      );
+
+      if (!response.ok) {
+        const errData = await response.json();
+        setSaveMessage(errData.detail || "Server validation failed.");
+        return;
+      }
+
+      setIsAddingCard(false);
+      setNewCard({
+        brand: "Visa",
+        last4: "",
+        exp_date: "",
+        is_primary: false,
+        upi_id: "",
+      });
+      fetchBilling(); // Refresh the list dynamically from the backend
+      setSaveMessage("Payment method added successfully.");
+      setTimeout(() => setSaveMessage(""), 3000);
+    } catch (err) {
+      setSaveMessage("Network error. Cannot reach backend.");
+    }
+  };
+
+  const handleDeleteMethod = async (id) => {
+    await fetch(
+      `http://127.0.0.1:8000/api/auth/billing/methods/${id}?email=${user.email}`,
+      { method: "DELETE" },
+    );
+    fetchBilling();
+  };
+
+  const handleMakePrimary = async (id) => {
+    await fetch(
+      `http://127.0.0.1:8000/api/auth/billing/methods/${id}/primary?email=${user.email}`,
+      { method: "PUT" },
+    );
+    fetchBilling();
+  };
+
+  const handleGenerate2FA = async () => {
+    setSetup2fa({ ...setup2fa, loading: true, error: "" });
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/auth/2fa/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        setSetup2fa({
+          active: true,
+          uri: data.uri,
+          secret: data.secret,
+          token: "",
+          error: "",
+          loading: false,
+        });
+      }
+    } catch (err) {
+      setSetup2fa({
+        ...setup2fa,
+        error: "Failed to reach server.",
+        loading: false,
+      });
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/auth/2fa/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, token: setup2fa.token }),
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        setTwoFactorAuth(true);
+        setSetup2fa({
+          active: false,
+          uri: "",
+          token: "",
+          error: "",
+          loading: false,
+        });
+        onUpdateUser({ ...user, security: { twoFactorAuth: true } }); // Sync to local memory
+        setSaveMessage("Authenticator connected successfully.");
+        setTimeout(() => setSaveMessage(""), 3000);
+      } else {
+        setSetup2fa({ ...setup2fa, error: data.detail });
+      }
+    } catch (err) {
+      setSetup2fa({ ...setup2fa, error: "Verification failed." });
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    await fetch("http://127.0.0.1:8000/api/auth/2fa/disable", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email }),
+    });
+    setTwoFactorAuth(false);
+    onUpdateUser({ ...user, security: { twoFactorAuth: false } });
+  };
 
   // Intelligently parse the existing phone string into Code and Number
   const initialPhoneFull = user?.phone || "+91 98765 43210";
@@ -213,8 +650,8 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
     email: user?.email || "",
     company: user?.company || "Maritime Brokerage Inc.",
     role: user?.jobRole || "Operations Manager",
-    phoneCode: initialCode,            // <--- NEW: Separated Country Code
-    phoneNumber: initialNumber,        // <--- NEW: Separated Phone Number
+    phoneCode: initialCode, // <--- NEW: Separated Country Code
+    phoneNumber: initialNumber, // <--- NEW: Separated Phone Number
     timezone: user?.timezone || "Asia/Kolkata (IST)",
     avatar: user?.avatar || null,
   });
@@ -226,13 +663,44 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
   // 1. AVATAR UPLOAD HANDLER
   const handleAvatarUpload = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        handleProfileUpdate("avatar", reader.result);
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+
+        // Aggressively resize to 150px max to stay well under local storage limits
+        const MAX_SIZE = 150;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to a highly compressed JPEG (60% quality)
+        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
+        handleProfileUpdate("avatar", compressedBase64);
       };
-      reader.readAsDataURL(file);
-    }
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   // 2. INTERNATIONAL SMART PHONE FORMATTER
@@ -245,7 +713,8 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
 
     if (code === "+91") {
       // India: 98765 43210
-      if (input.length > 5) formatted = `${input.slice(0, 5)} ${input.slice(5)}`;
+      if (input.length > 5)
+        formatted = `${input.slice(0, 5)} ${input.slice(5)}`;
     } else if (code === "+1") {
       // US/Canada: (555) 123-4567
       if (input.length > 3 && input.length <= 6) {
@@ -266,24 +735,48 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
   };
 
   // 3. PREMIUM INPUT RENDERER (UX ENHANCER)
-  const renderPremiumInput = (label, field, type, icon, placeholder, customHandler = null) => (
+  const renderPremiumInput = (
+    label,
+    field,
+    type,
+    IconComponent,
+    placeholder,
+    customHandler = null,
+  ) => (
     <div className="form-group">
       <label>{label}</label>
-      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-        <span style={{ position: "absolute", left: "16px", color: "#64748b", fontSize: "15px", pointerEvents: "none" }}>
-          {icon}
+      <div
+        style={{ position: "relative", display: "flex", alignItems: "center" }}
+      >
+        <span
+          style={{
+            position: "absolute",
+            left: "14px",
+            color: "#64748b",
+            pointerEvents: "none",
+            zIndex: 2,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <IconComponent size={16} />
         </span>
         <input
           type={type}
           className="settings-input"
           style={{
-            paddingLeft: "44px",
+            paddingLeft: "46px",
             paddingRight: profileData[field] ? "40px" : "16px",
             fontFamily: "inherit",
             fontWeight: "500",
+            width: "100%",
           }}
           value={profileData[field]}
-          onChange={customHandler ? customHandler : (e) => handleProfileUpdate(field, e.target.value)}
+          onChange={
+            customHandler
+              ? customHandler
+              : (e) => handleProfileUpdate(field, e.target.value)
+          }
           placeholder={placeholder}
         />
         {/* Dynamic Clear Button */}
@@ -292,15 +785,35 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
             onClick={() => handleProfileUpdate(field, "")}
             title="Clear field"
             style={{
-              position: "absolute", right: "14px", color: "#94a3b8", cursor: "pointer",
-              fontSize: "10px", background: "rgba(255,255,255,0.08)",
-              width: "18px", height: "18px", display: "flex", alignItems: "center",
-              justifyContent: "center", borderRadius: "50%", fontWeight: "bold",
+              position: "absolute",
+              right: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#94a3b8",
+              cursor: "pointer",
+              fontSize: "10px",
+              background: "rgba(255,255,255,0.08)",
+              width: "20px",
+              height: "20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "50%",
+              fontWeight: "bold",
               transition: "all 0.2s ease",
+              zIndex: 2,
             }}
-            onMouseOver={(e) => { e.target.style.background = "#ef4444"; e.target.style.color = "#fff"; }}
-            onMouseOut={(e) => { e.target.style.background = "rgba(255,255,255,0.08)"; e.target.style.color = "#94a3b8"; }}
-          >✕</span>
+            onMouseOver={(e) => {
+              e.target.style.background = "#ef4444";
+              e.target.style.color = "#fff";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+              e.currentTarget.style.color = "#94a3b8";
+            }}
+          >
+            <X size={12} strokeWidth={3} />
+          </span>
         )}
       </div>
     </div>
@@ -310,29 +823,59 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
   const renderInternationalPhoneInput = () => (
     <div className="form-group">
       <label>Phone Number</label>
-      <div 
-        style={{ 
-          position: "relative", display: "flex", alignItems: "center", 
-          background: "rgba(0, 0, 0, 0.25)", border: "1px solid rgba(255, 255, 255, 0.08)", 
-          borderRadius: "10px", transition: "all 0.2s ease" 
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          background: "rgba(0, 0, 0, 0.25)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          borderRadius: "10px",
+          transition: "all 0.2s ease",
         }}
-        onFocus={(e) => e.currentTarget.style.borderColor = "#38bdf8"}
-        onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)"}
+        onFocus={(e) => (e.currentTarget.style.borderColor = "#38bdf8")}
+        onBlur={(e) =>
+          (e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)")
+        }
       >
-        <span style={{ position: "absolute", left: "14px", color: "#64748b", fontSize: "15px", pointerEvents: "none", zIndex: 1 }}>📞</span>
-        
+        <span
+          style={{
+            position: "absolute",
+            left: "14px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "#64748b",
+            display: "flex",
+            pointerEvents: "none",
+            zIndex: 1,
+          }}
+        >
+          <Phone size={16} />
+        </span>
+
         {/* Country Code Dropdown */}
         <select
           value={profileData.phoneCode}
           onChange={(e) => {
             handleProfileUpdate("phoneCode", e.target.value);
-            handleProfileUpdate("phoneNumber", profileData.phoneNumber.replace(/[^\d]/g, "")); 
+            handleProfileUpdate(
+              "phoneNumber",
+              profileData.phoneNumber.replace(/[^\d]/g, ""),
+            );
           }}
           style={{
-            appearance: "none", background: "transparent", border: "none",
-            borderRight: "1px solid rgba(255, 255, 255, 0.1)", color: "#38bdf8",
-            padding: "13px 26px 13px 40px", fontSize: "13.5px", fontWeight: "700",
-            cursor: "pointer", outline: "none", width: "115px", zIndex: 0
+            appearance: "none",
+            background: "transparent",
+            border: "none",
+            borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+            color: "#38bdf8",
+            padding: "13px 26px 13px 40px",
+            fontSize: "13.5px",
+            fontWeight: "700",
+            cursor: "pointer",
+            outline: "none",
+            width: "115px",
+            zIndex: 0,
           }}
         >
           <option value="+1">🇺🇸 +1</option>
@@ -344,7 +887,19 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
           <option value="+49">🇩🇪 +49</option>
           <option value="+86">🇨🇳 +86</option>
         </select>
-        <span style={{ position: "absolute", left: "100px", color: "#64748b", fontSize: "10px", pointerEvents: "none" }}>▼</span>
+        <span
+          style={{
+            position: "absolute",
+            left: "100px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "#64748b",
+            fontSize: "10px",
+            pointerEvents: "none",
+          }}
+        >
+          ▼
+        </span>
 
         {/* Number Input */}
         <input
@@ -353,9 +908,16 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
           onChange={handlePhoneChange}
           placeholder="Phone number"
           style={{
-            flex: 1, background: "transparent", border: "none", color: "#f1f5f9",
-            padding: "13px 16px", fontSize: "14px", fontFamily: "'Courier New', monospace",
-            fontWeight: "600", letterSpacing: "1px", outline: "none"
+            flex: 1,
+            background: "transparent",
+            border: "none",
+            color: "#f1f5f9",
+            padding: "13px 16px",
+            fontSize: "14px",
+            fontFamily: "'Courier New', monospace",
+            fontWeight: "600",
+            letterSpacing: "1px",
+            outline: "none",
           }}
         />
 
@@ -365,15 +927,34 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
             onClick={() => handleProfileUpdate("phoneNumber", "")}
             title="Clear field"
             style={{
-              position: "absolute", right: "14px", color: "#94a3b8", cursor: "pointer",
-              fontSize: "10px", background: "rgba(255,255,255,0.08)",
-              width: "18px", height: "18px", display: "flex", alignItems: "center",
-              justifyContent: "center", borderRadius: "50%", fontWeight: "bold",
+              position: "absolute",
+              right: "14px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#94a3b8",
+              cursor: "pointer",
+              fontSize: "10px",
+              background: "rgba(255,255,255,0.08)",
+              width: "20px",
+              height: "20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "50%",
+              fontWeight: "bold",
               transition: "all 0.2s ease",
             }}
-            onMouseOver={(e) => { e.target.style.background = "#ef4444"; e.target.style.color = "#fff"; }}
-            onMouseOut={(e) => { e.target.style.background = "rgba(255,255,255,0.08)"; e.target.style.color = "#94a3b8"; }}
-          >✕</span>
+            onMouseOver={(e) => {
+              e.target.style.background = "#ef4444";
+              e.target.style.color = "#fff";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.background = "rgba(255,255,255,0.08)";
+              e.target.style.color = "#94a3b8";
+            }}
+          >
+            ✕
+          </span>
         )}
       </div>
     </div>
@@ -382,6 +963,26 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
   const saveSettings = () => {
     setIsSaving(true);
     setSaveMessage("");
+    setSecurityMsg("");
+
+    // Basic password validation if user is trying to change it
+    if (settingsTab === "security" && (passwords.new || passwords.current)) {
+      if (!passwords.current) {
+        setSecurityMsg("Please enter your current password.");
+        setIsSaving(false);
+        return;
+      }
+      if (passwords.new.length < 8) {
+        setSecurityMsg("New password must be at least 8 characters.");
+        setIsSaving(false);
+        return;
+      }
+      if (passwords.new !== passwords.confirm) {
+        setSecurityMsg("New passwords do not match.");
+        setIsSaving(false);
+        return;
+      }
+    }
 
     setTimeout(() => {
       if (onUpdateUser) {
@@ -391,11 +992,23 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
           email: profileData.email,
           company: profileData.company,
           jobRole: profileData.role,
-          // Re-combine the global code and the formatted number
-          phone: `${profileData.phoneCode} ${profileData.phoneNumber}`, 
+          phone: `${profileData.phoneCode} ${profileData.phoneNumber}`,
           timezone: profileData.timezone,
           avatar: profileData.avatar,
+          preferences: {
+            unit: selectedUnit,
+            currency: selectedCurrency,
+            emailNotifications: emailNotifications,
+          },
+          security: {
+            twoFactorAuth: twoFactorAuth,
+          },
         });
+      }
+
+      // Clear the password boxes upon a successful save
+      if (settingsTab === "security") {
+        setPasswords({ current: "", new: "", confirm: "" });
       }
 
       setIsSaving(false);
@@ -413,6 +1026,7 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
     route: "loading",
     weather: "loading",
     pricing: "loading",
+    customs: "loading",
   });
 
   // Poll the backend every 10 seconds for real-time agent health
@@ -1108,8 +1722,8 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                   <h3>Weather Routing</h3>
                   <p>
                     {agentHealth.weather === "offline"
-                      ? "Agent offline. Satellite telemetry connection lost."
-                      : "Monitoring live satellite telemetry and marine risk factors across all active ports."}
+                      ? "Agent offline. Live weather data unavailable."
+                      : "Live weather monitoring active. Analyzing port conditions, wind risk, marine alerts, and weather impact on freight pricing."}
                   </p>
                 </div>
 
@@ -1139,6 +1753,37 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                     {agentHealth.pricing === "offline"
                       ? "Agent offline. Core pricing engine unreachable."
                       : "Calculating live fuel surcharges, port fees, and margin optimization factors."}
+                  </p>
+                </div>
+
+                {/* 4. Customs Agent */}
+                <div
+                  className={`construction-card ${agentHealth.customs === "offline" ? "offline" : ""}`}
+                >
+                  <div className="card-3d-visual">
+                    <div
+                      className="radar-pulse-visual"
+                      style={{
+                        borderColor: "#f59e0b",
+                        color: "#f59e0b",
+                        background: "rgba(245, 158, 11, 0.1)",
+                      }}
+                    >
+                      🏛️
+                    </div>
+                  </div>
+                  <div className={`agent-status-badge ${agentHealth.customs}`}>
+                    {agentHealth.customs === "loading"
+                      ? "⏳ CHECKING"
+                      : agentHealth.customs === "online"
+                        ? "🟢 ONLINE"
+                        : "🔴 OFFLINE"}
+                  </div>
+                  <h3>Customs & Risk</h3>
+                  <p>
+                    {agentHealth.customs === "offline"
+                      ? "Agent offline. Customs database unreachable."
+                      : "Validating international shipping documents and assessing holistic shipment risk."}
                   </p>
                 </div>
               </div>
@@ -1396,24 +2041,59 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                 </div>
 
                 {/* Live LLM Route Agent Card */}
-                <div className="card agent-card">
+                <div className="llm-agent-card">
                   <div
                     className="card-heading"
-                    style={{ marginBottom: "16px" }}
+                    style={{
+                      marginBottom: "0px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "16px",
+                    }}
                   >
-                    <div className="agent-icon">✦</div>
+                    <div
+                      className="agent-icon"
+                      style={{
+                        background: "rgba(56, 189, 248, 0.15)",
+                        border: "1px solid rgba(56, 189, 248, 0.4)",
+                        boxShadow: "0 0 15px rgba(56, 189, 248, 0.3)",
+                        color: "#38bdf8",
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "22px",
+                      }}
+                    >
+                      ✦
+                    </div>
                     <div>
-                      <h2>Route Intelligence AI</h2>
+                      <h2
+                        style={{
+                          color: "#ffffff",
+                          margin: "0 0 4px 0",
+                          fontSize: "20px",
+                          fontWeight: "800",
+                          letterSpacing: "-0.5px",
+                        }}
+                      >
+                        Route Intelligence AI
+                      </h2>
                       <p
                         style={{
-                          margin: "2px 0 0",
-                          fontSize: "12px",
+                          margin: "0",
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          letterSpacing: "1.5px",
                           color: "#38bdf8",
+                          textTransform: "uppercase",
                         }}
                       >
                         LIVE ANALYSIS: {origin.toUpperCase()} TO{" "}
                         {destination.toUpperCase()}
-                        {activeRoute ? ` (ROUTE ${activeRoute.route_id})` : ""}
+                        {activeRoute ? ` // ROUTE ${activeRoute.route_id}` : ""}
                       </p>
                     </div>
                   </div>
@@ -1431,7 +2111,7 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                       <span className="prompt-arrow">❯</span>
                       {isLlmLoading ? (
                         <span className="typing-text">
-                          Generating custom trade lane analysis...
+                          Generating custom trade lane analysis..._
                         </span>
                       ) : (
                         <p className="insight-text">{llmInsight}</p>
@@ -1936,6 +2616,388 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                               <strong>✦ Marine Agent Advisory:</strong>{" "}
                               {result.weather.advisory}
                             </div>
+
+                            {/* Weather Pricing Impact */}
+                            {result.weather_pricing && (
+                              <div className="weather-pricing-impact">
+                                <div className="weather-impact-header">
+                                  <div>
+                                    <strong>Weather Pricing Impact</strong>
+                                    <span>
+                                      Dynamic pricing adjustment based on marine
+                                      risk
+                                    </span>
+                                  </div>
+
+                                  <div
+                                    className={`risk-badge ${result.weather_pricing.weather_risk_level?.toLowerCase()}`}
+                                  >
+                                    {result.weather_pricing.weather_risk_level}{" "}
+                                    Risk
+                                  </div>
+                                </div>
+
+                                <div className="weather-impact-grid">
+                                  <div className="weather-impact-item">
+                                    <small>Weather Surcharge</small>
+                                    <strong>
+                                      {
+                                        result.weather_pricing
+                                          .weather_surcharge_percent
+                                      }
+                                      %
+                                    </strong>
+                                  </div>
+
+                                  <div className="weather-impact-item">
+                                    <small>Estimated Delay</small>
+                                    <strong>
+                                      {
+                                        result.weather_pricing
+                                          .estimated_delay_days
+                                      }{" "}
+                                      days
+                                    </strong>
+                                  </div>
+
+                                  <div className="weather-impact-item">
+                                    <small>Price Before Weather</small>
+                                    <strong>
+                                      {formatCurrency(
+                                        result.weather_pricing
+                                          .price_before_weather_usd,
+                                      )}
+                                    </strong>
+                                  </div>
+
+                                  <div className="weather-impact-item">
+                                    <small>Price After Weather</small>
+                                    <strong>
+                                      {formatCurrency(
+                                        result.weather_pricing
+                                          .price_after_weather_usd,
+                                      )}
+                                    </strong>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Weather Alerts */}
+                            {result.weather.weather_alerts &&
+                              result.weather.weather_alerts.length > 0 && (
+                                <div className="weather-alerts">
+                                  <div className="weather-alerts-header">
+                                    <strong>⚠️ Weather Alerts</strong>
+                                    <span>
+                                      Marine conditions requiring attention
+                                    </span>
+                                  </div>
+
+                                  <div className="weather-alert-list">
+                                    {result.weather.weather_alerts.map(
+                                      (alert, index) => (
+                                        <div
+                                          className="weather-alert-item"
+                                          key={index}
+                                        >
+                                          <span className="weather-alert-icon">
+                                            ⚠️
+                                          </span>
+                                          <span>{alert}</span>
+                                        </div>
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+                        </section>
+                      )}
+
+                      {/* 3.6 Real-Time Agentic Customs & Regulatory Intelligence */}
+                      {result.customs && result.shipment_risk_report && (
+                        <section className="weather-section">
+                          <div className="section-heading">
+                            <div>
+                              <p
+                                className="section-label"
+                                style={{ color: "#38bdf8" }}
+                              >
+                                REGULATORY CORE
+                              </p>
+                              <h2>Shipment Risk & Customs Intelligence</h2>
+                              <p
+                                style={{
+                                  color: "#94a3b8",
+                                  fontSize: "14px",
+                                  margin: "6px 0 0",
+                                }}
+                              >
+                                Dynamic route compliance, HS tariff validation,
+                                and interactive document audit.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="customs-modern-container">
+                            {/* 🌟 BENTO GRID 🌟 */}
+                            <div className="customs-bento-grid">
+                              {/* PANEL 1: Readiness (Hero Panel) */}
+                              <div className="bento-panel readiness-panel">
+                                <div className="bento-header">
+                                  <span className="bento-icon">⚡</span>
+                                  <h4>Clearance Readiness</h4>
+                                </div>
+
+                                <div className="readiness-core">
+                                  <div className="readiness-score-modern">
+                                    <strong>
+                                      {
+                                        result.customs.audit_metric
+                                          .score_out_of_10
+                                      }
+                                    </strong>
+                                    <span>/ 10</span>
+                                  </div>
+
+                                  <div className="readiness-meta">
+                                    <span
+                                      className={`grade-pill-modern ${result.customs.audit_metric.grade.toLowerCase().replace(/\s+/g, "-")}`}
+                                    >
+                                      {result.customs.audit_metric.grade}
+                                    </span>
+                                    <div className="overall-risk-indicator">
+                                      Risk Level:{" "}
+                                      <strong
+                                        className={result.shipment_risk_report.overall_risk.toLowerCase()}
+                                      >
+                                        {
+                                          result.shipment_risk_report
+                                            .overall_risk
+                                        }
+                                      </strong>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="readiness-progress-wrapper">
+                                  <div className="readiness-stat-row">
+                                    <span>
+                                      <strong>
+                                        {
+                                          result.customs.audit_metric
+                                            .total_provided
+                                        }
+                                      </strong>{" "}
+                                      of{" "}
+                                      {
+                                        result.customs.audit_metric
+                                          .total_required
+                                      }{" "}
+                                      Documents Verified
+                                    </span>
+                                    <span>
+                                      {
+                                        result.customs.audit_metric
+                                          .fulfillment_percent
+                                      }
+                                      %
+                                    </span>
+                                  </div>
+                                  <div className="readiness-bar-track">
+                                    <div
+                                      className="readiness-bar-fill"
+                                      style={{
+                                        width: `${result.customs.audit_metric.fulfillment_percent}%`,
+                                      }}
+                                    ></div>
+                                  </div>
+                                </div>
+
+                                <p className="audit-commentary-modern">
+                                  <strong
+                                    style={{
+                                      color: "#38bdf8",
+                                      fontWeight: "600",
+                                    }}
+                                  >
+                                    Agent Note:
+                                  </strong>{" "}
+                                  {result.customs.audit_metric.audit_advisory}
+                                </p>
+                              </div>
+
+                              {/* PANEL 2: Financials & Tariffs */}
+                              <div className="bento-panel finance-panel">
+                                <div className="bento-header">
+                                  <span className="bento-icon">🏛️</span>
+                                  <h4>{result.customs.customs_authority}</h4>
+                                </div>
+
+                                <div className="bento-stats-group">
+                                  <div className="bento-stat">
+                                    <small>HS Tariff Code</small>
+                                    <strong>{result.customs.hs_code}</strong>
+                                  </div>
+                                  <div className="bento-stat">
+                                    <small>Duty Rate</small>
+                                    <strong>
+                                      {result.customs.estimated_duty_rate}
+                                    </strong>
+                                  </div>
+                                </div>
+
+                                <div className="bento-highlight-box">
+                                  <small>Estimated Duties</small>
+                                  <strong className="text-emerald">
+                                    $
+                                    {result.customs.estimated_duties_usd.toLocaleString(
+                                      "en-US",
+                                    )}
+                                  </strong>
+                                </div>
+                              </div>
+
+                              {/* PANEL 3: Status & Clearance */}
+                              <div className="bento-panel status-panel">
+                                <div className="bento-header">
+                                  <span className="bento-icon">⏱️</span>
+                                  <h4>Clearance Status</h4>
+                                </div>
+
+                                <div className="status-highlight">
+                                  <strong>
+                                    {result.customs.validation_status}
+                                  </strong>
+                                  <small>
+                                    Est. Window:{" "}
+                                    <span className="text-cyan">
+                                      {result.customs.estimated_clearance_time}
+                                    </span>
+                                  </small>
+                                </div>
+
+                                <div className="bento-stats-group mt-auto">
+                                  <div className="bento-stat">
+                                    <small>Weather Risk</small>
+                                    <strong>
+                                      {result.shipment_risk_report.weather_risk}
+                                    </strong>
+                                  </div>
+                                  <div className="bento-stat">
+                                    <small>Customs Risk</small>
+                                    <strong>
+                                      {result.shipment_risk_report.customs_risk}
+                                    </strong>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 🌟 INTERACTIVE DOCUMENT AUDIT 🌟 */}
+                            <div className="interactive-docs-modern">
+                              <div className="interactive-docs-header">
+                                <div>
+                                  <h4>Interactive Document Audit</h4>
+                                  <p>
+                                    Select documents in your possession to
+                                    dynamically recalculate clearance readiness.
+                                  </p>
+                                </div>
+                                {isAuditingDocs && (
+                                  <span className="auditing-indicator-modern">
+                                    <span className="spinner"></span>{" "}
+                                    Auditing...
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="doc-checklist-modern">
+                                {result.customs.required_documents.map(
+                                  (doc, idx) => {
+                                    const isChecked = checkedDocs.includes(doc);
+                                    return (
+                                      <label
+                                        key={idx}
+                                        className={`doc-card-modern ${isChecked ? "verified" : "pending"}`}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={isChecked}
+                                          onChange={() => toggleDocument(doc)}
+                                        />
+                                        <div
+                                          className={`checkbox-modern ${isChecked ? "checked" : ""}`}
+                                        >
+                                          {isChecked && (
+                                            <svg
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              strokeWidth="3"
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                            >
+                                              <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                          )}
+                                        </div>
+                                        <div className="doc-info-modern">
+                                          <strong>{doc}</strong>
+                                          <small>
+                                            {isChecked
+                                              ? "Verified In-Hand"
+                                              : "Required"}
+                                          </small>
+                                        </div>
+                                      </label>
+                                    );
+                                  },
+                                )}
+                              </div>
+                            </div>
+
+                            {/* 🌟 MISSING DOCS ALERTS 🌟 */}
+                            {result.customs.missing_documents.length > 0 && (
+                              <div className="missing-docs-modern">
+                                <div className="missing-header">
+                                  <span className="alert-icon">⚠️</span>
+                                  <strong>
+                                    {result.customs.missing_documents.length}{" "}
+                                    Document(s) Pending Resolution
+                                  </strong>
+                                </div>
+                                <div className="missing-chips">
+                                  {result.customs.missing_documents.map(
+                                    (doc, i) => (
+                                      <span key={i} className="chip">
+                                        ✕ {doc}
+                                      </span>
+                                    ),
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 🌟 ADVISORY 🌟 */}
+                            <div className="customs-advisory-modern">
+                              <div className="advisory-title">
+                                <span className="advisory-icon">✦</span>
+                                <strong>Customs Intelligence Advisory</strong>
+                              </div>
+                              <p className="advisory-text">
+                                {result.customs.advisory}
+                              </p>
+
+                              {result.customs.flags.length > 0 && (
+                                <ul className="advisory-flags">
+                                  {result.customs.flags.map((flag, i) => (
+                                    <li key={i}>{flag}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
                           </div>
                         </section>
                       )}
@@ -2131,25 +3193,25 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                     className={`settings-nav-item ${settingsTab === "profile" ? "active" : ""}`}
                     onClick={() => setSettingsTab("profile")}
                   >
-                    <span>👤</span> Profile Information
+                    <User size={18} /> Profile Information
                   </div>
                   <div
                     className={`settings-nav-item ${settingsTab === "preferences" ? "active" : ""}`}
                     onClick={() => setSettingsTab("preferences")}
                   >
-                    <span>⚙️</span> System Preferences
+                    <SlidersHorizontal size={18} /> System Preferences
                   </div>
                   <div
                     className={`settings-nav-item ${settingsTab === "security" ? "active" : ""}`}
                     onClick={() => setSettingsTab("security")}
                   >
-                    <span>🔒</span> Security & 2FA
+                    <Shield size={18} /> Security & 2FA
                   </div>
                   <div
                     className={`settings-nav-item ${settingsTab === "billing" ? "active" : ""}`}
                     onClick={() => setSettingsTab("billing")}
                   >
-                    <span>💳</span> Billing & Plan
+                    <CreditCard size={18} /> Billing & Plan
                   </div>
                 </aside>
 
@@ -2157,12 +3219,40 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                 <div className="settings-content">
                   {settingsTab === "profile" && (
                     <div className="card settings-card">
-                      <h3>Personal Information</h3>
-                      <p className="settings-desc">
-                        Update your personal details and public profile.
-                      </p>
+                      {/* --- REFINED HEADER --- */}
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          paddingBottom: "24px",
+                          marginBottom: "32px",
+                          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                        }}
+                      >
+                        <div>
+                          <h3 style={{ margin: "0 0 6px 0", fontSize: "20px" }}>
+                            Personal Information
+                          </h3>
+                          <p
+                            className="settings-desc"
+                            style={{ marginBottom: 0, fontSize: "13px" }}
+                          >
+                            Update your personal details and public profile.
+                          </p>
+                        </div>
+                      </div>
 
-                      <div className="settings-avatar-row">
+                      {/* --- REFINED AVATAR ROW --- */}
+                      <div
+                        className="settings-avatar-row"
+                        style={{
+                          marginTop: "-10px",
+                          paddingBottom: "36px",
+                          marginBottom: "36px",
+                          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                        }}
+                      >
                         <div className="settings-avatar-large">
                           {profileData.avatar ? (
                             <img
@@ -2180,7 +3270,6 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                           )}
                         </div>
 
-                        {/* Hidden file input for the avatar */}
                         <input
                           type="file"
                           id="avatar-upload"
@@ -2189,43 +3278,170 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                           onChange={handleAvatarUpload}
                         />
 
-                        {/* Button triggers the hidden input */}
-                        <button
-                          className="analyze-button outline"
-                          onClick={() =>
-                            document.getElementById("avatar-upload").click()
-                          }
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "12px",
+                          }}
                         >
-                          Upload New Avatar
-                        </button>
+                          <div style={{ display: "flex", gap: "12px" }}>
+                            {profileData.avatar ? (
+                              <>
+                                <button
+                                  className="analyze-button outline"
+                                  style={{
+                                    borderRadius: "24px",
+                                    padding: "8px 20px",
+                                    fontSize: "12px",
+                                    background: "rgba(56, 189, 248, 0.1)",
+                                    borderColor: "rgba(56, 189, 248, 0.3)",
+                                    color: "#38bdf8",
+                                  }}
+                                  onClick={() =>
+                                    document
+                                      .getElementById("avatar-upload")
+                                      .click()
+                                  }
+                                >
+                                  📷 Change Picture
+                                </button>
+                                <button
+                                  className="analyze-button outline"
+                                  style={{
+                                    borderRadius: "24px",
+                                    padding: "8px 20px",
+                                    fontSize: "12px",
+                                    color: "#fca5a5",
+                                    borderColor: "rgba(239, 68, 68, 0.3)",
+                                    background: "rgba(239, 68, 68, 0.05)",
+                                  }}
+                                  onClick={() =>
+                                    handleProfileUpdate("avatar", null)
+                                  }
+                                >
+                                  🗑️ Remove
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                className="analyze-button outline"
+                                style={{
+                                  borderRadius: "24px",
+                                  padding: "8px 20px",
+                                  fontSize: "12px",
+                                }}
+                                onClick={() =>
+                                  document
+                                    .getElementById("avatar-upload")
+                                    .click()
+                                }
+                              >
+                                Upload New Avatar
+                              </button>
+                            )}
+                          </div>
+                          <small
+                            style={{
+                              color: "#64748b",
+                              fontSize: "11px",
+                              fontWeight: "600",
+                              letterSpacing: "0.3px",
+                            }}
+                          >
+                            Automatically compressed. Max size 2MB.
+                          </small>
+                        </div>
                       </div>
 
                       <div className="form-grid-2">
-                        {renderPremiumInput("Full Name", "name", "text", "👤", "Enter your full name")}
-                        {renderPremiumInput("Email Address", "email", "email", "✉️", "name@company.com")}
-                        {renderPremiumInput("Company", "company", "text", "🏢", "Your organization name")}
-                        {renderPremiumInput("Job Role", "role", "text", "💼", "Your title")}
-                        
-                        {/* THE NEW GLOBAL PHONE COMPONENT */}
+                        {renderPremiumInput(
+                          "Full Name",
+                          "name",
+                          "text",
+                          User,
+                          "Enter your full name",
+                        )}
+                        {renderPremiumInput(
+                          "Email Address",
+                          "email",
+                          "email",
+                          Mail,
+                          "name@company.com",
+                        )}
+                        {renderPremiumInput(
+                          "Company",
+                          "company",
+                          "text",
+                          Building2,
+                          "Your organization name",
+                        )}
+                        {renderPremiumInput(
+                          "Job Role",
+                          "role",
+                          "text",
+                          Briefcase,
+                          "Your title",
+                        )}
+
                         {renderInternationalPhoneInput()}
-                        
-                        {/* Custom Timezone Dropdown */}
+
+                        {/* Pixel-Perfect Timezone Dropdown */}
                         <div className="form-group">
                           <label>Timezone</label>
-                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                            <span style={{ position: 'absolute', left: '16px', color: '#64748b', fontSize: '15px', pointerEvents: 'none', zIndex: 1 }}>🌍</span>
-                            <select 
-                              className="settings-input" 
-                              style={{ paddingLeft: '44px', appearance: 'none', cursor: 'pointer' }}
-                              value={profileData.timezone} 
-                              onChange={(e) => handleProfileUpdate('timezone', e.target.value)}
+                          <div
+                            style={{
+                              position: "relative",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <span
+                              style={{
+                                position: "absolute",
+                                left: "16px",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                color: "#64748b",
+                                fontSize: "15px",
+                                pointerEvents: "none",
+                                zIndex: 1,
+                              }}
+                            >
+                              🌍
+                            </span>
+                            <select
+                              className="settings-input"
+                              style={{
+                                paddingLeft: "42px",
+                                cursor: "pointer",
+                                width: "100%",
+                                fontFamily: "inherit",
+                                fontWeight: "500",
+                              }}
+                              value={profileData.timezone}
+                              onChange={(e) =>
+                                handleProfileUpdate("timezone", e.target.value)
+                              }
                             >
                               <option>Asia/Kolkata (IST)</option>
                               <option>America/New_York (EST)</option>
                               <option>Europe/London (GMT)</option>
                               <option>Asia/Tokyo (JST)</option>
                             </select>
-                            <span style={{ position: 'absolute', right: '16px', color: '#38bdf8', fontSize: '10px', pointerEvents: 'none' }}>▼</span>
+                            <span
+                              style={{
+                                position: "absolute",
+                                right: "16px",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                color: "#38bdf8",
+                                fontSize: "10px",
+                                pointerEvents: "none",
+                              }}
+                            >
+                              ▼
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -2247,13 +3463,53 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                             Imperial (Miles, Fahrenheit).
                           </small>
                         </div>
-                        <select
-                          className="settings-input"
-                          style={{ width: "150px" }}
+                        <div
+                          className="custom-dropdown"
+                          style={{ width: "190px" }}
                         >
-                          <option>Metric (NM / °C)</option>
-                          <option>Imperial (MI / °F)</option>
-                        </select>
+                          <div
+                            className="settings-input custom-dropdown-trigger"
+                            onClick={() => {
+                              setUnitsMenuOpen(!unitsMenuOpen);
+                              setCurrencyMenuOpen(false);
+                            }}
+                          >
+                            {selectedUnit}
+                          </div>
+                          {unitsMenuOpen && (
+                            <>
+                              {/* Invisible backdrop to close menu when clicking outside */}
+                              <div
+                                style={{
+                                  position: "fixed",
+                                  inset: 0,
+                                  zIndex: 999,
+                                }}
+                                onClick={() => setUnitsMenuOpen(false)}
+                              />
+                              <div className="custom-dropdown-menu">
+                                <div
+                                  className="custom-dropdown-item"
+                                  onClick={() => {
+                                    setSelectedUnit("Metric (NM / °C)");
+                                    setUnitsMenuOpen(false);
+                                  }}
+                                >
+                                  Metric (NM / °C)
+                                </div>
+                                <div
+                                  className="custom-dropdown-item"
+                                  onClick={() => {
+                                    setSelectedUnit("Imperial (MI / °F)");
+                                    setUnitsMenuOpen(false);
+                                  }}
+                                >
+                                  Imperial (MI / °F)
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                       <div className="preference-row">
@@ -2264,14 +3520,51 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                             quotations.
                           </small>
                         </div>
-                        <select
-                          className="settings-input"
-                          style={{ width: "150px" }}
+
+                        <div
+                          className="custom-dropdown"
+                          style={{ width: "190px" }}
                         >
-                          <option>USD ($)</option>
-                          <option>EUR (€)</option>
-                          <option>INR (₹)</option>
-                        </select>
+                          <div
+                            className="settings-input custom-dropdown-trigger"
+                            onClick={() => {
+                              setCurrencyMenuOpen(!currencyMenuOpen);
+                              setUnitsMenuOpen(false);
+                            }}
+                          >
+                            {selectedCurrency}
+                          </div>
+                          {currencyMenuOpen && (
+                            <>
+                              {/* Invisible backdrop to close menu when clicking outside */}
+                              <div
+                                style={{
+                                  position: "fixed",
+                                  inset: 0,
+                                  zIndex: 999,
+                                }}
+                                onClick={() => setCurrencyMenuOpen(false)}
+                              />
+                              <div className="custom-dropdown-menu">
+                                {WORLD_CURRENCIES.map((currency) => (
+                                  <div
+                                    key={currency}
+                                    className="custom-dropdown-item"
+                                    onClick={() => {
+                                      // Splits "USD ($) - US Dollar" so the box just shows "USD ($)"
+                                      setSelectedCurrency(
+                                        currency.split(" - ")[0],
+                                      );
+                                      setCurrencyMenuOpen(false);
+                                    }}
+                                  >
+                                    {currency}
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                       <div className="preference-row borderless">
@@ -2283,7 +3576,13 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                           </small>
                         </div>
                         <label className="toggle-switch">
-                          <input type="checkbox" defaultChecked />
+                          <input
+                            type="checkbox"
+                            checked={emailNotifications}
+                            onChange={(e) =>
+                              setEmailNotifications(e.target.checked)
+                            }
+                          />
                           <span className="slider"></span>
                         </label>
                       </div>
@@ -2297,105 +3596,1342 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                         Keep your maritime brokerage account secure.
                       </p>
 
-                      <div className="form-grid-2">
-                        <div className="form-group">
-                          <label>Current Password</label>
+                      {securityMsg && (
+                        <div
+                          style={{
+                            color: "#f87171",
+                            background: "rgba(239, 68, 68, 0.1)",
+                            padding: "12px 16px",
+                            borderRadius: "10px",
+                            border: "1px solid rgba(239, 68, 68, 0.2)",
+                            marginBottom: "20px",
+                            fontSize: "13.5px",
+                            fontWeight: "600",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <Shield size={16} /> {securityMsg}
+                        </div>
+                      )}
+
+                      {/* Moved Current Password out of the split-grid for a cleaner hierarchy */}
+                      <div
+                        className="form-group"
+                        style={{
+                          maxWidth: "48%",
+                          minWidth: "250px",
+                          marginBottom: "24px",
+                        }}
+                      >
+                        <label>Current Password</label>
+                        <div
+                          style={{
+                            position: "relative",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          <span
+                            style={{
+                              position: "absolute",
+                              left: "14px",
+                              color: "#64748b",
+                              pointerEvents: "none",
+                              zIndex: 2,
+                              display: "flex",
+                            }}
+                          >
+                            <Lock size={16} />
+                          </span>
                           <input
                             type="password"
                             className="settings-input"
+                            style={{
+                              paddingLeft: "42px",
+                              fontFamily: "inherit",
+                              fontWeight: "500",
+                              letterSpacing: "2px",
+                            }}
                             placeholder="••••••••"
-                          />
-                        </div>
-                        <div></div>
-                        <div className="form-group">
-                          <label>New Password</label>
-                          <input
-                            type="password"
-                            className="settings-input"
-                            placeholder="Enter new password"
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label>Confirm Password</label>
-                          <input
-                            type="password"
-                            className="settings-input"
-                            placeholder="Confirm new password"
+                            value={passwords.current}
+                            onChange={(e) =>
+                              setPasswords({
+                                ...passwords,
+                                current: e.target.value,
+                              })
+                            }
                           />
                         </div>
                       </div>
 
-                      <hr className="settings-divider" />
-
-                      <div className="preference-row borderless">
-                        <div>
-                          <strong>Two-Factor Authentication (2FA)</strong>
-                          <small>
-                            Require an authenticator code in addition to your
-                            password when logging in.
-                          </small>
+                      {/* New & Confirm Passwords sit together in the grid below */}
+                      <div className="form-grid-2">
+                        <div className="form-group">
+                          <label>New Password</label>
+                          <div
+                            style={{
+                              position: "relative",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <span
+                              style={{
+                                position: "absolute",
+                                left: "14px",
+                                color: "#64748b",
+                                pointerEvents: "none",
+                                zIndex: 2,
+                                display: "flex",
+                              }}
+                            >
+                              <Lock size={16} />
+                            </span>
+                            <input
+                              type="password"
+                              className="settings-input"
+                              style={{
+                                paddingLeft: "42px",
+                                fontFamily: "inherit",
+                                fontWeight: "500",
+                              }}
+                              placeholder="Enter new password"
+                              value={passwords.new}
+                              onChange={(e) =>
+                                setPasswords({
+                                  ...passwords,
+                                  new: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
                         </div>
-                        <button
-                          className="analyze-button outline"
-                          style={{ width: "auto", padding: "8px 16px" }}
+
+                        <div className="form-group">
+                          <label>Confirm Password</label>
+                          <div
+                            style={{
+                              position: "relative",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <span
+                              style={{
+                                position: "absolute",
+                                left: "14px",
+                                color: "#64748b",
+                                pointerEvents: "none",
+                                zIndex: 2,
+                                display: "flex",
+                              }}
+                            >
+                              <Lock size={16} />
+                            </span>
+                            <input
+                              type="password"
+                              className="settings-input"
+                              style={{
+                                paddingLeft: "42px",
+                                fontFamily: "inherit",
+                                fontWeight: "500",
+                              }}
+                              placeholder="Confirm new password"
+                              value={passwords.confirm}
+                              onChange={(e) =>
+                                setPasswords({
+                                  ...passwords,
+                                  confirm: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <hr
+                        className="settings-divider"
+                        style={{
+                          border: "none",
+                          borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                          margin: "32px 0",
+                        }}
+                      />
+
+                      <div
+                        className="preference-row borderless"
+                        style={{
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            width: "100%",
+                            alignItems: "center",
+                          }}
                         >
-                          Enable 2FA
-                        </button>
+                          <div>
+                            <strong>Two-Factor Authentication (2FA)</strong>
+                            <small>
+                              Require an authenticator code in addition to your
+                              password when logging in.
+                            </small>
+                          </div>
+                          <button
+                            className="analyze-button"
+                            onClick={
+                              twoFactorAuth
+                                ? handleDisable2FA
+                                : handleGenerate2FA
+                            }
+                            disabled={setup2fa.loading}
+                            style={{
+                              width: "auto",
+                              padding: "0 24px",
+                              height: "42px",
+                              borderRadius: "10px",
+                              margin: 0,
+                              background: twoFactorAuth
+                                ? "rgba(239, 68, 68, 0.1)"
+                                : "linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)",
+                              color: twoFactorAuth ? "#fca5a5" : "#fff",
+                              border: twoFactorAuth
+                                ? "1px solid rgba(239, 68, 68, 0.4)"
+                                : "none",
+                              boxShadow: twoFactorAuth
+                                ? "none"
+                                : "0 4px 15px rgba(37, 99, 235, 0.4)",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            <Shield size={16} style={{ marginTop: "-2px" }} />
+                            <span style={{ lineHeight: "1" }}>
+                              {setup2fa.loading
+                                ? "Generating..."
+                                : twoFactorAuth
+                                  ? "Disable 2FA"
+                                  : "Enable 2FA"}
+                            </span>
+                          </button>
+                        </div>
+
+                        {/* --- THE QR CODE PROVISIONING MODAL INLINE --- */}
+                        {setup2fa.active && !twoFactorAuth && (
+                          <div
+                            style={{
+                              width: "100%",
+                              marginTop: "16px",
+                              padding: "24px",
+                              background: "rgba(2, 6, 23, 0.6)",
+                              border: "1px solid rgba(56, 189, 248, 0.3)",
+                              borderRadius: "14px",
+                              display: "flex",
+                              gap: "24px",
+                              boxShadow: "inset 0 4px 20px rgba(0,0,0,0.5)",
+                              animation: "settingsFadeIn 0.3s forwards",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <div
+                              style={{
+                                background: "white",
+                                padding: "8px",
+                                borderRadius: "8px",
+                                height: "150px",
+                                width: "150px",
+                                minWidth: "150px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                overflow: "hidden",
+                              }}
+                            >
+                              {setup2fa.uri ? (
+                                <QRCodeSVG
+                                  value={setup2fa.uri}
+                                  size={134}
+                                  level="M"
+                                  includeMargin={false}
+                                />
+                              ) : (
+                                <span
+                                  style={{
+                                    color: "#94a3b8",
+                                    fontSize: "12px",
+                                    fontWeight: "600",
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  Loading QR...
+                                </span>
+                              )}
+                            </div>
+
+                            <div
+                              style={{
+                                flex: 1,
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <strong
+                                style={{
+                                  color: "#38bdf8",
+                                  fontSize: "15px",
+                                  marginBottom: "6px",
+                                }}
+                              >
+                                Scan this QR Code
+                              </strong>
+
+                              <small
+                                style={{
+                                  color: "#94a3b8",
+                                  lineHeight: "1.6",
+                                  marginBottom: "12px",
+                                }}
+                              >
+                                Open Google Authenticator or Authy, scan the
+                                code to the left, and enter the generated
+                                6-digit token below to verify setup.
+                              </small>
+
+                              {/* Manual Secret Key Fallback */}
+                              {setup2fa.secret && (
+                                <small
+                                  style={{
+                                    color: "#64748b",
+                                    fontSize: "11px",
+                                    marginBottom: "16px",
+                                    display: "block",
+                                  }}
+                                >
+                                  Manual Setup Key:{" "}
+                                  <code
+                                    style={{
+                                      color: "#38bdf8",
+                                      background: "rgba(56,189,248,0.1)",
+                                      padding: "3px 8px",
+                                      borderRadius: "6px",
+                                      letterSpacing: "1px",
+                                      fontWeight: "bold",
+                                    }}
+                                  >
+                                    {setup2fa.secret}
+                                  </code>
+                                </small>
+                              )}
+
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "12px",
+                                }}
+                              >
+                                <input
+                                  type="text"
+                                  maxLength={6}
+                                  placeholder="000000"
+                                  className="settings-input"
+                                  value={setup2fa.token}
+                                  onChange={(e) =>
+                                    setSetup2fa({
+                                      ...setup2fa,
+                                      token: e.target.value.replace(/\D/g, ""),
+                                    })
+                                  }
+                                  style={{
+                                    width: "120px",
+                                    textAlign: "center",
+                                    fontSize: "18px",
+                                    letterSpacing: "4px",
+                                    padding: "0",
+                                  }}
+                                />
+                                <button
+                                  className="analyze-button"
+                                  onClick={handleVerify2FA}
+                                  style={{
+                                    margin: 0,
+                                    height: "44px",
+                                    borderRadius: "10px",
+                                  }}
+                                >
+                                  Verify Setup
+                                </button>
+                                <button
+                                  className="analyze-button outline"
+                                  onClick={() =>
+                                    setSetup2fa({
+                                      active: false,
+                                      uri: "",
+                                      secret: "",
+                                      token: "",
+                                      error: "",
+                                      loading: false,
+                                    })
+                                  }
+                                  style={{
+                                    margin: 0,
+                                    height: "44px",
+                                    border: "none",
+                                    background: "transparent",
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                              {setup2fa.error && (
+                                <span
+                                  style={{
+                                    color: "#f87171",
+                                    fontSize: "12px",
+                                    marginTop: "10px",
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  {setup2fa.error}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
                   {settingsTab === "billing" && (
                     <div className="card settings-card">
-                      <h3>Billing & Subscription</h3>
-                      <p className="settings-desc">
-                        Manage your Agentic Platform subscription tier.
-                      </p>
-
-                      <div className="billing-banner">
-                        <div className="billing-info">
-                          <span className="plan-badge">PRO TIER</span>
-                          <h4>Agentic Platform Pro</h4>
-                          <p>
-                            Unlimited route analyses, live weather intelligence,
-                            and priority LLM processing.
-                          </p>
-                        </div>
-                        <div className="billing-price">
-                          <h2>
-                            $299<span>/mo</span>
-                          </h2>
-                        </div>
-                      </div>
-
-                      <div className="preference-row borderless">
-                        <div>
-                          <strong>Payment Method</strong>
-                          <small>
-                            Visa ending in **** 4242 (Expires 12/28)
-                          </small>
-                        </div>
-                        <button
-                          className="analyze-button outline"
-                          style={{ width: "auto", padding: "8px 16px" }}
+                      <div
+                        style={{
+                          paddingBottom: "20px",
+                          marginBottom: "32px",
+                          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                        }}
+                      >
+                        <h3 style={{ margin: "0 0 6px 0", fontSize: "20px" }}>
+                          Billing & Subscription
+                        </h3>
+                        <p
+                          className="settings-desc"
+                          style={{ marginBottom: 0, fontSize: "13px" }}
                         >
-                          Update Card
-                        </button>
+                          Manage your Agentic Platform subscription tier and
+                          payment methods.
+                        </p>
                       </div>
+
+                      {/* Render a loading skeleton or the actual data */}
+                      {!billingData ? (
+                        <div
+                          style={{
+                            color: "#94a3b8",
+                            textAlign: "center",
+                            padding: "40px",
+                          }}
+                        >
+                          Loading billing intelligence...
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            style={{
+                              background:
+                                "linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(37, 99, 235, 0.03) 100%)",
+                              border: "1px solid rgba(56, 189, 248, 0.25)",
+                              borderRadius: "16px",
+                              padding: "32px",
+                              marginBottom: "32px",
+                              position: "relative",
+                              overflow: "hidden",
+                              boxShadow:
+                                "inset 0 0 20px rgba(56, 189, 248, 0.05)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: "-100px",
+                                right: "-100px",
+                                width: "300px",
+                                height: "300px",
+                                background:
+                                  "radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%)",
+                                borderRadius: "50%",
+                                pointerEvents: "none",
+                              }}
+                            ></div>
+
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
+                                marginBottom: "28px",
+                                position: "relative",
+                                zIndex: 1,
+                              }}
+                            >
+                              <div>
+                                <span
+                                  style={{
+                                    display: "inline-block",
+                                    background:
+                                      "linear-gradient(135deg, #0ea5e9, #2563eb)",
+                                    color: "white",
+                                    padding: "4px 10px",
+                                    borderRadius: "6px",
+                                    fontSize: "10.5px",
+                                    fontWeight: "800",
+                                    letterSpacing: "1px",
+                                    marginBottom: "14px",
+                                    boxShadow:
+                                      "0 4px 12px rgba(14, 165, 233, 0.4)",
+                                  }}
+                                >
+                                  {billingData.tier.includes("Pro")
+                                    ? "PRO TIER"
+                                    : "BASE TIER"}
+                                </span>
+                                <h4
+                                  style={{
+                                    color: "white",
+                                    fontSize: "24px",
+                                    margin: "0 0 6px 0",
+                                    fontWeight: "700",
+                                    letterSpacing: "-0.5px",
+                                  }}
+                                >
+                                  {billingData.tier}
+                                </h4>
+                                <p
+                                  style={{
+                                    color: "#94a3b8",
+                                    fontSize: "13.5px",
+                                    margin: 0,
+                                  }}
+                                >
+                                  Next billing date:{" "}
+                                  {billingData.next_billing_date}
+                                </p>
+                              </div>
+                              <div style={{ textAlign: "right" }}>
+                                <h2
+                                  style={{
+                                    color: "white",
+                                    fontSize: "36px",
+                                    margin: 0,
+                                    fontWeight: "800",
+                                    letterSpacing: "-1px",
+                                  }}
+                                >
+                                  $299
+                                  <span
+                                    style={{
+                                      fontSize: "16px",
+                                      color: "#64748b",
+                                      fontWeight: "600",
+                                      letterSpacing: "0",
+                                    }}
+                                  >
+                                    /mo
+                                  </span>
+                                </h2>
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "repeat(auto-fit, minmax(200px, 1fr))",
+                                gap: "16px",
+                                marginBottom: "32px",
+                                position: "relative",
+                                zIndex: 1,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "10px",
+                                  color: "#e2e8f0",
+                                  fontSize: "13.5px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                <CheckCircle2 size={18} color="#38bdf8" />{" "}
+                                Unlimited Route Analysis
+                              </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "10px",
+                                  color: "#e2e8f0",
+                                  fontSize: "13.5px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                <CheckCircle2 size={18} color="#38bdf8" /> Live
+                                Weather Intelligence
+                              </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "10px",
+                                  color: "#e2e8f0",
+                                  fontSize: "13.5px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                <CheckCircle2 size={18} color="#38bdf8" />{" "}
+                                Priority LLM Processing
+                              </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "10px",
+                                  color: "#e2e8f0",
+                                  fontSize: "13.5px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                <CheckCircle2 size={18} color="#38bdf8" />{" "}
+                                Customs & Margin Agents
+                              </div>
+                            </div>
+
+                            {/* DYNAMIC USAGE BAR */}
+                            <div
+                              style={{
+                                background: "rgba(2, 6, 23, 0.6)",
+                                padding: "18px 20px",
+                                borderRadius: "12px",
+                                border: "1px solid rgba(255, 255, 255, 0.05)",
+                                position: "relative",
+                                zIndex: 1,
+                                boxShadow: "inset 0 4px 10px rgba(0,0,0,0.3)",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  marginBottom: "12px",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    color: "#94a3b8",
+                                    fontSize: "12px",
+                                    fontWeight: "700",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                  }}
+                                >
+                                  API Usage (This Month)
+                                </span>
+                                <span
+                                  style={{
+                                    color: "#64748b",
+                                    fontSize: "12.5px",
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  <strong style={{ color: "#f8fafc" }}>
+                                    {billingData.api_usage.toLocaleString()}
+                                  </strong>{" "}
+                                  / {billingData.api_limit.toLocaleString()}{" "}
+                                  reqs
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  height: "6px",
+                                  background: "rgba(255, 255, 255, 0.08)",
+                                  borderRadius: "10px",
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    /* MATH: Calculates exact percentage of API usage */
+                                    width: `${(billingData.api_usage / billingData.api_limit) * 100}%`,
+                                    height: "100%",
+                                    background:
+                                      "linear-gradient(90deg, #38bdf8, #818cf8)",
+                                    borderRadius: "10px",
+                                    boxShadow:
+                                      "0 0 10px rgba(56, 189, 248, 0.6)",
+                                    transition:
+                                      "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* ENTERPRISE PAYMENT METHODS SECTION */}
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: "16px",
+                              marginTop: "40px",
+                            }}
+                          >
+                            <div>
+                              <h4
+                                style={{
+                                  color: "white",
+                                  fontSize: "16px",
+                                  margin: "0 0 4px 0",
+                                  fontWeight: "600",
+                                }}
+                              >
+                                Payment Methods
+                              </h4>
+                              <p
+                                style={{
+                                  color: "#94a3b8",
+                                  fontSize: "12.5px",
+                                  margin: 0,
+                                }}
+                              >
+                                Add or remove billing methods for your
+                                workspace.
+                              </p>
+                            </div>
+                            <button
+                              className="analyze-button outline"
+                              onClick={() => setIsAddingCard(!isAddingCard)}
+                              style={{
+                                margin: 0,
+                                height: "36px",
+                                padding: "0 16px",
+                                width: "auto",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                              }}
+                            >
+                              {/* FIXED: Swaps to an 'X' icon when the form is open to make sense contextually */}
+                              {isAddingCard ? (
+                                <X size={16} />
+                              ) : (
+                                <Plus size={16} />
+                              )}
+                              {isAddingCard ? "Cancel" : "Add Method"}
+                            </button>
+                          </div>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "12px",
+                            }}
+                          >
+                            {/* INLINE ADD METHOD FORM */}
+                            {isAddingCard && (
+                              <div
+                                style={{
+                                  padding: "24px",
+                                  background: "rgba(2, 6, 23, 0.6)",
+                                  border: "1px dashed rgba(56, 189, 248, 0.5)",
+                                  borderRadius: "14px",
+                                  animation: "settingsFadeIn 0.3s forwards",
+                                }}
+                              >
+                                {/* Inputs Row */}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: "16px",
+                                    marginBottom: "24px",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      position: "relative",
+                                      width: "200px",
+                                    }}
+                                  >
+                                    <select
+                                      className="settings-input"
+                                      style={{
+                                        width: "100%",
+                                        paddingLeft: "16px",
+                                        cursor: "pointer",
+                                        fontFamily: "inherit",
+                                        appearance: "none",
+                                      }}
+                                      value={newCard.brand}
+                                      onChange={(e) =>
+                                        setNewCard({
+                                          ...newCard,
+                                          brand: e.target.value,
+                                          last4: "",
+                                          exp_date: "",
+                                          upi_id: "",
+                                        })
+                                      }
+                                    >
+                                      <optgroup label="Credit/Debit Cards">
+                                        <option value="Visa">Visa</option>
+                                        <option value="Mastercard">
+                                          Mastercard
+                                        </option>
+                                        <option value="American Express">
+                                          American Express
+                                        </option>
+                                      </optgroup>
+                                      <optgroup label="Digital Wallets">
+                                        <option value="PayPal">PayPal</option>
+                                        <option value="Apple Pay">
+                                          Apple Pay
+                                        </option>
+                                        <option value="Google Pay">
+                                          Google Pay
+                                        </option>
+                                      </optgroup>
+                                      <optgroup label="Bank Accounts">
+                                        <option value="Bank Transfer">
+                                          ACH / Bank Transfer
+                                        </option>
+                                      </optgroup>
+                                      <optgroup label="Regional">
+                                        <option value="UPI">UPI (India)</option>
+                                      </optgroup>
+                                    </select>
+                                    <span
+                                      style={{
+                                        position: "absolute",
+                                        right: "16px",
+                                        top: "50%",
+                                        transform: "translateY(-50%)",
+                                        color: "#38bdf8",
+                                        fontSize: "10px",
+                                        pointerEvents: "none",
+                                      }}
+                                    >
+                                      ▼
+                                    </span>
+                                  </div>
+
+                                  {/* Dynamic Inputs based on Payment Type */}
+                                  {[
+                                    "Visa",
+                                    "Mastercard",
+                                    "American Express",
+                                  ].includes(newCard.brand) && (
+                                    <>
+                                      <input
+                                        type="text"
+                                        className="settings-input"
+                                        placeholder="Card Number (Last 4)"
+                                        maxLength={4}
+                                        style={{
+                                          flex: 1,
+                                          minWidth: "160px",
+                                          paddingLeft: "16px",
+                                          fontFamily: "inherit",
+                                        }}
+                                        value={newCard.last4}
+                                        onChange={(e) =>
+                                          setNewCard({
+                                            ...newCard,
+                                            last4: e.target.value.replace(
+                                              /\D/g,
+                                              "",
+                                            ),
+                                          })
+                                        }
+                                      />
+                                      <input
+                                        type="text"
+                                        className="settings-input"
+                                        placeholder="MM/YYYY"
+                                        maxLength={7}
+                                        style={{
+                                          width: "120px",
+                                          paddingLeft: "16px",
+                                          fontFamily: "inherit",
+                                        }}
+                                        value={newCard.exp_date}
+                                        onChange={(e) =>
+                                          setNewCard({
+                                            ...newCard,
+                                            exp_date: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </>
+                                  )}
+
+                                  {newCard.brand === "UPI" && (
+                                    <input
+                                      type="text"
+                                      className="settings-input"
+                                      placeholder="Enter UPI ID (e.g., user@okhdfcbank)"
+                                      style={{
+                                        flex: 1,
+                                        minWidth: "220px",
+                                        paddingLeft: "16px",
+                                        fontFamily: "inherit",
+                                      }}
+                                      value={newCard.upi_id || ""}
+                                      onChange={(e) =>
+                                        setNewCard({
+                                          ...newCard,
+                                          upi_id: e.target.value.toLowerCase(),
+                                        })
+                                      }
+                                    />
+                                  )}
+
+                                  {newCard.brand === "PayPal" && (
+                                    <div
+                                      style={{
+                                        flex: 1,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        padding: "0 16px",
+                                        background: "rgba(255,255,255,0.05)",
+                                        borderRadius: "10px",
+                                        color: "#cbd5e1",
+                                        fontSize: "13.5px",
+                                        border:
+                                          "1px solid rgba(255,255,255,0.1)",
+                                        minWidth: "250px",
+                                      }}
+                                    >
+                                      You will be redirected to PayPal to
+                                      authorize the billing agreement.
+                                    </div>
+                                  )}
+
+                                  {["Apple Pay", "Google Pay"].includes(
+                                    newCard.brand,
+                                  ) && (
+                                    <div
+                                      style={{
+                                        flex: 1,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        padding: "0 16px",
+                                        background: "rgba(255,255,255,0.05)",
+                                        borderRadius: "10px",
+                                        color: "#cbd5e1",
+                                        fontSize: "13.5px",
+                                        border:
+                                          "1px solid rgba(255,255,255,0.1)",
+                                        minWidth: "250px",
+                                      }}
+                                    >
+                                      Click save to authenticate securely via
+                                      your device wallet.
+                                    </div>
+                                  )}
+
+                                  {newCard.brand === "Bank Transfer" && (
+                                    <>
+                                      <input
+                                        type="text"
+                                        className="settings-input"
+                                        placeholder="Routing Number"
+                                        maxLength={9}
+                                        style={{
+                                          flex: 1,
+                                          minWidth: "140px",
+                                          paddingLeft: "16px",
+                                          fontFamily: "inherit",
+                                        }}
+                                      />
+                                      <input
+                                        type="text"
+                                        className="settings-input"
+                                        placeholder="Account (Last 4)"
+                                        maxLength={4}
+                                        style={{
+                                          width: "160px",
+                                          paddingLeft: "16px",
+                                          fontFamily: "inherit",
+                                        }}
+                                        value={newCard.last4}
+                                        onChange={(e) =>
+                                          setNewCard({
+                                            ...newCard,
+                                            last4: e.target.value.replace(
+                                              /\D/g,
+                                              "",
+                                            ),
+                                          })
+                                        }
+                                      />
+                                    </>
+                                  )}
+                                </div>
+
+                                {/* Actions Row */}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    flexWrap: "wrap",
+                                    gap: "16px",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "14px",
+                                    }}
+                                  >
+                                    <label className="toggle-switch">
+                                      <input
+                                        type="checkbox"
+                                        checked={newCard.is_primary}
+                                        onChange={(e) =>
+                                          setNewCard({
+                                            ...newCard,
+                                            is_primary: e.target.checked,
+                                          })
+                                        }
+                                      />
+                                      <span className="slider"></span>
+                                    </label>
+                                    <span
+                                      style={{
+                                        color: "#cbd5e1",
+                                        fontSize: "13.5px",
+                                        fontWeight: "600",
+                                        userSelect: "none",
+                                      }}
+                                    >
+                                      Set as default method
+                                    </span>
+                                  </div>
+
+                                  <button
+                                    className="analyze-button"
+                                    onClick={handleAddPaymentMethod}
+                                    style={{
+                                      margin: 0,
+                                      height: "42px",
+                                      padding: "0 28px",
+                                      width: "auto",
+                                      minWidth: "160px",
+                                      borderRadius: "10px",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    Save{" "}
+                                    {newCard.brand === "Bank Transfer"
+                                      ? "Account"
+                                      : newCard.brand === "PayPal"
+                                        ? "PayPal"
+                                        : ["Apple Pay", "Google Pay"].includes(
+                                              newCard.brand,
+                                            )
+                                          ? "Wallet"
+                                          : newCard.brand === "UPI"
+                                            ? "UPI ID"
+                                            : "Card"}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* RENDER SAVED METHODS DYNAMICALLY */}
+                            {billingData.payment_methods?.length === 0 ? (
+                              <div
+                                style={{
+                                  padding: "30px 20px",
+                                  textAlign: "center",
+                                  background: "rgba(15, 23, 42, 0.4)",
+                                  border: "1px dashed rgba(255, 255, 255, 0.1)",
+                                  borderRadius: "14px",
+                                  color: "#94a3b8",
+                                  fontSize: "13.5px",
+                                }}
+                              >
+                                No payment methods found. Add a method to keep
+                                your workspace active.
+                              </div>
+                            ) : (
+                              billingData.payment_methods?.map((method) => {
+                                let MethodIcon = CreditCard;
+                                let displayName = `${method.brand} ending in ${method.last4}`;
+                                let displayStatus = `Expires ${method.exp_date}`;
+
+                                if (method.brand === "PayPal") {
+                                  MethodIcon = Globe;
+                                  displayName = "PayPal Account";
+                                  displayStatus = "Linked Billing Agreement";
+                                } else if (
+                                  method.brand === "Apple Pay" ||
+                                  method.brand === "Google Pay"
+                                ) {
+                                  MethodIcon = Shield;
+                                  displayName = method.brand;
+                                  displayStatus = "Device Authenticated";
+                                } else if (method.brand === "Bank Transfer") {
+                                  MethodIcon = Building2;
+                                  displayName = `ACH Bank Account (*${method.last4})`;
+                                  displayStatus = "Verified Active";
+                                } else if (method.brand === "UPI") {
+                                  MethodIcon = Smartphone;
+                                  displayName = `UPI Handle (*${method.last4})`;
+                                  displayStatus = "Verified VPA";
+                                }
+
+                                return (
+                                  <div
+                                    key={method.id}
+                                    style={{
+                                      padding: "20px",
+                                      background: method.is_primary
+                                        ? "rgba(14, 165, 233, 0.05)"
+                                        : "rgba(15, 23, 42, 0.4)",
+                                      border: method.is_primary
+                                        ? "1px solid rgba(56, 189, 248, 0.4)"
+                                        : "1px solid rgba(255, 255, 255, 0.06)",
+                                      borderRadius: "14px",
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center",
+                                      transition: "all 0.2s ease",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "16px",
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: "52px",
+                                          height: "36px",
+                                          background:
+                                            "rgba(255, 255, 255, 0.08)",
+                                          borderRadius: "6px",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          border:
+                                            "1px solid rgba(255, 255, 255, 0.1)",
+                                          boxShadow:
+                                            "0 4px 10px rgba(0,0,0,0.2)",
+                                        }}
+                                      >
+                                        <MethodIcon
+                                          size={20}
+                                          color={
+                                            method.is_primary
+                                              ? "#38bdf8"
+                                              : "#cbd5e1"
+                                          }
+                                        />
+                                      </div>
+                                      <div>
+                                        <strong
+                                          style={{
+                                            display: "block",
+                                            color: "#f8fafc",
+                                            fontSize: "14.5px",
+                                            marginBottom: "4px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "8px",
+                                          }}
+                                        >
+                                          {displayName}
+                                          {method.is_primary && (
+                                            <span
+                                              style={{
+                                                background:
+                                                  "rgba(56, 189, 248, 0.15)",
+                                                color: "#38bdf8",
+                                                fontSize: "10px",
+                                                padding: "2px 6px",
+                                                borderRadius: "4px",
+                                                textTransform: "uppercase",
+                                                letterSpacing: "0.5px",
+                                              }}
+                                            >
+                                              Default
+                                            </span>
+                                          )}
+                                        </strong>
+                                        <small
+                                          style={{
+                                            color: "#64748b",
+                                            fontSize: "12.5px",
+                                            fontWeight: "500",
+                                          }}
+                                        >
+                                          {displayStatus}
+                                        </small>
+                                      </div>
+                                    </div>
+
+                                    <div
+                                      style={{ display: "flex", gap: "8px" }}
+                                    >
+                                      {!method.is_primary && (
+                                        <button
+                                          className="analyze-button outline"
+                                          onClick={() =>
+                                            handleMakePrimary(method.id)
+                                          }
+                                          title="Make Default"
+                                          style={{
+                                            margin: 0,
+                                            height: "36px",
+                                            width: "36px",
+                                            padding: 0,
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            border: "none",
+                                            background:
+                                              "rgba(255,255,255,0.05)",
+                                          }}
+                                        >
+                                          <Star size={16} color="#cbd5e1" />
+                                        </button>
+                                      )}
+                                      <button
+                                        className="analyze-button outline"
+                                        onClick={() =>
+                                          handleDeleteMethod(method.id)
+                                        }
+                                        title="Delete Method"
+                                        style={{
+                                          margin: 0,
+                                          height: "36px",
+                                          width: "36px",
+                                          padding: 0,
+                                          display: "flex",
+                                          justifyContent: "center",
+                                          alignItems: "center",
+                                          border: "none",
+                                          background: "rgba(239, 68, 68, 0.1)",
+                                        }}
+                                      >
+                                        <Trash2 size={16} color="#f87171" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+
+                            {/* Billing History Link */}
+                            <div
+                              style={{
+                                padding: "20px",
+                                marginTop: "16px",
+                                background: "transparent",
+                                border: "1px solid transparent",
+                                borderRadius: "14px",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                cursor: "pointer",
+                                transition: "all 0.2s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background =
+                                  "rgba(255, 255, 255, 0.03)";
+                                e.currentTarget.style.borderColor =
+                                  "rgba(255, 255, 255, 0.06)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background =
+                                  "transparent";
+                                e.currentTarget.style.borderColor =
+                                  "transparent";
+                              }}
+                              onClick={() => {
+                                setSaveMessage("Invoice PDF downloaded.");
+                                setTimeout(() => setSaveMessage(""), 3000);
+                              }}
+                            >
+                              <div>
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    color: "#f8fafc",
+                                    fontSize: "14.5px",
+                                    marginBottom: "4px",
+                                  }}
+                                >
+                                  Billing History
+                                </strong>
+                                <small
+                                  style={{
+                                    color: "#64748b",
+                                    fontSize: "12.5px",
+                                    fontWeight: "500",
+                                  }}
+                                >
+                                  Download previous invoices and receipts.
+                                </small>
+                              </div>
+                              <div
+                                style={{
+                                  color: "#38bdf8",
+                                  fontSize: "13.5px",
+                                  fontWeight: "600",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                }}
+                              >
+                                View History <span>→</span>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
-                  {/* Universal Save Footer */}
-                  <div className="settings-footer">
+                  {/* UNIVERSAL STICKY SAVE FOOTER */}
+                  <div className="settings-footer-sticky">
                     {saveMessage && (
-                      <span className="save-success-msg">✓ {saveMessage}</span>
+                      <span className="save-success-msg">
+                        <CheckCircle2 size={16} /> {saveMessage}
+                      </span>
                     )}
                     <button
                       className="analyze-button"
                       onClick={saveSettings}
                       disabled={isSaving}
-                      style={{ width: "160px", margin: 0 }}
                     >
+                      <Save size={16} />{" "}
                       {isSaving ? "Saving..." : "Save Changes"}
                     </button>
                   </div>

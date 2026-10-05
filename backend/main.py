@@ -15,13 +15,23 @@ from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
 
+import secrets
+import smtplib
+from datetime import datetime
+from email.mime.text import MIMEText
+
 from app.models import (
     RouteRequest,
     QuotationRequest,
     OTPRequest,
+    CustomsAuditRequest,
     OTPVerify,
     ResetPasswordRequest
 )
+
+from app.agents.customs_agent import CustomsAgent
+
+customs_agent = CustomsAgent()
 
 from app.services.quotation_service import QuotationService
 from app.agents.route_agent import RouteAgent
@@ -32,6 +42,10 @@ from app.otp_model import OTPCode
 from app.password_reset_model import PasswordResetOTP
 from app.auth_utils import hash_password
 from app.auth_routes import router as auth_router
+
+
+
+
 
 
 # ============================================================
@@ -93,6 +107,31 @@ def home():
         "milestone": "Milestone 1 - Route Intelligence"
     }
 
+# Update generate_quotation to pass provided_documents
+@app.post("/api/quotations/generate")
+def generate_quotation(request: QuotationRequest):
+    result = quotation_service.generate_quotation(
+        origin=request.origin,
+        destination=request.destination,
+        cargo_type=request.cargo_type,
+        containers=request.containers,
+        provided_documents=request.provided_documents  # <--- PASS THIS
+    )
+    return result
+
+# NEW: Real-time customs interactive audit endpoint
+@app.post("/api/customs/audit")
+def audit_customs_documentation(request: CustomsAuditRequest):
+    return customs_agent.validate_shipment(
+        origin=request.origin,
+        destination=request.destination,
+        cargo_type=request.cargo_type,
+        containers=request.containers,
+        transshipments=request.transshipments or 0,
+        route_type=request.route_type or "Direct",
+        provided_documents=request.provided_documents
+    )
+
 
 # ============================================================
 # SYSTEM HEALTH
@@ -138,26 +177,25 @@ def check_system_health():
     weather_status = "offline"
 
     try:
-        socket.setdefaulttimeout(1.0)
-
-        socket.socket(
-            socket.AF_INET,
-            socket.SOCK_STREAM
-        ).connect(
-            ("api.open-meteo.com", 80)
-        )
-
-        weather_status = "online"
+        with socket.create_connection(
+            ("api.open-meteo.com", 443),
+            timeout=3.0
+        ):
+            weather_status = "online"
 
     except Exception:
         weather_status = "offline"
+
+    # Add this inside check_system_health() before the return statement:
+    customs_status = "online" # Runs locally without external dependencies
 
     return {
         "status": "success",
         "agents": {
             "route": route_status,
             "weather": weather_status,
-            "pricing": pricing_status
+            "pricing": pricing_status,
+            "customs": customs_status # <--- ADD THIS
         }
     }
 
@@ -243,7 +281,6 @@ def hash_otp(otp: str) -> str:
         otp.encode()
     ).hexdigest()
 
-import secrets # Ensure this is imported at the top of main.py if not already
 
 def send_email_background(sender_email: str, app_password: str, recipient_email: str, otp_code: str):
     try:
@@ -593,6 +630,7 @@ def verify_otp(
 @app.post("/api/auth/request-password-reset")
 def request_password_reset(
     request: OTPRequest,
+    background_tasks: BackgroundTasks,
     db=Depends(get_db)
 ):
 

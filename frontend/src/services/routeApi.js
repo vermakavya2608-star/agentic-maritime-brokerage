@@ -53,3 +53,17 @@ export async function getSystemHealth() {
     };
   }
 }
+
+export async function auditCustoms(auditPayload) {
+  const response = await fetch(`${API_BASE_URL}/api/customs/audit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(auditPayload)
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to audit customs documentation");
+  }
+
+  return await response.json();
+}

@@ -12,6 +12,8 @@ function Login({ onLogin }) {
   const [otp, setOtp] = useState("");
   const [pendingUser, setPendingUser] = useState(null);
 
+  const [authMode, setAuthMode] = useState("email"); // Tracks if we use Email or Authenticator
+
   // Forgot password states
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [forgotPasswordStep, setForgotPasswordStep] = useState("email");
@@ -88,16 +90,18 @@ function Login({ onLogin }) {
     setMessage("");
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
+      // --- UPDATE THESE THREE LINES ---
+      const endpoint = authMode === "app" ? `${API_URL}/api/auth/2fa/verify` : `${API_URL}/api/auth/verify-otp`;
+      const bodyPayload = authMode === "app" ? { email: pendingUser.email, token: otp } : { email: pendingUser.email, otp: otp };
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: pendingUser.email,
-          otp: otp,
-        }),
+        body: JSON.stringify(bodyPayload),
       });
+      // --- END UPDATE ---
 
       const data = await response.json();
 
@@ -108,16 +112,25 @@ function Login({ onLogin }) {
       }
 
       if (data.status === "success") {
-        localStorage.setItem("currentUser", JSON.stringify(pendingUser));
+        // 1. Pull any saved local settings (like avatar and phone)
+        const localUsers = JSON.parse(localStorage.getItem('maritimeUsers')) || [];
+        const savedLocalUser = localUsers.find(u => u.email === pendingUser.email) || {};
+
+        // 2. Merge local settings with the verified backend data
+        const mergedUser = {
+          ...savedLocalUser, 
+          ...pendingUser     
+        };
+
+        // 3. Save the merged user so the avatar survives the login
+        localStorage.setItem("currentUser", JSON.stringify(mergedUser));
 
         setMessageType("success");
-        setMessage(
-          `Verification successful. Welcome back, ${pendingUser.name}!`,
-        );
+        setMessage(`Verification successful. Welcome back, ${mergedUser.name}!`);
 
-        // Removed the artificial 800ms delay for instant dashboard loading
-        onLogin(pendingUser);
-      } else {
+        onLogin(mergedUser);
+      }
+      else {
         setMessageType("error");
         setMessage("Invalid or expired OTP. Please try again.");
       }
@@ -264,6 +277,20 @@ function Login({ onLogin }) {
 
       // Admin/user role now comes from the backend
       setPendingUser(user);
+
+      // --- ADD THIS NEW 2FA CHECK ---
+      if (user.is_2fa_enabled) {
+        setAuthMode("app");
+        setIsOtpStep(true);
+        setMessageType("success");
+        setMessage("Open your Authenticator app to get your code.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Fallback to standard email OTP
+      setAuthMode("email");
+      // --- END 2FA CHECK ---
 
       // Send OTP for second-step verification
       const otpResponse = await fetch(`${API_URL}/api/auth/send-otp`, {
@@ -694,11 +721,17 @@ function Login({ onLogin }) {
                 <h2>Security Verification</h2>
 
                 <p className="login-subtitle">
-                  Enter the 6-digit code sent to
-                  <br />
-                  <strong style={{ color: "#38bdf8" }}>
-                    {pendingUser?.email}
-                  </strong>
+                  {authMode === "app" ? (
+                    <>
+                      Enter the 6-digit code from your <br />
+                      <strong style={{ color: "#38bdf8" }}>Authenticator App</strong>
+                    </>
+                  ) : (
+                    <>
+                      Enter the 6-digit code sent to <br />
+                      <strong style={{ color: "#38bdf8" }}>{pendingUser?.email}</strong>
+                    </>
+                  )}
                 </p>
 
                 <form onSubmit={handleVerifyOTP}>

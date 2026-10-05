@@ -1347,10 +1347,23 @@ body {
 ========================================= */
 .upcoming-modules-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr); /* ◄ Changed from 3 to 4 */
+  gap: 20px;
   margin-bottom: 40px;
 }
+
+@media (max-width: 1200px) {
+  .upcoming-modules-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .upcoming-modules-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 .construction-card {
   background: linear-gradient(145deg, #071325 0%, #0f2952 100%);
@@ -1550,7 +1563,13 @@ body {
 }
 
 /* Responsive Grid for New Modules */
-@media (max-width: 950px) {
+@media (max-width: 1200px) {
+  .upcoming-modules-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
   .upcoming-modules-grid {
     grid-template-columns: 1fr;
   }
@@ -2756,9 +2775,7 @@ body, .app {
   max-width: 1050px;
   margin-top: 24px;
   align-items: flex-start;
-  /* CRITICAL FIX: Forces massive space at the bottom so you can scroll past the save button */
-  padding-bottom: 150px !important; 
-  margin-bottom: 100px !important;
+  padding-bottom: 24px !important; 
 }
 
 /* 2. Sidebar Navigation */
@@ -2775,7 +2792,7 @@ body, .app {
 
 .settings-nav-item {
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: 10px;
   color: #94a3b8;
   font-size: 13.5px;
   font-weight: 500;
@@ -2801,6 +2818,1358 @@ body, .app {
 }
 
 /* 3. Content Area & Premium Glass Card */
+/* 1. Fix the overlap by adding bottom padding to the content wrapper */
+.settings-content {
+  flex: 1;
+  min-width: 0; 
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 80px !important; /* <-- This ensures you can scroll past the button */
+}
+
+.settings-card {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 20px !important;
+  padding: 36px !important; 
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+.settings-card h3 {
+  color: #f8fafc !important;
+  margin: 0 0 6px 0 !important;
+  font-size: 19px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.3px;
+}
+
+.settings-desc {
+  color: #94a3b8;
+  font-size: 13.5px;
+  margin-bottom: 32px;
+  letter-spacing: 0.2px;
+}
+
+/* 4. Refined Form Grid & Inset Inputs */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px 32px; 
+  width: 100%;
+}
+
+.form-group label {
+  display: block;
+  color: #64748b; 
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.settings-input {
+  width: 100%;
+  box-sizing: border-box !important; 
+  background: rgba(0, 0, 0, 0.25) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+  height: 44px !important; /* Sleeker height */
+  border-radius: 10px !important;
+  font-size: 13.5px;
+  letter-spacing: 0.3px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.settings-input:hover {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.settings-input:focus {
+  border-color: #38bdf8 !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 0 0 3px rgba(56, 189, 248, 0.15) !important;
+}
+
+/* 5. Avatar Section - Glowing Ring Effect */
+.settings-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8, #2563eb);
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.8), 0 0 0 6px rgba(56, 189, 248, 0.3), 0 12px 24px rgba(0,0,0,0.4);
+}
+
+.analyze-button.outline {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  width: auto;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analyze-button.outline:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* 6. Sticky Save Footer */
+.settings-footer-sticky {
+  position: sticky;
+  bottom: 24px;
+  background: rgba(11, 27, 53, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 16px;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20px;
+  z-index: 10;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin-top: 12px;
+}
+
+.settings-footer-sticky .analyze-button {
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 0 28px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-footer-sticky .analyze-button:hover {
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+  transform: translateY(-1px);
+}
+
+.save-success-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #10b981;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 7. Toggles & Preference Rows */
+.preference-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.preference-row.borderless { border-bottom: none; }
+
+.preference-row strong {
+  display: block;
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  letter-spacing: 0.2px;
+}
+
+.preference-row small {
+  color: #64748b;
+  font-size: 12.5px;
+  display: block;
+  /* Increased from 380px to 500px to stop awkward line breaks */
+  max-width: 500px !important; 
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   ISOLATED LLM AGENT CARD (FIXES CSS LEAK) & PREMIUM TERMINAL UI
+   ========================================================================== */
+
+/* Forces the layout to stack vertically, preventing the squished row glitch */
+.llm-agent-card {
+  background: linear-gradient(180deg, #071325 0%, #0a1930 100%);
+  border: 1px solid #1e293b;
+  border-top: 3px solid #38bdf8;
+  color: #e2e8f0;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 32px;
+  border-radius: 16px;
+  width: 100%;
+}
+
+.llm-agent-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.15;
+  background-image: radial-gradient(rgba(56, 189, 248, 0.4) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+
+.llm-agent-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* -----------------------------------------
+   Ultra-Premium Terminal Box
+----------------------------------------- */
+.llm-terminal-box {
+  background: rgba(2, 6, 23, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 24px;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.pulse-loading {
+  border-color: #38bdf8;
+  animation: llm-border-pulse 2s infinite alternate;
+}
+
+@keyframes llm-border-pulse {
+  0% { box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 0 10px rgba(56, 189, 248, 0.2); }
+  100% { box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 0 25px rgba(56, 189, 248, 0.6); }
+}
+
+.terminal-header {
+  background: #0f172a;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+/* MacOS style window controls */
+.terminal-header .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-header .red { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+.terminal-header .yellow { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.6); }
+.terminal-header .green { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
+
+.terminal-header small {
+  margin-left: auto;
+  color: #94a3b8;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.terminal-content {
+  padding: 24px 28px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 180px;
+  /* Retro CRT scanlines */
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(56, 189, 248, 0.03) 2px,
+    rgba(56, 189, 248, 0.03) 4px
+  );
+}
+
+.prompt-arrow {
+  color: #38bdf8;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  font-size: 18px;
+  animation: blink 1.2s infinite;
+  margin-top: 2px;
+}
+
+.insight-text {
+  margin: 0 !important;
+  color: #f1f5f9 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-size: 14.5px !important;
+  line-height: 1.8 !important;
+  letter-spacing: 0.3px;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+}
+
+.typing-text {
+  color: #38bdf8;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  animation: pulse-text 1.5s infinite alternate;
+}
+
+@keyframes pulse-text {
+  from { opacity: 0.6; }
+  to { opacity: 1; text-shadow: 0 0 12px rgba(56, 189, 248, 0.8); }
+}
+
+/* ==========================================================================
+   8. FINAL POLISH (ICONS & RISK BADGES)
+   ========================================================================== */
+
+/* Fixes the glaring white icon box in the "Route Details" card */
+.heading-icon {
+  background: rgba(56, 189, 248, 0.1) !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15) !important;
+}
+
+/* Converts solid light-mode risk badges into sleek dark-mode glass */
+.risk-badge.low {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+}
+
+.risk-badge.moderate {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fcd34d !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+}
+
+.risk-badge.high {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+}
+/* ==========================================================================
+   MERGED RESPONSIVE UPDATE FROM PASTED APP.CSS
+   Preserves the original grid rules while applying the newer 3-column layout.
+   ========================================================================== */
+
+.upcoming-modules-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 950px) {
+  .upcoming-modules-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   WEATHER PRICING IMPACT & ALERTS
+   New styles from the second pasted App.css version.
+   ========================================================================== */
+
+.weather-pricing-impact {
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.weather-impact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.weather-impact-header > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weather-impact-header strong {
+  font-size: 16px;
+  color: #f8fafc;
+}
+
+.weather-impact-header span {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.weather-impact-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.weather-impact-item {
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid #334155;
+}
+
+.weather-impact-item small {
+  display: block;
+  color: #94a3b8;
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+
+.weather-impact-item strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 16px;
+}
+
+@media (max-width: 900px) {
+  .weather-impact-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .weather-impact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .weather-impact-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.weather-alerts {
+  margin-top: 18px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid #7f1d1d;
+  background: rgba(127, 29, 29, 0.12);
+}
+
+.weather-alerts-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.weather-alerts-header strong {
+  color: #fca5a5;
+  font-size: 15px;
+}
+
+.weather-alerts-header span {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.weather-alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weather-alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: rgba(15, 23, 42, 0.55);
+  color: #e2e8f0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.weather-alert-icon {
+  flex-shrink: 0;
+}
+
+
+/* ==========================================================================
+   SETTINGS STICKY FOOTER & ICON ALIGNMENTS
+   ========================================================================== */
+
+
+/* Fix layout padding so you can scroll past the footer */
+.settings-layout {
+  padding-bottom: 100px !important; /* Restored space to prevent overlap */
+}
+
+/* 2. Make the sticky footer a completely invisible wrapper */
+.settings-footer-sticky {
+  position: sticky;
+  bottom: 24px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  z-index: 100;
+  margin-top: 16px;
+  width: 100%;
+  
+  /* KILL THE BIG DARK BOX */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+  
+  /* Let clicks pass through the empty space to the card underneath */
+  pointer-events: none; 
+}
+
+/* 3. Re-enable clicks ONLY for the button and message */
+.settings-footer-sticky > * {
+  pointer-events: auto;
+}
+
+/* Sleeker Floating Pill Button */
+.settings-footer-sticky .analyze-button {
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 4px 15px rgba(37, 99, 235, 0.4);
+  border-radius: 30px;         /* Fully rounded pill shape */
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 0 24px;
+  height: 44px;
+  margin: 0;
+  width: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.settings-footer-sticky .analyze-button:hover {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 6px 20px rgba(37, 99, 235, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Floating Success Message Pill */
+.save-success-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #10b981;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(11, 27, 53, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 10px 18px;
+  border-radius: 30px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* Tighten Input Heights */
+.settings-input {
+  height: 44px !important;
+}
+
+/* --- COPY TO THE ABSOLUTE BOTTOM OF APP.CSS --- */
+
+/* 1. Stop the button from floating over the form and remove the dark box */
+div.settings-footer-sticky {
+  position: relative !important;    /* Forces it to sit below the card, no overlapping! */
+  bottom: auto !important;
+  display: flex !important;
+  justify-content: flex-end !important; /* Aligns the button to the right */
+  width: 100% !important;
+  
+  /* Kills the ugly dark box stretching to the left */
+  background: transparent !important; 
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+  margin-top: 16px !important;
+}
+
+/* 2. Ensure the button itself looks sleek */
+div.settings-footer-sticky button.analyze-button {
+  border-radius: 30px !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(37, 99, 235, 0.4) !important;
+}
+
+/* 3. Remove excess scroll space we don't need anymore */
+.settings-content {
+  padding-bottom: 0 !important;
+  margin-bottom: 40px !important;
+}
+
+/* ==========================================================================
+   SETTINGS UI POLISH (TOGGLES, DROPDOWNS, ACTIVE STATES)
+   ========================================================================== */
+
+/* 1. Make the Active Sidebar Tab Glow */
+.settings-nav-item.active {
+  color: #7dd3fc !important; /* Brighter text */
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+.settings-nav-item.active svg {
+  color: #38bdf8 !important;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
+}
+
+/* 2. Custom Neon Dropdown Arrows for Select Boxes */
+select.settings-input {
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  padding-right: 40px !important;
+}
+
+/* 3. Modern Glassmorphic Toggle Switch (Replaces basic checkbox) */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 30px;
+  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.toggle-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #94a3b8;
+  border-radius: 50%;
+  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.toggle-switch input:checked + .slider {
+  background: rgba(14, 165, 233, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.toggle-switch input:checked + .slider:before {
+  transform: translateX(22px);
+  background-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+}
+
+/* 4. Boost contrast on Preference Labels */
+.preference-row strong {
+  color: #f8fafc !important;
+  font-size: 14.5px !important;
+  letter-spacing: 0px !important;
+}
+
+/* ==========================================================================
+   CUSTOM GLASSMORPHIC DROPDOWNS (Replaces native OS <select>)
+   ========================================================================== */
+.custom-dropdown {
+  position: relative;
+}
+
+.custom-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  
+  /* Adds the missing breathing room on the left */
+  padding-left: 16px !important; 
+  padding-right: 40px !important;
+  
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+}
+
+.custom-dropdown-trigger:hover {
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+
+.custom-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  background: rgba(11, 27, 53, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.1);
+  z-index: 1000;
+  animation: drop-fade 0.2s ease-out forwards;
+  
+  /* ADDED: Limits height and enables scrolling for long lists */
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+/* ADDED: Premium Dark Scrollbar for Dropdown */
+.custom-dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-dropdown-menu::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+}
+.custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
+}
+
+.custom-dropdown-item {
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.custom-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+/* Modern Hover Effect - Slide in and glow */
+.custom-dropdown-item:hover {
+  background: rgba(56, 189, 248, 0.15);
+  color: #ffffff;
+  padding-left: 22px; 
+}
+
+/* ==========================================================================
+   Z-INDEX FIX: PREVENT BUTTON FROM COVERING DROPDOWNS
+   ========================================================================== */
+
+/* 1. Elevate the settings card so its dropdowns can break out over the footer */
+.settings-card {
+  position: relative !important;
+  z-index: 20 !important; 
+}
+
+/* 2. Lower the footer's layer so it stays tucked safely underneath */
+div.settings-footer-sticky {
+  z-index: 1 !important;
+}
+
+/* ==========================================================================
+   SMOOTH TAB TRANSITIONS
+   ========================================================================== */
+.settings-card {
+  animation: settingsFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes settingsFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   AGENTIC CUSTOMS - MODERN BENTO BOX UI
+   ========================================================================== */
+
+.customs-modern-container {
+  background: rgba(4, 10, 20, 0.4);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.4), 0 20px 40px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px);
+}
+
+/* --- BENTO GRID --- */
+.customs-bento-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.bento-panel {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.02);
+}
+
+.bento-panel:hover {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.bento-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.bento-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.bento-header h4 {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* --- PANEL 1: READINESS --- */
+.readiness-core {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.readiness-score-modern {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.readiness-score-modern strong {
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+
+.readiness-score-modern span {
+  font-size: 18px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.readiness-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grade-pill-modern {
+  display: inline-flex;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.grade-pill-modern.excellent { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.grade-pill-modern.good { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.grade-pill-modern.moderate-risk { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+.grade-pill-modern.critical-non-compliance { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+.overall-risk-indicator {
+  font-size: 12.5px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.overall-risk-indicator strong.low { color: #34d399; }
+.overall-risk-indicator strong.moderate { color: #fcd34d; }
+.overall-risk-indicator strong.high { color: #f87171; }
+
+.readiness-progress-wrapper {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 16px;
+}
+
+.audit-commentary-modern {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+/* --- PANELS 2 & 3: STATS --- */
+.bento-stats-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.bento-stat small {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.bento-stat strong {
+  display: block;
+  font-size: 15px;
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.bento-highlight-box {
+  margin-top: auto;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.bento-highlight-box small {
+  display: block;
+  font-size: 11px;
+  color: #34d399;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.text-emerald { font-size: 24px; font-weight: 800; color: #10b981; }
+.text-cyan { color: #38bdf8; font-weight: 700; }
+
+.status-highlight {
+  margin-bottom: 24px;
+}
+
+.status-highlight strong {
+  display: block;
+  font-size: 18px;
+  color: #f8fafc;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+
+.status-highlight small {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* --- INTERACTIVE DOCS (SLEEK LIST) --- */
+.interactive-docs-modern {
+  margin-top: 12px;
+}
+
+.interactive-docs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.interactive-docs-header h4 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: #f1f5f9;
+}
+
+.interactive-docs-header p {
+  margin: 0;
+  font-size: 13.5px;
+  color: #64748b;
+}
+
+.auditing-indicator-modern {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 30px;
+  color: #38bdf8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(56, 189, 248, 0.3);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: spin-3d 1s linear infinite;
+}
+
+.doc-checklist-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.doc-card-modern {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.doc-card-modern input[type="checkbox"] {
+  display: none;
+}
+
+/* Hover effect */
+.doc-card-modern.pending:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Verified state - beautiful cyan/emerald glow */
+.doc-card-modern.verified {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.4) 100%);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.doc-card-modern.verified::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+}
+
+/* Modern Checkbox UI */
+.checkbox-modern {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.checkbox-modern.checked {
+  background: #10b981;
+  border-color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.checkbox-modern svg {
+  width: 14px;
+  height: 14px;
+  color: #020617;
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: draw-check 0.3s ease-out forwards;
+}
+
+@keyframes draw-check {
+  to { stroke-dashoffset: 0; }
+}
+
+.doc-info-modern strong {
+  display: block;
+  font-size: 14px;
+  color: #f1f5f9;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.doc-info-modern small {
+  display: block;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.doc-card-modern.verified .doc-info-modern small {
+  color: #34d399;
+  font-weight: 600;
+}
+
+/* --- ALERTS & ADVISORIES --- */
+.missing-docs-modern {
+  margin-top: 24px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 16px;
+  padding: 20px 24px;
+}
+
+.missing-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.missing-header strong {
+  color: #fca5a5;
+  font-size: 14.5px;
+}
+
+.missing-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.missing-chips .chip {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.customs-advisory-modern {
+  margin-top: 24px;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-left: 4px solid #38bdf8;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.advisory-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.advisory-icon {
+  color: #38bdf8;
+  font-size: 18px;
+  animation: pulse-glow 2s infinite alternate;
+}
+
+.advisory-title strong {
+  color: #38bdf8;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+.advisory-text {
+  color: #e2e8f0;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.advisory-flags {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.advisory-flags li {
+  position: relative;
+  padding-left: 20px;
+  color: #fca5a5;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.advisory-flags li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #f87171;
+  font-weight: bold;
+}
+
+/* Responsive Grid Adjustments */
+@media (max-width: 1100px) {
+  .customs-bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .readiness-panel {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .customs-bento-grid {
+    grid-template-columns: 1fr;
+  }
+  .readiness-panel {
+    grid-column: span 1;
+  }
+  .readiness-core {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ======================================================================
+   MERGED ADDITIONS FROM PASTED CSS
+   Original App.css content above is preserved unchanged.
+   ====================================================================== */
+
+/* Responsive Grid for New Modules */
+@media (max-width: 950px) {
+  .upcoming-modules-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   ADVANCED SETTINGS PAGE UI (ULTRA-MODERN & SCROLL-FIXED)
+   ========================================================================== */
+
+/* 1. Master Layout & Definitive Scroll Fix */
+.settings-layout {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+  max-width: 1050px;
+  margin-top: 24px;
+  align-items: flex-start;
+  /* CRITICAL FIX: Forces massive space at the bottom so you can scroll past the save button */
+  padding-bottom: 150px !important; 
+  margin-bottom: 100px !important;
+}
+
+.settings-nav-item {
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+
+/* 3. Content Area & Premium Glass Card */
 .settings-content {
   flex: 1;
   min-width: 0; 
@@ -2818,14 +4187,6 @@ body, .app {
   padding: 40px !important; 
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
   backdrop-filter: blur(16px) !important;
-}
-
-.settings-card h3 {
-  color: #f8fafc !important;
-  margin: 0 0 6px 0 !important;
-  font-size: 19px !important;
-  font-weight: 600 !important;
-  letter-spacing: -0.3px;
 }
 
 .settings-desc {
@@ -2866,10 +4227,6 @@ body, .app {
   outline: none;
   transition: all 0.2s ease;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
-}
-
-.settings-input:hover {
-  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 .settings-input:focus {
@@ -2916,12 +4273,6 @@ body, .app {
   transition: all 0.2s ease;
 }
 
-.analyze-button.outline:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
-}
-
 /* 6. Save Footer - Gradient Button */
 .settings-footer {
   display: flex;
@@ -2958,11 +4309,6 @@ body, .app {
   animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
 /* 7. Toggles & Preference Rows */
 .preference-row {
   display: flex;
@@ -2972,21 +4318,517 @@ body, .app {
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.preference-row.borderless { border-bottom: none; }
-
-.preference-row strong {
-  display: block;
-  color: #e2e8f0;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  letter-spacing: 0.2px;
-}
-
 .preference-row small {
   color: #64748b;
   font-size: 12.5px;
   display: block;
   max-width: 380px;
   line-height: 1.6;
+}
+
+.weather-pricing-impact {
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+/* ==========================================================================
+   AGENTIC CUSTOMS - REFINED BENTO BOX UI
+   ========================================================================== */
+
+.customs-modern-container {
+  background: rgba(11, 27, 53, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* --- BENTO GRID --- */
+.customs-bento-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.bento-panel {
+  background: rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bento-panel:hover {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(56, 189, 248, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.bento-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.bento-icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.bento-header h4 {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+/* --- PANEL 1: READINESS --- */
+.readiness-core {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.readiness-score-modern {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.readiness-score-modern strong {
+  font-size: 64px;
+  font-weight: 800;
+  letter-spacing: -3px;
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 0.9;
+}
+
+.readiness-score-modern span {
+  font-size: 16px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.readiness-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grade-pill-modern {
+  display: inline-flex;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.grade-pill-modern.excellent { background: rgba(16, 185, 129, 0.08); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+.grade-pill-modern.good { background: rgba(56, 189, 248, 0.08); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2); }
+.grade-pill-modern.moderate-risk { background: rgba(245, 158, 11, 0.08); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.2); }
+.grade-pill-modern.critical-non-compliance { background: rgba(239, 68, 68, 0.08); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+.overall-risk-indicator {
+  font-size: 12.5px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.overall-risk-indicator strong.low { color: #34d399; }
+.overall-risk-indicator strong.moderate { color: #fcd34d; }
+.overall-risk-indicator strong.high { color: #f87171; }
+
+.readiness-progress-wrapper {
+  margin-bottom: 20px;
+}
+
+.readiness-stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 12.5px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.readiness-stat-row strong {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.readiness-bar-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.readiness-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #10b981);
+  border-radius: 10px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.audit-commentary-modern {
+  margin: 0;
+  font-size: 12.5px;
+  color: #cbd5e1;
+  line-height: 1.6;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* --- PANELS 2 & 3: STATS --- */
+.bento-stats-group {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.bento-stat small {
+  display: block;
+  font-size: 10.5px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.bento-stat strong {
+  display: block;
+  font-size: 15px;
+  color: #f1f5f9;
+  font-weight: 500;
+}
+
+.bento-highlight-box {
+  margin-top: auto;
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  padding: 18px;
+  border-radius: 12px;
+}
+
+.bento-highlight-box small {
+  display: block;
+  font-size: 10.5px;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.text-emerald { font-size: 26px; font-weight: 700; color: #10b981; letter-spacing: -0.5px; }
+.text-cyan { color: #38bdf8; font-weight: 600; }
+
+.status-highlight {
+  margin-bottom: 28px;
+}
+
+.status-highlight strong {
+  display: block;
+  font-size: 18px;
+  color: #f8fafc;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.status-highlight small {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* --- INTERACTIVE DOCS (SLEEK LIST) --- */
+.interactive-docs-modern {
+  margin-top: 16px;
+}
+
+.interactive-docs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+
+.interactive-docs-header h4 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.interactive-docs-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.auditing-indicator-modern {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 30px;
+  color: #38bdf8;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(56, 189, 248, 0.2);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: spin-3d 1s linear infinite;
+}
+
+.doc-checklist-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.doc-card-modern {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: rgba(15, 23, 42, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.doc-card-modern input[type="checkbox"] {
+  display: none;
+}
+
+/* Hover effect */
+.doc-card-modern.pending:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+/* Verified state - extremely fine green glow */
+.doc-card-modern.verified {
+  background: rgba(16, 185, 129, 0.03);
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+.doc-card-modern.verified::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+/* Modern Checkbox UI */
+.checkbox-modern {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.checkbox-modern.checked {
+  background: #10b981;
+  border-color: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.checkbox-modern svg {
+  width: 12px;
+  height: 12px;
+  color: #020617;
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: draw-check 0.3s ease-out forwards;
+}
+
+.doc-info-modern strong {
+  display: block;
+  font-size: 13.5px;
+  color: #e2e8f0;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.doc-info-modern small {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.doc-card-modern.verified .doc-info-modern small {
+  color: #10b981;
+  font-weight: 500;
+}
+
+/* --- ALERTS & ADVISORIES --- */
+.missing-docs-modern {
+  margin-top: 24px;
+  background: rgba(239, 68, 68, 0.03);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.missing-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.missing-header strong {
+  color: #fca5a5;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.missing-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.missing-chips .chip {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.customs-advisory-modern {
+  margin-top: 24px;
+  background: rgba(56, 189, 248, 0.03);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.advisory-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.advisory-icon {
+  color: #38bdf8;
+  font-size: 16px;
+  animation: pulse-glow 2s infinite alternate;
+}
+
+.advisory-title strong {
+  color: #38bdf8;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.advisory-text {
+  color: #cbd5e1;
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.advisory-flags {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.advisory-flags li {
+  position: relative;
+  padding-left: 16px;
+  color: #fca5a5;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.advisory-flags li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #f87171;
+}
+
+/* Responsive Grid Adjustments */
+@media (max-width: 1100px) {
+  .customs-bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .readiness-panel {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .customs-bento-grid {
+    grid-template-columns: 1fr;
+  }
+  .readiness-panel {
+    grid-column: span 1;
+  }
+  .readiness-core {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
