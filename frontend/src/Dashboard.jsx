@@ -183,51 +183,303 @@ const getRegion = (port) => {
   return "OTHER";
 };
 
-// Generates unique visual routes
+// Generates visually distinct route paths for map display.
+// These are illustrative corridors, not verified shipping tracks.
 const getRealisticRoute = (orig, dest, routeObj, recommendedRouteId) => {
   if (!routeObj) return [];
-  const origCoord = portCoordinates[orig];
-  const destCoord = portCoordinates[dest];
-  if (!origCoord || !destCoord) return [];
 
-  let path = [origCoord];
-  const rOrig = getRegion(orig);
-  const rDest = getRegion(dest);
+  const start = portCoordinates[orig];
+  const end = portCoordinates[dest];
+  if (!start || !end) return [];
+  if (orig === dest) return [start];
 
-  if (
-    (rOrig === "EU" && rDest === "ASIA_OCEANIA") ||
-    (rOrig === "ASIA_OCEANIA" && rDest === "EU")
-  ) {
-    if (routeObj.transshipments === 0)
-      path.push(
-        waypoints.Gibraltar,
-        waypoints.Suez,
-        waypoints.BabElMandeb,
-        waypoints.Malacca,
-      );
-    else path.push(waypoints.CapeOfGoodHope, waypoints.Malacca);
-  } else if (
-    (rOrig === "EU" && rDest === "NA_WEST") ||
-    (rOrig === "NA_WEST" && rDest === "EU")
-  ) {
-    path.push(waypoints.Panama);
-  } else if (
-    (rOrig === "NA_EAST" && rDest === "ASIA_OCEANIA") ||
-    (rOrig === "ASIA_OCEANIA" && rDest === "NA_EAST")
-  ) {
-    path.push(waypoints.Panama);
+  const region = (port) => {
+    if (getRegion(port) !== "OTHER") return getRegion(port);
+    if (["Cape Town", "Durban", "Mombasa"].includes(port)) return "AFRICA";
+    if (["Buenos Aires", "Santos", "Valparaiso"].includes(port))
+      return "SOUTH_AMERICA";
+    if (port === "Panama City") return "PANAMA";
+    return "OTHER";
+  };
+
+  const from = region(orig);
+  const to = region(dest);
+  const isRecommended = routeObj.route_id === recommendedRouteId;
+  const rank = Number(routeObj.rank) || 2;
+  // Alternatives use a small visual offset so lines remain selectable without
+  // drifting far from the illustrative ocean corridor.
+  const offset = isRecommended ? 0 : ((rank % 4) + 1) * 0.22;
+  let corridor = [];
+  let reverse = false;
+
+  const isPair = (a, b, x, y) => (a === x && b === y) || (a === y && b === x);
+  const setPair = (a, b, points) => {
+    corridor = points;
+    reverse = from === b && to === a;
+  };
+
+  // Japan <-> Australia follows an illustrative western Pacific corridor.
+  if (isPair(orig, dest, "Tokyo", "Sydney")) {
+    corridor = [
+      [30, 145],
+      [22, 153],
+      [12, 158],
+      [2, 160],
+      [-10, 157],
+      [-22, 153],
+      [-29, 151],
+    ];
+    reverse = orig === "Sydney" && dest === "Tokyo";
+    // North Pacific: East Asia <-> North America's west coast.
+  } else if (isPair(from, to, "ASIA_OCEANIA", "NA_WEST")) {
+    setPair("ASIA_OCEANIA", "NA_WEST", [
+      [38, 145],
+      [42, 170],
+      [45, -165],
+      [42, -145],
+      [36, -125],
+    ]);
+    // Trans-Atlantic: Europe <-> North America's east coast.
+  } else if (isPair(from, to, "EU", "NA_EAST")) {
+    setPair("EU", "NA_EAST", [
+      [50, -12],
+      [47, -28],
+      [44, -42],
+      [41, -58],
+    ]);
+    // Europe <-> west coast uses the Panama Canal corridor.
+  } else if (isPair(from, to, "EU", "NA_WEST")) {
+    setPair("EU", "NA_WEST", [
+      [45, -12],
+      [30, -28],
+      [15, -48],
+      [9.1, -79.68],
+      [14, -105],
+      [22, -120],
+    ]);
+    // Asia <-> Europe via Suez or the Cape, depending on route characteristics.
+  } else if (isPair(from, to, "EU", "ASIA_OCEANIA")) {
+    const useSuez = Number(routeObj.transshipments ?? 0) === 0;
+    const suez = [
+      [36, -6],
+      [34, 12],
+      [31, 28],
+      waypoints.Suez,
+      waypoints.BabElMandeb,
+      [8, 60],
+      [4, 78],
+      waypoints.Malacca,
+    ];
+    const cape = [
+      [35, -15],
+      [10, -15],
+      [-18, 4],
+      waypoints.CapeOfGoodHope,
+      [-30, 40],
+      [-20, 65],
+      [-8, 85],
+      waypoints.Malacca,
+    ];
+    setPair("EU", "ASIA_OCEANIA", useSuez ? suez : cape);
+    // Asia <-> North America's east coast: Panama corridor.
+  } else if (isPair(from, to, "ASIA_OCEANIA", "NA_EAST")) {
+    setPair("ASIA_OCEANIA", "NA_EAST", [
+      [30, 145],
+      [20, 170],
+      [8, -160],
+      [5, -125],
+      waypoints.Panama,
+      [20, -75],
+      [35, -70],
+    ]);
+    // Middle East connections.
+  } else if (isPair(from, to, "MIDDLE_EAST", "ASIA_OCEANIA")) {
+    setPair("MIDDLE_EAST", "ASIA_OCEANIA", [
+      [20, 58],
+      [12, 65],
+      [5, 78],
+      waypoints.Malacca,
+    ]);
+  } else if (isPair(from, to, "EU", "MIDDLE_EAST")) {
+    setPair("EU", "MIDDLE_EAST", [
+      [36, -6],
+      [34, 12],
+      [31, 28],
+      waypoints.Suez,
+      waypoints.BabElMandeb,
+      [18, 52],
+    ]);
+    // Africa connections: Indian Ocean ports and Cape of Good Hope routes.
+  } else if (isPair(from, to, "AFRICA", "ASIA_OCEANIA")) {
+    const isEastAfrica =
+      ["Mombasa"].includes(orig) || ["Mombasa"].includes(dest);
+    setPair(
+      "AFRICA",
+      "ASIA_OCEANIA",
+      isEastAfrica
+        ? [[-5, 48], [-12, 62], [-8, 82], waypoints.Malacca]
+        : [
+            waypoints.CapeOfGoodHope,
+            [-30, 42],
+            [-18, 65],
+            [-8, 85],
+            waypoints.Malacca,
+          ],
+    );
+  } else if (isPair(from, to, "AFRICA", "EU")) {
+    const westAfricaRoute =
+      ["Cape Town", "Durban"].includes(orig) ||
+      ["Cape Town", "Durban"].includes(dest);
+    setPair(
+      "AFRICA",
+      "EU",
+      westAfricaRoute
+        ? [
+            waypoints.CapeOfGoodHope,
+            [-5, 5],
+            [15, -10],
+            [32, -12],
+            waypoints.Gibraltar,
+          ]
+        : [[-5, 42], [8, 35], [20, 20], [32, 5], waypoints.Gibraltar],
+    );
+  } else if (isPair(from, to, "AFRICA", "MIDDLE_EAST")) {
+    setPair("AFRICA", "MIDDLE_EAST", [
+      [-8, 48],
+      [5, 55],
+      [15, 55],
+      [22, 58],
+    ]);
+    // South America routes.
+  } else if (isPair(from, to, "SOUTH_AMERICA", "EU")) {
+    const westCoast =
+      ["Valparaiso"].includes(orig) || ["Valparaiso"].includes(dest);
+    setPair(
+      "SOUTH_AMERICA",
+      "EU",
+      westCoast
+        ? [
+            waypoints.CapeOfGoodHope,
+            [-5, 5],
+            [20, -20],
+            [38, -15],
+            waypoints.Gibraltar,
+          ]
+        : [[-20, -35], [0, -25], [20, -35], [38, -20], waypoints.Gibraltar],
+    );
+  } else if (isPair(from, to, "SOUTH_AMERICA", "NA_EAST")) {
+    setPair("SOUTH_AMERICA", "NA_EAST", [
+      [-5, -35],
+      [15, -50],
+      [30, -65],
+      [40, -70],
+    ]);
+  } else if (isPair(from, to, "SOUTH_AMERICA", "NA_WEST")) {
+    setPair("SOUTH_AMERICA", "NA_WEST", [
+      [-5, -80],
+      waypoints.Panama,
+      [15, -100],
+      [28, -115],
+    ]);
+  } else if (isPair(from, to, "SOUTH_AMERICA", "ASIA_OCEANIA")) {
+    const westCoast =
+      ["Valparaiso"].includes(orig) || ["Valparaiso"].includes(dest);
+    setPair(
+      "SOUTH_AMERICA",
+      "ASIA_OCEANIA",
+      westCoast
+        ? [
+            [-35, -80],
+            [-10, -110],
+            [10, -145],
+            [25, 170],
+            [20, 145],
+          ]
+        : [waypoints.CapeOfGoodHope, [-30, 45], [-15, 75], [0, 100], [10, 130]],
+    );
+  } else if (isPair(from, to, "SOUTH_AMERICA", "AFRICA")) {
+    setPair("SOUTH_AMERICA", "AFRICA", [
+      [-25, -25],
+      [-30, 0],
+      waypoints.CapeOfGoodHope,
+    ]);
+    // Panama port and North American coastal connections.
+  } else if (isPair(from, to, "PANAMA", "NA_WEST")) {
+    setPair("PANAMA", "NA_WEST", [
+      [9.1, -79.68],
+      [5, -95],
+      [15, -110],
+      [25, -120],
+    ]);
+  } else if (isPair(from, to, "PANAMA", "NA_EAST")) {
+    setPair("PANAMA", "NA_EAST", [
+      [9.1, -79.68],
+      [15, -75],
+      [28, -72],
+      [40, -74],
+    ]);
+  } else if (isPair(from, to, "PANAMA", "EU")) {
+    setPair("PANAMA", "EU", [
+      [9.1, -79.68],
+      [15, -60],
+      [30, -40],
+      [45, -20],
+      waypoints.Gibraltar,
+    ]);
+  } else if (isPair(from, to, "PANAMA", "ASIA_OCEANIA")) {
+    setPair("PANAMA", "ASIA_OCEANIA", [
+      [9.1, -79.68],
+      [5, -105],
+      [5, -135],
+      [10, -165],
+      [20, 170],
+      [25, 145],
+    ]);
   }
 
-  // Visual offset so alternative routes don't overlap the main route exactly
-  const isRecommended = routeObj.route_id === recommendedRouteId;
-  const offset = isRecommended ? 0 : (routeObj.rank || 2) * 1.5;
+  if (reverse) corridor = [...corridor].reverse();
 
-  const finalPath = path.map((point, index) => {
-    if (index === 0) return point;
-    return [point[0] + offset, point[1] - offset];
-  });
+  // If a less common region pair has no hand-authored corridor, bow the route
+  // toward an ocean midpoint instead of drawing a perfectly straight line.
+  if (corridor.length === 0) {
+    let endLng = end[1];
+    let startLng = start[1];
+    if (Math.abs(endLng - startLng) > 180) {
+      if (startLng < endLng) startLng += 360;
+      else endLng += 360;
+    }
+    const midLng = (startLng + endLng) / 2;
+    const midLat = (start[0] + end[0]) / 2;
+    const oceanBend = midLat >= 0 ? -8 : 8;
+    corridor = [[midLat + oceanBend, ((midLng + 540) % 360) - 180]];
+  }
 
-  finalPath.push(destCoord);
+  // Keep longitudes continuous around the Pacific to avoid a line crossing the map.
+  const rawPoints = [start, ...corridor, end];
+  const points = [[rawPoints[0][0], rawPoints[0][1]]];
+  for (let i = 1; i < rawPoints.length; i++) {
+    let lng = rawPoints[i][1];
+    const previousLng = points[i - 1][1];
+    while (lng - previousLng > 180) lng -= 360;
+    while (lng - previousLng < -180) lng += 360;
+    points.push([rawPoints[i][0], lng]);
+  }
+
+  const finalPath = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    finalPath.push(a);
+    for (let j = 1; j < 8; j++) {
+      const t = j / 8;
+      const curve = Math.sin(Math.PI * t) * offset;
+      finalPath.push([
+        a[0] + (b[0] - a[0]) * t + curve,
+        a[1] + (b[1] - a[1]) * t - curve,
+      ]);
+    }
+  }
+  finalPath.push(points[points.length - 1]);
   return finalPath;
 };
 
@@ -275,6 +527,10 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
   const [result, setResult] = useState(null);
   const [activeRoute, setActiveRoute] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [freightIntelligence, setFreightIntelligence] = useState(null);
+  const [freightIntelligenceLoading, setFreightIntelligenceLoading] =
+    useState(false);
+  const [freightIntelligenceError, setFreightIntelligenceError] = useState("");
 
   // Holds currently checked document names
   const [checkedDocs, setCheckedDocs] = useState([]);
@@ -1210,6 +1466,48 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
     setLoading(false);
   };
 
+  const analyzeFreightIntelligence = async () => {
+    setFreightIntelligenceLoading(true);
+    setFreightIntelligenceError("");
+    setFreightIntelligence(null);
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/freight-intelligence/analyze",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            origin,
+            destination,
+            cargo_type: cargoType,
+            containers: Number(containers),
+            provided_documents: checkedDocs,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || data.message || "Freight analysis failed.",
+        );
+      }
+
+      setFreightIntelligence(data);
+    } catch (error) {
+      console.error("Freight Intelligence error:", error);
+      setFreightIntelligenceError(
+        error.message || "Unable to connect to the backend.",
+      );
+    } finally {
+      setFreightIntelligenceLoading(false);
+    }
+  };
+
   // 1. Dynamic Search Logic
   const filteredRequests = customerRequests.filter((req) => {
     const q = searchQuery.toLowerCase();
@@ -2038,6 +2336,16 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                       ? "Analyzing route..."
                       : "✦ Analyze route & generate quote →"}
                   </button>
+
+                  <button
+                    className="analyze-button"
+                    onClick={analyzeFreightIntelligence}
+                    disabled={freightIntelligenceLoading}
+                  >
+                    {freightIntelligenceLoading
+                      ? "Analyzing..."
+                      : "Analyze Freight Intelligence"}
+                  </button>
                 </div>
 
                 {/* Live LLM Route Agent Card */}
@@ -2121,6 +2429,263 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                 </div>
               </div>{" "}
               {/* <-- ADD THIS EXACT LINE HERE */}
+              {/* Freight Intelligence Results */}
+              {freightIntelligenceLoading && (
+                <div className="card">
+                  <h2>Freight Intelligence</h2>
+                  <p>Analyzing route, pricing, weather, and customs...</p>
+                </div>
+              )}
+              {freightIntelligenceError && (
+                <div className="card">
+                  <h2>Freight Intelligence Error</h2>
+                  <p>{freightIntelligenceError}</p>
+                </div>
+              )}
+              {freightIntelligence && (
+                <div className="card fi-report">
+                  {(() => {
+                    const fi = freightIntelligence;
+                    const route = fi.route_intelligence ?? {};
+                    const pricing = fi.pricing_intelligence ?? {};
+                    const risk = fi.risk_intelligence ?? {};
+                    const customs = fi.customs ?? {};
+                    const weather = fi.weather ?? {};
+
+                    const customsText = [
+                      customs.status,
+                      customs.message,
+                      customs.summary,
+                      customs.alert,
+                      risk.readiness_grade,
+                      risk.summary,
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
+
+                    const critical =
+                      /critical|discharge refusal|immediate attention|non-compliance/i.test(
+                        customsText,
+                      );
+
+                    const overallRisk = risk.overall_risk ?? "Unknown";
+                    const weatherRisk =
+                      risk.weather_risk ?? weather.risk_level ?? "Unknown";
+                    const customsRisk =
+                      risk.customs_risk ?? customs.risk_level ?? "Unknown";
+
+                    const riskClass = (value) =>
+                      /critical|high/i.test(String(value))
+                        ? "fi-risk-high"
+                        : /medium|moderate/i.test(String(value))
+                          ? "fi-risk-medium"
+                          : /low|ready|compliant/i.test(String(value))
+                            ? "fi-risk-low"
+                            : "fi-risk-neutral";
+
+                    return (
+                      <>
+                        <div className="fi-report-header">
+                          <div>
+                            <span className="fi-eyebrow">
+                              ✦ INTELLIGENCE OVERVIEW
+                            </span>
+                            <h2>Freight Intelligence</h2>
+                            <p>
+                              {fi.shipment?.origin ?? "Origin"}{" "}
+                              <span className="fi-route-arrow">→</span>{" "}
+                              {fi.shipment?.destination ?? "Destination"}
+                            </p>
+                          </div>
+
+                          <span className="fi-live-badge">
+                            <span className="fi-live-dot" />
+                            Analysis complete
+                          </span>
+                        </div>
+
+                        {critical && (
+                          <div className="fi-critical-alert" role="alert">
+                            <div className="fi-alert-icon">!</div>
+                            <div>
+                              <strong>Critical customs alert</strong>
+                              <p>
+                                {customs.message ||
+                                  customs.summary ||
+                                  customs.alert ||
+                                  risk.summary ||
+                                  "A critical compliance issue was detected. Review customs requirements before proceeding."}
+                              </p>
+                              <small>
+                                Resolve the compliance issue before approving
+                                the shipment.
+                              </small>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="fi-metric-grid">
+                          <div className="fi-metric-card">
+                            <span className="fi-metric-icon">⌖</span>
+                            <span className="fi-metric-label">
+                              Transit time
+                            </span>
+                            <strong>
+                              {route.transit_time_days ?? "—"}
+                              <small> days</small>
+                            </strong>
+                            <span className="fi-metric-foot">
+                              {route.transshipments ?? "—"} transshipments
+                            </span>
+                          </div>
+
+                          <div className="fi-metric-card">
+                            <span className="fi-metric-icon">↗</span>
+                            <span className="fi-metric-label">
+                              Route distance
+                            </span>
+                            <strong>{route.distance_nm ?? "—"}</strong>
+                            <span className="fi-metric-foot">
+                              Nautical miles
+                            </span>
+                          </div>
+
+                          <div className="fi-metric-card">
+                            <span className="fi-metric-icon">＄</span>
+                            <span className="fi-metric-label">
+                              Total freight
+                            </span>
+                            <strong className="fi-price">
+                              {pricing.total_freight_usd != null
+                                ? formatCurrency(pricing.total_freight_usd)
+                                : "—"}
+                            </strong>
+                            <span className="fi-metric-foot">
+                              Estimated shipment cost
+                            </span>
+                          </div>
+
+                          <div className="fi-metric-card">
+                            <span className="fi-metric-icon">↗</span>
+                            <span className="fi-metric-label">
+                              Total profit
+                            </span>
+                            <strong className="fi-price">
+                              {pricing.total_profit_usd != null
+                                ? formatCurrency(pricing.total_profit_usd)
+                                : "—"}
+                            </strong>
+                            <span className="fi-metric-foot">
+                              Estimated profit
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="fi-detail-grid">
+                          <section className="fi-detail-card">
+                            <div className="fi-card-heading">
+                              <span className="fi-detail-icon">⌖</span>
+                              <div>
+                                <h3>Route intelligence</h3>
+                                <p>Recommended shipping route</p>
+                              </div>
+                            </div>
+
+                            <div className="fi-route-id">
+                              {route.recommended_route ??
+                                route.route_id ??
+                                "Not available"}
+                            </div>
+
+                            <div className="fi-detail-row">
+                              <span>Transit time</span>
+                              <strong>
+                                {route.transit_time_days ?? "—"} days
+                              </strong>
+                            </div>
+                            <div className="fi-detail-row">
+                              <span>Distance</span>
+                              <strong>{route.distance_nm ?? "—"} NM</strong>
+                            </div>
+                            <div className="fi-detail-row">
+                              <span>Transshipments</span>
+                              <strong>{route.transshipments ?? "—"}</strong>
+                            </div>
+                          </section>
+
+                          <section className="fi-detail-card">
+                            <div className="fi-card-heading">
+                              <span className="fi-detail-icon">◈</span>
+                              <div>
+                                <h3>Risk & readiness</h3>
+                                <p>Shipment assessment</p>
+                              </div>
+                            </div>
+
+                            <div className="fi-risk-row">
+                              <span>Overall risk</span>
+                              <span
+                                className={`fi-risk-badge ${riskClass(overallRisk)}`}
+                              >
+                                {overallRisk}
+                              </span>
+                            </div>
+                            <div className="fi-risk-row">
+                              <span>Weather risk</span>
+                              <span
+                                className={`fi-risk-badge ${riskClass(weatherRisk)}`}
+                              >
+                                {weatherRisk}
+                              </span>
+                            </div>
+                            <div className="fi-risk-row">
+                              <span>Customs risk</span>
+                              <span
+                                className={`fi-risk-badge ${riskClass(customsRisk)}`}
+                              >
+                                {customsRisk}
+                              </span>
+                            </div>
+
+                            <div className="fi-readiness">
+                              <span>Readiness grade</span>
+                              <strong>
+                                {risk.readiness_grade ?? "Not available"}
+                              </strong>
+                              <div className="fi-readiness-track">
+                                <div
+                                  className="fi-readiness-fill"
+                                  style={{
+                                    width: `${Math.max(
+                                      0,
+                                      Math.min(
+                                        100,
+                                        Number(risk.readiness_score) || 0,
+                                      ),
+                                    )}%`,
+                                  }}
+                                />
+                              </div>
+                              <small>
+                                Score: {risk.readiness_score ?? "—"} / 100
+                              </small>
+                            </div>
+                          </section>
+                        </div>
+
+                        <section className="fi-summary-card">
+                          <h3>AI assessment summary</h3>
+                          <p>
+                            {risk.summary ||
+                              "No additional assessment summary is available."}
+                          </p>
+                        </section>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+              
               {/* Route Result */}
               {result && activeRoute && (
                 <div className="card result-card">
@@ -2162,12 +2727,18 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                           scrollWheelZoom={true}
                         >
                           <TileLayer
-                            url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-                            attribution="&copy; Esri"
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                           />
 
                           {/* Map the main recommended route first */}
                           <Polyline
+                            eventHandlers={{
+                              click: () =>
+                                handleRouteSelection(
+                                  result.recommended_route_details,
+                                ),
+                            }}
                             positions={getRealisticRoute(
                               result.origin,
                               result.destination,
@@ -2209,6 +2780,9 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                             return (
                               <Polyline
                                 key={routeOpt.route_id}
+                                eventHandlers={{
+                                  click: () => handleRouteSelection(routeOpt),
+                                }}
                                 positions={getRealisticRoute(
                                   result.origin,
                                   result.destination,

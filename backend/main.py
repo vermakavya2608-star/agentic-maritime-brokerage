@@ -35,6 +35,9 @@ customs_agent = CustomsAgent()
 
 from app.services.quotation_service import QuotationService
 from app.agents.route_agent import RouteAgent
+from app.services.freight_intelligence_service import (
+    FreightIntelligenceService,
+)
 
 from app.database import Base, engine, get_db
 from app.user_model import User
@@ -93,6 +96,7 @@ app.add_middleware(
 route_agent = RouteAgent()
 llm_agent = LLMAgent()
 quotation_service = QuotationService()
+freight_intelligence_service = FreightIntelligenceService()
 
 
 # ============================================================
@@ -131,6 +135,18 @@ def audit_customs_documentation(request: CustomsAuditRequest):
         route_type=request.route_type or "Direct",
         provided_documents=request.provided_documents
     )
+
+
+@app.post("/api/freight-intelligence/analyze")
+def analyze_freight_intelligence(request: QuotationRequest):
+    return freight_intelligence_service.analyze_freight(
+        origin=request.origin,
+        destination=request.destination,
+        cargo_type=request.cargo_type,
+        containers=request.containers,
+        provided_documents=request.provided_documents,
+    )
+
 
 
 # ============================================================
@@ -215,24 +231,6 @@ def analyze_route(request: RouteRequest):
     )
 
     return result
-
-
-# ============================================================
-# QUOTATION GENERATION
-# ============================================================
-
-@app.post("/api/quotations/generate")
-def generate_quotation(request: QuotationRequest):
-
-    result = quotation_service.generate_quotation(
-        origin=request.origin,
-        destination=request.destination,
-        cargo_type=request.cargo_type,
-        containers=request.containers
-    )
-
-    return result
-
 
 # ============================================================
 # LLM ROUTE INSIGHT

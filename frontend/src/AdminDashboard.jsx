@@ -21,6 +21,9 @@ function AdminDashboard({ user, onLogout }) {
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [activeSection, setActiveSection] = useState("dashboard");
+  const [freightAnalyses, setFreightAnalyses] = useState({});
+  const [freightLoadingIds, setFreightLoadingIds] = useState([]);
+  const [freightErrors, setFreightErrors] = useState({});
   const [requestFilter, setRequestFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [aiEngineOnline, setAiEngineOnline] = useState(false);
@@ -199,10 +202,111 @@ function AdminDashboard({ user, onLogout }) {
     adjustedCost: Number(request.quotation?.pricing?.adjusted_cost) || 0,
   }));
 
+  const quotationTrendsData = (() => {
+    const counts = {};
+
+    requests.forEach((request) => {
+      const rawDate = request.createdAt ?? request.timestamp ?? request.date;
+
+      if (!rawDate) return;
+
+      const date = new Date(rawDate);
+
+      if (Number.isNaN(date.getTime())) return;
+
+      const day = date.toLocaleDateString("en-CA");
+
+      counts[day] = (counts[day] || 0) + 1;
+    });
+
+    return Object.entries(counts)
+      .map(([date, quotations]) => ({
+        date,
+        quotations,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  })();
+
   const loadRequests = () => {
     const savedRequests =
       JSON.parse(localStorage.getItem("quotationRequests")) || [];
     setRequests(savedRequests);
+  };
+
+  const analyzeFreightRequest = async (request) => {
+    const requestId = request.id;
+
+    if (requestId === undefined || requestId === null) {
+      setFreightErrors((prev) => ({
+        ...prev,
+        unknown:
+          "This quotation has no ID. Please check the saved request data.",
+      }));
+      return;
+    }
+
+    setFreightLoadingIds((prev) => [...new Set([...prev, requestId])]);
+    setFreightErrors((prev) => ({ ...prev, [requestId]: "" }));
+
+    try {
+      const shipment = request.shipment || request;
+      const quotation = request.quotation || {};
+
+      const origin =
+        shipment.origin ?? quotation.origin ?? quotation.shipment?.origin;
+      const destination =
+        shipment.destination ??
+        quotation.destination ??
+        quotation.shipment?.destination;
+      const cargo_type =
+        shipment.cargo_type ??
+        shipment.cargoType ??
+        quotation.cargo_type ??
+        quotation.shipment?.cargo_type;
+      const containers =
+        shipment.containers ??
+        quotation.containers ??
+        quotation.shipment?.containers;
+
+      if (!origin || !destination || !cargo_type || !containers) {
+        throw new Error(
+          "Shipment details are incomplete. Check the saved quotation's origin, destination, cargo type, and container count.",
+        );
+      }
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/freight-intelligence/analyze",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            origin,
+            destination,
+            cargo_type,
+            containers: Number(containers),
+            provided_documents: [],
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Freight analysis failed.");
+      }
+
+      setFreightAnalyses((prev) => ({
+        ...prev,
+        [requestId]: data,
+      }));
+    } catch (error) {
+      setFreightErrors((prev) => ({
+        ...prev,
+        [requestId]: error.message || "Unable to analyze this shipment.",
+      }));
+    } finally {
+      setFreightLoadingIds((prev) => prev.filter((id) => id !== requestId));
+    }
   };
 
   useEffect(() => {
@@ -283,6 +387,13 @@ function AdminDashboard({ user, onLogout }) {
           </button>
 
           <button
+            className={activeSection === "analytics" ? "active" : ""}
+            onClick={() => setActiveSection("analytics")}
+          >
+            Analytics
+          </button>
+
+          <button
             className={activeSection === "users" ? "active" : ""}
             onClick={() => setActiveSection("users")}
           >
@@ -315,6 +426,13 @@ function AdminDashboard({ user, onLogout }) {
             onClick={() => setActiveSection("weather")}
           >
             Weather Intelligence
+          </button>
+
+          <button
+            className={activeSection === "freight-intelligence" ? "active" : ""}
+            onClick={() => setActiveSection("freight-intelligence")}
+          >
+            Freight Intelligence
           </button>
 
           <button
@@ -517,156 +635,6 @@ function AdminDashboard({ user, onLogout }) {
                 <span>Total Containers</span>
                 <strong>{totalContainers}</strong>
                 <small>Across all requests</small>
-              </div>
-            </section>
-
-            <section className="admin-analytics-grid">
-              {/* Quotation Status */}
-              <div className="analytics-card">
-                <div className="analytics-card-header">
-                  <div>
-                    <h2>Quotation Status</h2>
-                    <p>Current quotation request distribution</p>
-                  </div>
-                </div>
-
-                {requests.length === 0 ? (
-                  <div className="chart-empty">
-                    No quotation data available yet.
-                  </div>
-                ) : (
-                  <div className="chart-container">
-                    <ResponsiveContainer width="100%" height={280}>
-                      <PieChart>
-                        <Pie
-                          data={statusData}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={90}
-                          dataKey="value"
-                          label={({ name, value }) => `${name}: ${value}`}
-                        >
-                          <Cell fill="#f59e0b" />
-                          <Cell fill="#10b981" />
-                          <Cell fill="#ef4444" />
-                        </Pie>
-
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
-
-              {/* Route Performance */}
-              <div className="analytics-card">
-                <div className="analytics-card-header">
-                  <div>
-                    <h2>Route Performance</h2>
-                    <p>AI route score for each quotation</p>
-                  </div>
-                </div>
-
-                {requests.length === 0 ? (
-                  <div className="chart-empty">
-                    No route data available yet.
-                  </div>
-                ) : (
-                  <div className="chart-container">
-                    <ResponsiveContainer width="100%" height={280}>
-                      <BarChart
-                        data={routeScoreData}
-                        margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-
-                        <XAxis
-                          dataKey="route"
-                          interval={0}
-                          tick={{ fontSize: 11 }}
-                        />
-
-                        <YAxis
-                          domain={[0, 100]}
-                          label={{
-                            value: "Score",
-                            angle: -90,
-                            position: "insideLeft",
-                          }}
-                        />
-
-                        <Tooltip
-                          formatter={(value) => [value, "Route Score"]}
-                        />
-
-                        <Bar
-                          dataKey="score"
-                          name="Route Score"
-                          fill="#0d6efd"
-                          radius={[6, 6, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
-
-              {/* Pricing Overview */}
-              <div className="analytics-card analytics-card-wide">
-                <div className="analytics-card-header">
-                  <div>
-                    <h2>Pricing Overview</h2>
-                    <p>Comparison of base freight and adjusted cost</p>
-                  </div>
-                </div>
-
-                {requests.length === 0 ? (
-                  <div className="chart-empty">
-                    No pricing data available yet.
-                  </div>
-                ) : (
-                  <div className="chart-container">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart
-                        data={pricingData}
-                        margin={{ top: 10, right: 20, left: 20, bottom: 10 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-
-                        <XAxis
-                          dataKey="route"
-                          interval={0}
-                          tick={{ fontSize: 11 }}
-                        />
-
-                        <YAxis />
-
-                        <Tooltip
-                          formatter={(value) =>
-                            `$${Number(value).toLocaleString("en-US")}`
-                          }
-                        />
-
-                        <Legend />
-
-                        <Bar
-                          dataKey="baseFreight"
-                          name="Base Freight"
-                          fill="#0d6efd"
-                          radius={[6, 6, 0, 0]}
-                        />
-
-                        <Bar
-                          dataKey="adjustedCost"
-                          name="Adjusted Cost"
-                          fill="#10b981"
-                          radius={[6, 6, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
               </div>
             </section>
           </>
@@ -1372,6 +1340,415 @@ function AdminDashboard({ user, onLogout }) {
               </div>
             )}
           </section>
+        )}
+
+        {activeSection === "freight-intelligence" && (
+          <section className="freight-intelligence-admin">
+            <h2>Freight Intelligence</h2>
+            <p>
+              Analyze customer shipments for route performance, pricing,
+              profitability, risk, and documentation readiness.
+            </p>
+
+            {requests.length === 0 ? (
+              <p>No quotation requests are available yet.</p>
+            ) : (
+              <div className="freight-analysis-list">
+                {requests.map((request, index) => {
+                  const requestId = request.id ?? `request-${index}`;
+                  const analysis = freightAnalyses[request.id];
+                  const isLoading = freightLoadingIds.includes(request.id);
+                  const error = freightErrors[request.id];
+
+                  return (
+                    <article className="freight-analysis-card" key={requestId}>
+                      <h3>
+                        {request.origin || request.shipment?.origin || "Origin"}{" "}
+                        →{" "}
+                        {request.destination ||
+                          request.shipment?.destination ||
+                          "Destination"}
+                      </h3>
+
+                      <p>
+                        Cargo:{" "}
+                        {request.cargo_type ||
+                          request.cargoType ||
+                          request.shipment?.cargo_type ||
+                          "Not specified"}
+                      </p>
+
+                      <p>
+                        Containers:{" "}
+                        {request.containers ??
+                          request.shipment?.containers ??
+                          "Not specified"}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => analyzeFreightRequest(request)}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Analyzing..." : "Analyze Shipment"}
+                      </button>
+
+                      {error && (
+                        <p role="alert" className="freight-error">
+                          {error}
+                        </p>
+                      )}
+
+                      {analysis && (
+                        <div className="freight-analysis-results">
+                          <div className="freight-results-heading">
+                            <div>
+                              <span className="freight-eyebrow">
+                                INTELLIGENCE REPORT
+                              </span>
+                              <h4>Analysis Results</h4>
+                            </div>
+
+                            <span className="freight-report-status">
+                              <span className="freight-status-dot" />
+                              Analysis complete
+                            </span>
+                          </div>
+
+                          <div className="freight-result-highlight">
+                            <div>
+                              <span>RECOMMENDED ROUTE</span>
+                              <h5>
+                                {analysis.route_intelligence
+                                  ?.recommended_route ??
+                                  analysis.route_intelligence?.route_id ??
+                                  "Route unavailable"}
+                              </h5>
+                            </div>
+
+                            <div className="freight-transit-value">
+                              <strong>
+                                {analysis.route_intelligence
+                                  ?.transit_time_days ?? "—"}
+                              </strong>
+                              <span>days transit</span>
+                            </div>
+                          </div>
+
+                          <div className="freight-metric-grid">
+                            <div className="freight-metric">
+                              <span>TOTAL FREIGHT</span>
+                              <strong className="freight-money">
+                                {analysis.pricing_intelligence
+                                  ?.total_freight_usd != null
+                                  ? `$${Number(
+                                      analysis.pricing_intelligence
+                                        .total_freight_usd,
+                                    ).toLocaleString("en-US", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}`
+                                  : "—"}
+                              </strong>
+                            </div>
+
+                            <div className="freight-metric">
+                              <span>PROJECTED PROFIT</span>
+                              <strong className="freight-money">
+                                {analysis.pricing_intelligence
+                                  ?.total_profit_usd != null
+                                  ? `$${Number(
+                                      analysis.pricing_intelligence
+                                        .total_profit_usd,
+                                    ).toLocaleString("en-US", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}`
+                                  : "—"}
+                              </strong>
+                            </div>
+
+                            <div className="freight-metric">
+                              <span>OVERALL RISK</span>
+                              <strong>
+                                {analysis.risk_intelligence?.overall_risk ??
+                                  "Unknown"}
+                              </strong>
+                              <span
+                                className={`freight-risk-badge ${
+                                  String(
+                                    analysis.risk_intelligence?.overall_risk ??
+                                      "",
+                                  )
+                                    .toLowerCase()
+                                    .includes("high")
+                                    ? "risk-high"
+                                    : String(
+                                          analysis.risk_intelligence
+                                            ?.overall_risk ?? "",
+                                        )
+                                          .toLowerCase()
+                                          .includes("low")
+                                      ? "risk-low"
+                                      : "risk-medium"
+                                }`}
+                              >
+                                {String(
+                                  analysis.risk_intelligence?.overall_risk ??
+                                    "Unknown",
+                                ).toUpperCase()}
+                              </span>
+                            </div>
+
+                            <div className="freight-metric">
+                              <span>READINESS SCORE</span>
+                              <strong>
+                                {analysis.risk_intelligence?.readiness_score ??
+                                  "—"}
+                              </strong>
+                              <span className="freight-readiness-grade">
+                                {analysis.risk_intelligence?.readiness_grade ??
+                                  "Not available"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="freight-report-summary">
+                            <span className="freight-eyebrow">
+                              ASSESSMENT SUMMARY
+                            </span>
+                            <p>
+                              {analysis.risk_intelligence?.summary ??
+                                "No assessment summary is available."}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeSection === "analytics" && (
+          <div className="analytics-section">
+            <div className="section-header">
+              <div>
+                <h2>Analytics Overview</h2>
+                <p>
+                  Visual insights into routes, quotations, pricing, and shipment
+                  risks.
+                </p>
+              </div>
+            </div>
+
+            <section className="admin-analytics-grid">
+              {/* Quotation Status */}
+              <div className="analytics-card">
+                <div className="analytics-card-header">
+                  <div>
+                    <h2>Quotation Status</h2>
+                    <p>Current quotation request distribution</p>
+                  </div>
+                </div>
+
+                {requests.length === 0 ? (
+                  <div className="chart-empty">
+                    No quotation data available yet.
+                  </div>
+                ) : (
+                  <div className="chart-container">
+                    <ResponsiveContainer width="100%" height={280}>
+                      <PieChart>
+                        <Pie
+                          data={statusData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={90}
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: ${value}`}
+                        >
+                          <Cell fill="#f59e0b" />
+                          <Cell fill="#10b981" />
+                          <Cell fill="#ef4444" />
+                        </Pie>
+
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              {/* Route Performance */}
+              <div className="analytics-card">
+                <div className="analytics-card-header">
+                  <div>
+                    <h2>Route Performance</h2>
+                    <p>AI route score for each quotation</p>
+                  </div>
+                </div>
+
+                {requests.length === 0 ? (
+                  <div className="chart-empty">
+                    No route data available yet.
+                  </div>
+                ) : (
+                  <div className="chart-container">
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart
+                        data={routeScoreData}
+                        margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+
+                        <XAxis
+                          dataKey="route"
+                          interval={0}
+                          tick={{ fontSize: 11 }}
+                        />
+
+                        <YAxis
+                          domain={[0, 100]}
+                          label={{
+                            value: "Score",
+                            angle: -90,
+                            position: "insideLeft",
+                          }}
+                        />
+
+                        <Tooltip
+                          formatter={(value) => [value, "Route Score"]}
+                        />
+
+                        <Bar
+                          dataKey="score"
+                          name="Route Score"
+                          fill="#0d6efd"
+                          radius={[6, 6, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              {/* Pricing Overview */}
+              <div className="analytics-card analytics-card-wide">
+                <div className="analytics-card-header">
+                  <div>
+                    <h2>Pricing Overview</h2>
+                    <p>Comparison of base freight and adjusted cost</p>
+                  </div>
+                </div>
+
+                {requests.length === 0 ? (
+                  <div className="chart-empty">
+                    No pricing data available yet.
+                  </div>
+                ) : (
+                  <div className="chart-container">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart
+                        data={pricingData}
+                        margin={{ top: 10, right: 20, left: 20, bottom: 10 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+
+                        <XAxis
+                          dataKey="route"
+                          interval={0}
+                          tick={{ fontSize: 11 }}
+                        />
+
+                        <YAxis />
+
+                        <Tooltip
+                          formatter={(value) =>
+                            `$${Number(value).toLocaleString("en-US")}`
+                          }
+                        />
+
+                        <Legend />
+
+                        <Bar
+                          dataKey="baseFreight"
+                          name="Base Freight"
+                          fill="#0d6efd"
+                          radius={[6, 6, 0, 0]}
+                        />
+
+                        <Bar
+                          dataKey="adjustedCost"
+                          name="Adjusted Cost"
+                          fill="#10b981"
+                          radius={[6, 6, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              {/* Quotation Trends */}
+              <div className="analytics-card analytics-card-wide">
+                <div className="analytics-card-header">
+                  <div>
+                    <h2>Quotation Trends</h2>
+                    <p>Daily quotation requests over time</p>
+                  </div>
+                </div>
+
+                {quotationTrendsData.length === 0 ? (
+                  <div className="chart-empty">
+                    No dated quotation data available yet.
+                  </div>
+                ) : (
+                  <div className="chart-container">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart
+                        data={quotationTrendsData}
+                        margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+
+                        <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+
+                        <YAxis
+                          allowDecimals={false}
+                          label={{
+                            value: "Quotations",
+                            angle: -90,
+                            position: "insideLeft",
+                          }}
+                        />
+
+                        <Tooltip />
+
+                        <Line
+                          type="monotone"
+                          dataKey="quotations"
+                          name="Quotation Requests"
+                          stroke="#36c9ff"
+                          strokeWidth={3}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <div className="analytics-empty-state">
+              <h3>Analytics Dashboard</h3>
+              <p>Your charts and performance insights will appear here.</p>
+            </div>
+          </div>
         )}
 
         {activeSection === "weather" && (
