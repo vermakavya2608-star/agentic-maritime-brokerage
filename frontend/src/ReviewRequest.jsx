@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import "./ReviewRequest.css";
 
+import { reviewQuotation } from "./services/routeApi"; // ADD THIS AT THE TOP
+
 function ReviewRequest({ request, onBack }) {
   // Load saved feedback or default to empty
   const [feedback, setFeedback] = useState(request?.feedback || "");
@@ -13,26 +15,24 @@ function ReviewRequest({ request, onBack }) {
     setFeedback(request?.feedback || "");
   }, [request]);
 
-  const updateStatus = (newStatus) => {
-    const existingRequests =
-      JSON.parse(localStorage.getItem("quotationRequests")) || [];
+  const updateStatus = async (newStatus) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
 
-    const updatedRequests = existingRequests.map((item) =>
-      item.id === request.id
-        ? {
-            ...item,
-            status: newStatus,
-            feedback: feedback, // 2. Save feedback to the request object
-          }
-        : item,
-    );
-
-    localStorage.setItem("quotationRequests", JSON.stringify(updatedRequests));
-
-    alert(`Quotation ${newStatus.toLowerCase()} successfully.`);
-
-    onBack();
+    try {
+      await reviewQuotation(token, request.id, {
+        status: newStatus,
+        feedback: feedback
+      });
+      alert(`Quotation ${newStatus.toLowerCase()} successfully.`);
+      onBack(); // Triggers the dashboard to reload the requests
+    } catch (error) {
+      alert("Failed to update quotation status.");
+      console.error(error);
+    }
   };
+
+    
 
   if (!request) {
     return (

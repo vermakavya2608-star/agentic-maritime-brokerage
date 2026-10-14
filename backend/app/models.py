@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 class RouteRequest(BaseModel):
     origin: str
@@ -43,3 +43,17 @@ class InsightRequest(BaseModel):
     cargo_type: str
     route_id: Optional[str] = None
     transit_days: Optional[int] = None
+
+
+class SaveQuotationRequest(BaseModel):
+    origin: str
+    destination: str
+    cargo_type: str
+    containers: int
+    total_freight_usd: float
+    route_score: float
+    full_data: Dict[str, Any]
+
+class ReviewQuotationRequest(BaseModel):
+    status: str
+    feedback: Optional[str] = ""

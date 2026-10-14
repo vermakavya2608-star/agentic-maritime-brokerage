@@ -1,7 +1,10 @@
 from app.agents.llm_agent import LLMAgent
 
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
+import logging
+import traceback
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 import hashlib
 import secrets
@@ -40,8 +43,16 @@ from app.database import Base, engine, get_db
 from app.user_model import User
 from app.otp_model import OTPCode
 from app.password_reset_model import PasswordResetOTP
-from app.auth_utils import hash_password
+# Add this right below: from app.password_reset_model import PasswordResetOTP
+from app.quotation_model import QuotationRecord
+
+from sqlalchemy.orm import Session
+
+from app.auth_utils import hash_password, get_current_user_email
 from app.auth_routes import router as auth_router
+
+from app.quotation_model import QuotationRecord
+from app.models import SaveQuotationRequest, ReviewQuotationRequest
 
 
 
@@ -85,6 +96,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ============================================================
+# GLOBAL EXCEPTION HANDLER
+# ============================================================
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    # Log the exact error and stack trace for backend debugging
+    logging.error(f"Unhandled exception on {request.url.path}: {exc}\n{traceback.format_exc()}")
+    
+    # Return a clean, RFC 7807-style JSON response to the frontend
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "title": "Internal Server Error",
+            "detail": "An unexpected failure occurred while processing the request.",
+            "type": type(exc).__name__
+        }
+    )
+
 
 # ============================================================
 # AGENTS / SERVICES
@@ -118,6 +149,119 @@ def generate_quotation(request: QuotationRequest):
         provided_documents=request.provided_documents  # <--- PASS THIS
     )
     return result
+
+# ============================================================
+# QUOTATION STORAGE & MANAGEMENT
+# ============================================================
+
+@app.post("/api/quotations/save")
+def save_quotation(
+    request: SaveQuotationRequest, 
+    db: Session = Depends(get_db),
+    current_email: str = Depends(get_current_user_email)
+):
+    """Saves a newly generated quotation to the database."""
+    user = db.query(User).filter(User.email == current_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    new_quote = QuotationRecord(
+        user_id=user.id,
+        origin=request.origin,
+        destination=request.destination,
+        cargo_type=request.cargo_type,
+        containers=request.containers,
+        total_freight_usd=request.total_freight_usd,
+        route_score=request.route_score,
+        full_data=request.full_data,
+        status="Pending Review"
+    )
+    db.add(new_quote)
+    db.commit()
+    db.refresh(new_quote)
+    return {"status": "success", "quotation_id": new_quote.id}
+
+
+@app.get("/api/quotations/me")
+def get_my_quotations(
+    db: Session = Depends(get_db),
+    current_email: str = Depends(get_current_user_email)
+):
+    """Fetches all quotations for the logged-in customer."""
+    user = db.query(User).filter(User.email == current_email).first()
+    quotes = db.query(QuotationRecord).filter(QuotationRecord.user_id == user.id).order_by(QuotationRecord.created_at.desc()).all()
+    
+    # Format to match the frontend's expected structure
+    return [{
+        "id": q.id,
+        "status": q.status,
+        "feedback": q.feedback,
+        "createdAt": q.created_at.strftime("%B %d, %Y, %I:%M %p"),
+        "shipment": {
+            "origin": q.origin,
+            "destination": q.destination,
+            "cargo_type": q.cargo_type,
+            "containers": q.containers
+        },
+        "quotation": q.full_data
+    } for q in quotes]
+
+
+@app.get("/api/quotations/all")
+def get_all_quotations(
+    db: Session = Depends(get_db),
+    current_email: str = Depends(get_current_user_email)
+):
+    """Fetches ALL quotations for the Admin Dashboard."""
+    user = db.query(User).filter(User.email == current_email).first()
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required.")
+
+    quotes = db.query(QuotationRecord).order_by(QuotationRecord.created_at.desc()).all()
+    
+    result = []
+    for q in quotes:
+        customer = db.query(User).filter(User.id == q.user_id).first()
+        result.append({
+            "id": q.id,
+            "status": q.status,
+            "feedback": q.feedback,
+            "createdAt": q.created_at.strftime("%B %d, %Y, %I:%M %p"),
+            "customer": {
+                "name": customer.name if customer else "Unknown",
+                "email": customer.email if customer else "Unknown"
+            },
+            "shipment": {
+                "origin": q.origin,
+                "destination": q.destination,
+                "cargo_type": q.cargo_type,
+                "containers": q.containers
+            },
+            "quotation": q.full_data
+        })
+    return result
+
+
+@app.patch("/api/quotations/{quote_id}/review")
+def review_quotation(
+    quote_id: int,
+    request: ReviewQuotationRequest,
+    db: Session = Depends(get_db),
+    current_email: str = Depends(get_current_user_email)
+):
+    """Allows an Admin to Approve or Reject a quotation and leave feedback."""
+    user = db.query(User).filter(User.email == current_email).first()
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required.")
+
+    quote = db.query(QuotationRecord).filter(QuotationRecord.id == quote_id).first()
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quotation not found.")
+
+    quote.status = request.status
+    quote.feedback = request.feedback
+    db.commit()
+    return {"status": "success", "message": f"Quotation {request.status} successfully."}
 
 # NEW: Real-time customs interactive audit endpoint
 @app.post("/api/customs/audit")
@@ -204,7 +348,7 @@ def check_system_health():
 # ROUTE ANALYSIS
 # ============================================================
 
-@app.post("/routes")
+@app.post("/api/routes/analyze")
 def analyze_route(request: RouteRequest):
 
     result = route_agent.analyze_route(
@@ -212,23 +356,6 @@ def analyze_route(request: RouteRequest):
         request.destination,
         request.cargo_type,
         request.containers
-    )
-
-    return result
-
-
-# ============================================================
-# QUOTATION GENERATION
-# ============================================================
-
-@app.post("/api/quotations/generate")
-def generate_quotation(request: QuotationRequest):
-
-    result = quotation_service.generate_quotation(
-        origin=request.origin,
-        destination=request.destination,
-        cargo_type=request.cargo_type,
-        containers=request.containers
     )
 
     return result

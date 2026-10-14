@@ -17,6 +17,8 @@ import {
 import "./AdminDashboard.css";
 import ReviewRequest from "./ReviewRequest";
 
+import { getAllQuotations } from "./services/routeApi"; // ADD THIS AT THE TOP
+
 function AdminDashboard({ user, onLogout }) {
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -199,10 +201,15 @@ function AdminDashboard({ user, onLogout }) {
     adjustedCost: Number(request.quotation?.pricing?.adjusted_cost) || 0,
   }));
 
-  const loadRequests = () => {
-    const savedRequests =
-      JSON.parse(localStorage.getItem("quotationRequests")) || [];
-    setRequests(savedRequests);
+  const loadRequests = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+    try {
+      const data = await getAllQuotations(token);
+      setRequests(data);
+    } catch (error) {
+      console.error("Failed to load all quotations:", error);
+    }
   };
 
   useEffect(() => {

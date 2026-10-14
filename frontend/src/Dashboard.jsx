@@ -4,6 +4,8 @@ import {
   getLiveInsight,
   getSystemHealth,
   auditCustoms,
+  saveQuotation,
+  getMyQuotations
 } from "./services/routeApi";
 import {
   MapContainer,
@@ -482,12 +484,13 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
   });
 
   const fetchBilling = () => {
-    if (user?.email) {
-      fetch(`http://127.0.0.1:8000/api/auth/billing/${user.email}`)
-        .then((res) => res.json())
-        .then((data) => setBillingData(data))
-        .catch((err) => console.error("Failed to fetch billing", err));
-    }
+    const token = localStorage.getItem("accessToken");
+    fetch(`http://127.0.0.1:8000/api/auth/billing`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+      .then((res) => res.json())
+      .then((data) => setBillingData(data))
+      .catch((err) => console.error("Failed to fetch billing", err));
   };
 
   useEffect(() => {
@@ -520,18 +523,23 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
         setSaveMessage("Please enter a valid UPI ID (e.g., name@okbank).");
         return;
       }
+      
       // Sends only the last 4 characters of the UPI handle to fit the database schema securely
       payload.last4 = newCard.upi_id.slice(-4);
       payload.exp_date = "Active";
     }
 
     try {
+      const token = localStorage.getItem("accessToken");
       const response = await fetch(
         "http://127.0.0.1:8000/api/auth/billing/methods/add",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: user.email, ...payload }),
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload), // email is no longer in the payload!
         },
       );
 
@@ -558,17 +566,25 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
   };
 
   const handleDeleteMethod = async (id) => {
+    const token = localStorage.getItem("accessToken");
     await fetch(
-      `http://127.0.0.1:8000/api/auth/billing/methods/${id}?email=${user.email}`,
-      { method: "DELETE" },
+      `http://127.0.0.1:8000/api/auth/billing/methods/${id}`, // No email in URL!
+      { 
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      },
     );
     fetchBilling();
   };
 
   const handleMakePrimary = async (id) => {
+    const token = localStorage.getItem("accessToken");
     await fetch(
-      `http://127.0.0.1:8000/api/auth/billing/methods/${id}/primary?email=${user.email}`,
-      { method: "PUT" },
+      `http://127.0.0.1:8000/api/auth/billing/methods/${id}/primary`, // No email in URL!
+      { 
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${token}` }
+      },
     );
     fetchBilling();
   };
@@ -1047,16 +1063,19 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
     return () => clearInterval(interval);
   }, []);
 
+  const fetchMyQuotations = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+    try {
+      const data = await getMyQuotations(token);
+      setCustomerRequests(data);
+    } catch (error) {
+      console.error("Failed to load quotations:", error);
+    }
+  };
+
   useEffect(() => {
-    const savedRequests =
-      JSON.parse(localStorage.getItem("quotationRequests")) || [];
-
-    const userRequests = savedRequests.filter(
-      (request) =>
-        request.customer.email?.toLowerCase() === user?.email?.toLowerCase(),
-    );
-
-    setCustomerRequests(userRequests);
+    fetchMyQuotations();
   }, [user]);
 
   useEffect(() => {
@@ -1163,42 +1182,24 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
       if (data.status === "success") {
         setActiveRoute(data.recommended_route_details);
 
-        const quotationRequest = {
-          id: Date.now(),
-          customer: {
-            name: user?.name || "Customer",
-            email: user?.email || "",
-          },
-          shipment: {
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+          // Send to our secure database endpoint
+          await saveQuotation(token, {
             origin: origin,
             destination: destination,
             cargo_type: cargoType,
             containers: Number(containers),
-          },
-          quotation: data,
-          status: "Pending Review",
-          feedback: "",
-          createdAt: new Date().toLocaleString(),
-        };
-
-        const existingRequests =
-          JSON.parse(localStorage.getItem("quotationRequests")) || [];
-
-        existingRequests.unshift(quotationRequest);
-
-        localStorage.setItem(
-          "quotationRequests",
-          JSON.stringify(existingRequests),
-        );
-
-        setCustomerRequests(
-          existingRequests.filter(
-            (request) =>
-              request.customer.email?.toLowerCase() ===
-              user?.email?.toLowerCase(),
-          ),
-        );
+            total_freight_usd: data.total_freight_usd,
+            route_score: data.route_score,
+            full_data: data
+          });
+          
+          // Refresh the list immediately from the backend
+          fetchMyQuotations();
+        }
       }
+      
     } catch (error) {
       console.error("Error:", error);
       setResult({

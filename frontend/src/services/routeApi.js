@@ -67,3 +67,39 @@ export async function auditCustoms(auditPayload) {
 
   return await response.json();
 }
+
+export async function saveQuotation(token, payload) {
+  const response = await fetch(`${API_BASE_URL}/api/quotations/save`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) throw new Error("Failed to save quotation");
+  return await response.json();
+}
+
+export async function getMyQuotations(token) {
+  const response = await fetch(`${API_BASE_URL}/api/quotations/me`, {
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error("Failed to fetch quotations");
+  return await response.json();
+}
+
+export async function getAllQuotations(token) {
+  const response = await fetch(`${API_BASE_URL}/api/quotations/all`, {
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error("Failed to fetch all quotations");
+  return await response.json();
+}
+
+export async function reviewQuotation(token, quoteId, payload) {
+  const response = await fetch(`${API_BASE_URL}/api/quotations/${quoteId}/review`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) throw new Error("Failed to review quotation");
+  return await response.json();
+}

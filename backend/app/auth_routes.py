@@ -4,13 +4,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
-from app.auth_utils import hash_password, verify_password
+# Add get_current_user_email and create_access_token to your existing auth_utils import
+from app.auth_utils import hash_password, verify_password, create_access_token, get_current_user_email
 from app.database import get_db
 from app.user_model import User
 
 from app.user_model import PaymentMethod
 
 import pyotp
+
+import re
+from datetime import datetime
 
 load_dotenv()
 
@@ -128,6 +132,9 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
             detail="This account is inactive."
         )
 
+    # Generate the JWT
+    access_token = create_access_token(data={"sub": user.email})
+
     # Inside the login() function, update the return statement:
     return {
         "status": "success",
@@ -215,16 +222,16 @@ def disable_2fa(request: Generate2FARequest, db: Session = Depends(get_db)):
 # ENTERPRISE BILLING & PAYMENT METHODS
 # ============================================================
 
-@router.get("/billing/{email}")
-def get_billing_info(email: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == email).first()
+@router.get("/billing")
+def get_billing_info(
+    db: Session = Depends(get_db), 
+    current_email: str = Depends(get_current_user_email)
+):
+    user = db.query(User).filter(User.email == current_email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
-    
-    # Fetch all payment methods
-    methods = db.query(PaymentMethod).filter(PaymentMethod.user_email == email).all()
-    
-    # NOTE: We removed the aggressive auto-provisioning "ghost card" logic!
+
+    methods = db.query(PaymentMethod).filter(PaymentMethod.user_email == current_email).all()
 
     return {
         "tier": user.subscription_tier,
@@ -238,69 +245,139 @@ def get_billing_info(email: str, db: Session = Depends(get_db)):
     }
 
 class AddPaymentMethodRequest(BaseModel):
-    email: EmailStr
+    
     brand: str
     last4: str
     exp_date: str
     is_primary: bool
+    payment_token: str | None = None
+    upi_id: str | None = None
 
 @router.post("/billing/methods/add")
-def add_payment_method(request: AddPaymentMethodRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == request.email).first()
+def add_payment_method(
+    request: AddPaymentMethodRequest, 
+    db: Session = Depends(get_db),
+    current_email: str = Depends(get_current_user_email)
+):
+    user = db.query(User).filter(User.email == current_email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
 
-    # --- STRICT BACKEND VALIDATION ---
-    if request.brand in ["Visa", "Mastercard", "American Express"]:
-        if len(request.last4) != 4 or not request.last4.isdigit():
-            raise HTTPException(status_code=400, detail="Invalid card digits.")
-        if len(request.exp_date) < 5:
-            raise HTTPException(status_code=400, detail="Invalid expiry date.")
-    elif request.brand in ["PayPal", "Apple Pay", "Google Pay", "Bank Transfer", "UPI"]:
-        # Specific digital wallet / ACH / UPI formats bypass standard card checks
-        pass 
+    brand = request.brand.strip()
+    last4 = request.last4.strip()
+    exp_date = request.exp_date.strip()
+
+    if brand in ["Visa", "Mastercard", "American Express"]:
+        if len(last4) != 4 or not last4.isdigit():
+            raise HTTPException(status_code=400, detail="Card identifier must be exactly 4 digits.")
+
+        exp_match = re.match(r"^(0[1-9]|1[0-2])\/?(20[2-9][0-9]|[2-9][0-9])$", exp_date)
+        if not exp_match:
+            raise HTTPException(status_code=400, detail="Expiration date must follow MM/YY or MM/YYYY format.")
+
+        month = int(exp_match.group(1))
+        raw_year = exp_match.group(2)
+        year = int(raw_year) if len(raw_year) == 4 else int(f"20{raw_year}")
+
+        now = datetime.utcnow()
+        if year < now.year or (year == now.year and month < now.month):
+            raise HTTPException(status_code=400, detail="Card expiration date has expired.")
+
+    elif brand == "Bank Transfer":
+        if len(last4) != 4 or not last4.isdigit():
+            raise HTTPException(status_code=400, detail="Bank account identifier must be exactly 4 digits.")
+    elif brand in ["Apple Pay", "Google Pay", "NFC Tap"]:
+        if not request.payment_token or len(request.payment_token) < 20:
+             raise HTTPException(status_code=400, detail="Missing or invalid cryptographic payment token.")
+        last4 = "NFC"
+        exp_date = "Token"
+        
+    elif brand == "UPI" or brand == "UPI QR":
+        if not request.upi_id:
+            raise HTTPException(status_code=400, detail="UPI ID is required for mandate generation.")
+            
+        upi_match = re.match(r"^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$", request.upi_id)
+        if not upi_match:
+            raise HTTPException(status_code=400, detail="Invalid UPI ID format.")
+            
+        last4 = request.upi_id[-4:]
+        exp_date = "AutoPay"
+        
+    elif brand == "PayPal":
+        if not last4.isalnum():
+            raise HTTPException(status_code=400, detail="Invalid account token.")
     else:
         raise HTTPException(status_code=400, detail="Unsupported payment method.")
 
-    if request.is_primary:
-        # Remove primary status from all other cards securely in the backend
-        db.query(PaymentMethod).filter(PaymentMethod.user_email == request.email).update({"is_primary": False})
-        
+    duplicate_method = db.query(PaymentMethod).filter(
+        PaymentMethod.user_email == current_email,
+        PaymentMethod.brand == brand,
+        PaymentMethod.last4 == last4[:4]
+    ).first()
+    if duplicate_method:
+        raise HTTPException(status_code=409, detail="This payment method is already registered.")
+
+    existing_count = db.query(PaymentMethod).filter(PaymentMethod.user_email == current_email).count()
+    make_primary = request.is_primary or existing_count == 0
+
+    if make_primary:
+        db.query(PaymentMethod).filter(PaymentMethod.user_email == current_email).update({"is_primary": False})
+
     new_method = PaymentMethod(
-        user_email=request.email, 
-        brand=request.brand, 
-        last4=request.last4[:4], # Safely caps at 4 characters for the DB column
-        exp_date=request.exp_date[:10], 
-        is_primary=request.is_primary
+        user_email=current_email,
+        brand=brand,
+        last4=last4[:4],
+        exp_date=exp_date[:10],
+        is_primary=make_primary
     )
     db.add(new_method)
     db.commit()
     return {"status": "success"}
 
+
+
 # Notice we added `email: str` so the backend knows who to assign a new default to!
 @router.delete("/billing/methods/{method_id}")
-def delete_payment_method(method_id: int, email: str, db: Session = Depends(get_db)):
-    method_to_delete = db.query(PaymentMethod).filter(PaymentMethod.id == method_id).first()
-    
-    if method_to_delete:
-        was_primary = method_to_delete.is_primary
-        db.delete(method_to_delete)
-        db.commit()
-        
-        # If the user deleted their default method, automatically make the next available one primary
-        if was_primary:
-            next_method = db.query(PaymentMethod).filter(PaymentMethod.user_email == email).first()
-            if next_method:
-                next_method.is_primary = True
-                db.commit()
-                
+def delete_payment_method(
+    method_id: int, 
+    db: Session = Depends(get_db),
+    current_email: str = Depends(get_current_user_email)
+):
+    method_to_delete = db.query(PaymentMethod).filter(
+        PaymentMethod.id == method_id,
+        PaymentMethod.user_email == current_email
+    ).first()
+
+    if not method_to_delete:
+        raise HTTPException(status_code=404, detail="Payment method not found.")
+
+    was_primary = method_to_delete.is_primary
+    db.delete(method_to_delete)
+    db.commit()
+
+    if was_primary:
+        next_method = db.query(PaymentMethod).filter(PaymentMethod.user_email == current_email).first()
+        if next_method:
+            next_method.is_primary = True
+            db.commit()
+
     return {"status": "success"}
 
 @router.put("/billing/methods/{method_id}/primary")
-def make_primary_method(method_id: int, email: str, db: Session = Depends(get_db)):
-    # Reset all to false
-    db.query(PaymentMethod).filter(PaymentMethod.user_email == email).update({"is_primary": False})
-    # Set target to true
-    db.query(PaymentMethod).filter(PaymentMethod.id == method_id).update({"is_primary": True})
+def make_primary_method(
+    method_id: int, 
+    db: Session = Depends(get_db),
+    current_email: str = Depends(get_current_user_email)
+):
+    target_method = db.query(PaymentMethod).filter(
+        PaymentMethod.id == method_id,
+        PaymentMethod.user_email == current_email
+    ).first()
+
+    if not target_method:
+        raise HTTPException(status_code=404, detail="Payment method not found.")
+
+    db.query(PaymentMethod).filter(PaymentMethod.user_email == current_email).update({"is_primary": False})
+    target_method.is_primary = True
     db.commit()
     return {"status": "success"}
