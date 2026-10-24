@@ -8,6 +8,10 @@ import secrets
 import smtplib
 import socket
 import os
+import json
+import urllib.parse
+import urllib.request
+import urllib.error
 
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
@@ -232,6 +236,166 @@ def analyze_route(request: RouteRequest):
 
     return result
 
+
+# ============================================================
+# CALCULATED MARITIME SEA ROUTES (Searoute Engine)
+# ============================================================
+
+import searoute as sr
+
+class SeaRouteRequest(BaseModel):
+    origin: str
+    destination: str
+    transshipments: Optional[int] = 0
+
+# Port Coordinates: [longitude, latitude] required by searoute
+MARITIME_PORT_COORDS = {
+    "Antwerp": [4.4025, 51.2194],
+    "Barcelona": [2.1734, 41.3851],
+    "Buenos Aires": [-58.3816, -34.6037],
+    "Busan": [129.0756, 35.1796],
+    "Cape Town": [18.4241, -33.9249],
+    "Chennai": [80.2707, 13.0827],
+    "Colombo": [79.8612, 6.9271],
+    "Dubai": [55.2708, 25.2048],
+    "Durban": [31.0218, -29.8587],
+    "Genoa": [8.9463, 44.4056],
+    "Hamburg": [9.9937, 53.5511],
+    "Hong Kong": [114.1694, 22.3193],
+    "Jebel Ali": [55.056, 25.0113],
+    "London": [-0.1278, 51.5074],
+    "Long Beach": [-118.1937, 33.7701],
+    "Los Angeles": [-118.2437, 34.0522],
+    "Mombasa": [39.6682, -4.0435],
+    "Mumbai": [72.8333, 18.9667],
+    "New York": [-74.006, 40.7128],
+    "Panama City": [-79.5199, 8.9824],
+    "Port Klang": [101.3667, 3.0333],
+    "Rotterdam": [4.4792, 51.9225],
+    "Santos": [-46.3322, -23.9618],
+    "Seattle": [-122.3321, 47.6062],
+    "Shanghai": [121.4737, 31.2304],
+    "Singapore": [103.8198, 1.3521],
+    "Sydney": [151.2093, -33.8688],
+    "Tokyo": [139.6503, 35.6762],
+    "Valparaiso": [-71.6202, -33.0456],
+    "Vancouver": [-123.1207, 49.2827],
+}
+
+# Maritime navigation waypoints to create distinct sea corridors
+CHOKEPOINTS = {
+    "CapeOfGoodHope": [18.42, -34.35],
+    "Panama": [-79.68, 9.1],
+    "Malacca": [101.0, 2.5],
+    "Suez": [32.55, 29.92],
+    "Gibraltar": [-5.48, 35.95],
+    "BabElMandeb": [43.33, 12.58],
+}
+
+def build_sea_path(waypoints_list):
+    """Calculates water-only sea route segments across a list of [lon, lat] coordinates."""
+    path = []
+    total_distance = 0
+    for i in range(len(waypoints_list) - 1):
+        leg = sr.searoute(waypoints_list[i], waypoints_list[i + 1], units="naut")
+        coords = [[lat, lon] for lon, lat in leg["geometry"]["coordinates"]]
+        if path and coords:
+            coords = coords[1:]
+        path.extend(coords)
+        total_distance += leg["properties"]["length"]
+    return path, round(total_distance)
+
+@app.post("/api/sea-route")
+def calculate_sea_route(request: SeaRouteRequest):
+    origin = request.origin.strip()
+    destination = request.destination.strip()
+
+    if origin not in MARITIME_PORT_COORDS or destination not in MARITIME_PORT_COORDS:
+        raise HTTPException(status_code=400, detail="Unknown origin or destination port.")
+    if origin == destination:
+        raise HTTPException(status_code=400, detail="Origin and destination must be different ports.")
+
+    p1 = MARITIME_PORT_COORDS[origin]
+    p2 = MARITIME_PORT_COORDS[destination]
+
+    try:
+        # 1. Primary / Recommended Water Route
+        primary_geojson = sr.searoute(p1, p2, units="naut")
+        primary_coords = [
+            [lat, lon] for lon, lat in primary_geojson["geometry"]["coordinates"]
+        ]
+        primary_dist = round(primary_geojson["properties"]["length"])
+
+        # 2. Dynamic Alternatives (Returns list of viable alternatives)
+        alternatives = []
+
+        is_asia = lambda p: p in ["Shanghai", "Tokyo", "Busan", "Hong Kong", "Singapore", "Port Klang", "Chennai", "Mumbai"]
+        is_europe = lambda p: p in ["Rotterdam", "Hamburg", "London", "Antwerp", "Barcelona", "Genoa"]
+        is_americas = lambda p: p in ["New York", "Santos", "Buenos Aires", "Panama City", "Los Angeles", "Long Beach", "Seattle", "Vancouver"]
+
+        # Case A: Asia <-> Europe (Canal route vs Cape bypass vs Gibraltar transit)
+        if (is_asia(origin) and is_europe(destination)) or (is_europe(origin) and is_asia(destination)):
+            # Alt 1: Cape of Good Hope bypass
+            cape_path, cape_dist = build_sea_path([p1, CHOKEPOINTS["CapeOfGoodHope"], p2])
+            alternatives.append({
+                "id": "ALT_CAPE",
+                "name": "Via Cape of Good Hope (Canal Bypass)",
+                "distance_nm": cape_dist,
+                "path": cape_path
+            })
+
+            # Alt 2: Suez corridor waypoint
+            suez_path, suez_dist = build_sea_path([p1, CHOKEPOINTS["Malacca"], CHOKEPOINTS["Suez"], CHOKEPOINTS["Gibraltar"], p2])
+            alternatives.append({
+                "id": "ALT_SUEZ",
+                "name": "Suez Direct Corridor",
+                "distance_nm": suez_dist,
+                "path": suez_path
+            })
+
+        # Case B: Americas <-> Asia (Panama Canal vs Cape route)
+        elif (is_americas(origin) and is_asia(destination)) or (is_asia(origin) and is_americas(destination)):
+            panama_path, panama_dist = build_sea_path([p1, CHOKEPOINTS["Panama"], p2])
+            alternatives.append({
+                "id": "ALT_PANAMA",
+                "name": "Via Panama Canal",
+                "distance_nm": panama_dist,
+                "path": panama_path
+            })
+            cape_path, cape_dist = build_sea_path([p1, CHOKEPOINTS["CapeOfGoodHope"], p2])
+            alternatives.append({
+                "id": "ALT_CAPE",
+                "name": "Via Cape of Good Hope",
+                "distance_nm": cape_dist,
+                "path": cape_path
+            })
+
+        # Case C: Any other route pair (Generate 1 alternative via water midpoint)
+        if not alternatives:
+            mid_lon = (p1[0] + p2[0]) / 2.0
+            mid_lat = (p1[1] + p2[1]) / 2.0
+            offset_pt = [mid_lon, mid_lat + (7.0 if mid_lat <= 0 else -7.0)]
+            alt_path, alt_dist = build_sea_path([p1, offset_pt, p2])
+            alternatives.append({
+                "id": "ALT_SEA_WAY",
+                "name": "Secondary Coastal Corridor",
+                "distance_nm": alt_dist,
+                "path": alt_path
+            })
+
+        return {
+            "origin": origin,
+            "destination": destination,
+            "primary": {
+                "distance_nm": primary_dist,
+                "path": primary_coords
+            },
+            "alternatives": alternatives,
+            "source": "searoute-py"
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Routing calculation failed: {exc}")
+    
 # ============================================================
 # LLM ROUTE INSIGHT
 # ============================================================

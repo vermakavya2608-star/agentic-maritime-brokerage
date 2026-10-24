@@ -67,3 +67,29 @@ export async function auditCustoms(auditPayload) {
 
   return await response.json();
 }
+
+
+ // Fetch a calculated sea route through the FastAPI backend.
+export async function getSeaRoute(origin, destination, shoreBuffer = 5) {
+  const response = await fetch("http://127.0.0.1:8000/api/sea-route", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      origin,
+      destination,
+      shore_buffer: shoreBuffer,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail || `Sea route request failed: ${response.status}`
+    );
+  }
+
+  return data;
+}

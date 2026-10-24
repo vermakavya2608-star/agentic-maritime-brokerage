@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   generateQuotation,
+  getSeaRoute,
   getLiveInsight,
   getSystemHealth,
   auditCustoms,
@@ -500,6 +501,13 @@ const destIcon = new L.DivIcon({
   iconAnchor: [7, 7],
 });
 
+const portIcon = new L.DivIcon({
+  className: "custom-icon",
+  html: `<div style="background:#e2e8f0;width:8px;height:8px;border-radius:50%;border:1.5px solid #334155;box-shadow:0 0 5px rgba(226,232,240,.65);"></div>`,
+  iconSize: [8, 8],
+  iconAnchor: [4, 4],
+});
+
 function MapBounds({ origin, destination }) {
   const map = useMap();
   useEffect(() => {
@@ -519,6 +527,34 @@ function MapBounds({ origin, destination }) {
 
 function Dashboard({ user, onLogout, onUpdateUser }) {
   const [customerRequests, setCustomerRequests] = useState([]);
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackNotice, setFeedbackNotice] = useState("");
+
+  const submitCustomerFeedback = (event) => {
+    event.preventDefault();
+    const message = feedbackMessage.trim();
+    if (!message) {
+      setFeedbackNotice("Please write a few words before submitting.");
+      return;
+    }
+
+    const feedbackItems = JSON.parse(
+      localStorage.getItem("customerFeedback") || "[]",
+    );
+    feedbackItems.unshift({
+      id: Date.now(),
+      customerName: user?.name || "Customer",
+      customerEmail: user?.email || "",
+      rating: Number(feedbackRating),
+      message,
+      createdAt: new Date().toLocaleString(),
+    });
+    localStorage.setItem("customerFeedback", JSON.stringify(feedbackItems));
+    setFeedbackMessage("");
+    setFeedbackRating(5);
+    setFeedbackNotice("Thank you! Your feedback has been submitted.");
+  };
   const [origin, setOrigin] = useState("Tokyo");
   const [destination, setDestination] = useState("Sydney");
   const [cargoType, setCargoType] = useState("Electronics");
@@ -526,11 +562,78 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
 
   const [result, setResult] = useState(null);
   const [activeRoute, setActiveRoute] = useState(null);
+  const [seaRoutePositions, setSeaRoutePositions] = useState([]);
+  const [landLegs, setLandLegs] = useState([]);
+  const [seaRouteLoading, setSeaRouteLoading] = useState(false);
+  const [seaRouteError, setSeaRouteError] = useState("");
   const [loading, setLoading] = useState(false);
   const [freightIntelligence, setFreightIntelligence] = useState(null);
   const [freightIntelligenceLoading, setFreightIntelligenceLoading] =
     useState(false);
   const [freightIntelligenceError, setFreightIntelligenceError] = useState("");
+  const [quotationSubmitted, setQuotationSubmitted] = useState(false);
+  const [quotationNotice, setQuotationNotice] = useState("");
+
+  // Reset completed analyses whenever shipment inputs change.
+  const resetQuotationWorkflow = () => {
+    setResult(null);
+    setActiveRoute(null);
+    setSeaRoutePositions([]);
+    setLandLegs([]);
+    setSeaRouteError("");
+    setFreightIntelligence(null);
+    setFreightIntelligenceError("");
+    setQuotationSubmitted(false);
+    setQuotationNotice("");
+  };
+  const [alternativeRoutes, setAlternativeRoutes] = useState([]);
+
+  // Load calculated sea routes for primary and all alternative paths
+  useEffect(() => {
+    let cancelled = false;
+    if (!result?.origin || !result?.destination) {
+      setSeaRoutePositions([]);
+      setAlternativeRoutes([]);
+      setSeaRouteError("");
+      setSeaRouteLoading(false);
+      return;
+    }
+
+    setSeaRouteLoading(true);
+    setSeaRouteError("");
+
+    fetch("http://127.0.0.1:8000/api/sea-route", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        origin: result.origin,
+        destination: result.destination,
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Could not calculate maritime route.");
+        return res.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setSeaRoutePositions(data.primary?.path || []);
+        setAlternativeRoutes(data.alternatives || []);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setSeaRoutePositions([]);
+          setAlternativeRoutes([]);
+          setSeaRouteError(err.message || "Routing service offline.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setSeaRouteLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [result?.origin, result?.destination]);
 
   // Holds currently checked document names
   const [checkedDocs, setCheckedDocs] = useState([]);
@@ -556,6 +659,9 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
       : [...checkedDocs, docName];
 
     setCheckedDocs(updatedDocs);
+    setFreightIntelligence(null);
+    setQuotationSubmitted(false);
+    setQuotationNotice("");
     setIsAuditingDocs(true);
 
     try {
@@ -1405,6 +1511,10 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
     setLoading(true);
     setResult(null);
     setActiveRoute(null);
+    setFreightIntelligence(null);
+    setFreightIntelligenceError("");
+    setQuotationSubmitted(false);
+    setQuotationNotice("");
 
     try {
       const data = await generateQuotation({
@@ -1418,42 +1528,6 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
 
       if (data.status === "success") {
         setActiveRoute(data.recommended_route_details);
-
-        const quotationRequest = {
-          id: Date.now(),
-          customer: {
-            name: user?.name || "Customer",
-            email: user?.email || "",
-          },
-          shipment: {
-            origin: origin,
-            destination: destination,
-            cargo_type: cargoType,
-            containers: Number(containers),
-          },
-          quotation: data,
-          status: "Pending Review",
-          feedback: "",
-          createdAt: new Date().toLocaleString(),
-        };
-
-        const existingRequests =
-          JSON.parse(localStorage.getItem("quotationRequests")) || [];
-
-        existingRequests.unshift(quotationRequest);
-
-        localStorage.setItem(
-          "quotationRequests",
-          JSON.stringify(existingRequests),
-        );
-
-        setCustomerRequests(
-          existingRequests.filter(
-            (request) =>
-              request.customer.email?.toLowerCase() ===
-              user?.email?.toLowerCase(),
-          ),
-        );
       }
     } catch (error) {
       console.error("Error:", error);
@@ -1464,6 +1538,54 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
     }
 
     setLoading(false);
+  };
+
+  const handleGenerateFinalQuotation = () => {
+    if (result?.status !== "success" || !freightIntelligence) {
+      setQuotationNotice(
+        "Please complete Route Analysis and Freight Intelligence first.",
+      );
+      return;
+    }
+
+    const quotationRequest = {
+      id: Date.now(),
+      customer: {
+        name: user?.name || "Customer",
+        email: user?.email || "",
+      },
+      shipment: {
+        origin,
+        destination,
+        cargo_type: cargoType,
+        containers: Number(containers),
+      },
+      quotation: {
+        ...result,
+        selected_route_details: activeRoute,
+        freight_intelligence: freightIntelligence,
+      },
+      status: "Pending Review",
+      feedback: "",
+      createdAt: new Date().toLocaleString(),
+    };
+
+    const existingRequests = JSON.parse(
+      localStorage.getItem("quotationRequests") || "[]",
+    );
+    existingRequests.unshift(quotationRequest);
+    localStorage.setItem("quotationRequests", JSON.stringify(existingRequests));
+
+    setCustomerRequests(
+      existingRequests.filter(
+        (request) =>
+          request.customer.email?.toLowerCase() === user?.email?.toLowerCase(),
+      ),
+    );
+    setQuotationSubmitted(true);
+    setQuotationNotice(
+      "Quotation submitted successfully and is now pending admin review.",
+    );
   };
 
   const analyzeFreightIntelligence = async () => {
@@ -1635,6 +1757,17 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
           >
             ▤ &nbsp; Quotations
           </div>
+
+          <div
+            className={`nav-item ${activeSection === "feedback" ? "active" : ""}`}
+            onClick={() => {
+              setActiveSection("feedback");
+              setFeedbackNotice("");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            ★ &nbsp; Feedback
+          </div>
         </nav>
 
         <div className="platform">
@@ -1642,7 +1775,17 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
           <small>Milestone 1 • Route Foundation</small>
         </div>
 
-        <div className="nav-item settings">⚙ &nbsp; Settings</div>
+        <div
+          className={`nav-item settings ${activeSection === "settings" ? "active" : ""}`}
+          onClick={goToSettings}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") goToSettings();
+          }}
+        >
+          ⚙ &nbsp; Settings
+        </div>
 
         <button className="logout-button" onClick={onLogout}>
           ⇥ &nbsp; Logout
@@ -2196,7 +2339,7 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                         value={origin}
                         onChange={(e) => {
                           setOrigin(e.target.value);
-                          setResult(null);
+                          resetQuotationWorkflow();
                         }}
                       >
                         <option>Antwerp</option>
@@ -2240,7 +2383,7 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                         value={destination}
                         onChange={(e) => {
                           setDestination(e.target.value);
-                          setResult(null);
+                          resetQuotationWorkflow();
                         }}
                       >
                         <option>Antwerp</option>
@@ -2282,7 +2425,10 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
 
                       <select
                         value={cargoType}
-                        onChange={(e) => setCargoType(e.target.value)}
+                        onChange={(e) => {
+                          setCargoType(e.target.value);
+                          resetQuotationWorkflow();
+                        }}
                       >
                         <option>Electronics</option>
                         <option>General Cargo</option>
@@ -2299,7 +2445,10 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                         type="number"
                         min="1"
                         value={containers}
-                        onChange={(e) => setContainers(e.target.value)}
+                        onChange={(e) => {
+                          setContainers(e.target.value);
+                          resetQuotationWorkflow();
+                        }}
                       />
                     </div>
                   </div>
@@ -2332,15 +2481,17 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                     onClick={analyzeRoute}
                     disabled={loading}
                   >
-                    {loading
-                      ? "Analyzing route..."
-                      : "✦ Analyze route & generate quote →"}
+                    {loading ? "Analyzing route..." : "✦ Analyze Route"}
                   </button>
 
                   <button
                     className="analyze-button"
                     onClick={analyzeFreightIntelligence}
-                    disabled={freightIntelligenceLoading}
+                    disabled={
+                      freightIntelligenceLoading ||
+                      loading ||
+                      result?.status !== "success"
+                    }
                   >
                     {freightIntelligenceLoading
                       ? "Analyzing..."
@@ -2685,7 +2836,6 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                   })()}
                 </div>
               )}
-              
               {/* Route Result */}
               {result && activeRoute && (
                 <div className="card result-card">
@@ -2707,18 +2857,18 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                         </div>
                       </div>
 
-                      {/* 🗺️ INTERACTIVE MAP SHOWING ALL ROUTES */}
+                      {/* 🗺️ INTERACTIVE MAP SHOWING RECOMMENDED & ALTERNATIVE ROUTES */}
                       <div
                         id="map-view-section"
                         style={{
-                          height: "420px",
+                          height: "440px",
                           width: "100%",
                           borderRadius: "14px",
                           overflow: "hidden",
-                          marginBottom: "40px",
+                          marginBottom: "30px",
                           border: "1px solid #1e293b",
                           zIndex: 0,
-                          backgroundColor: "#323232",
+                          backgroundColor: "#0b172a",
                         }}
                       >
                         <MapContainer
@@ -2727,107 +2877,222 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                           scrollWheelZoom={true}
                         >
                           <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+                            attribution="Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ"
+                            maxZoom={16}
                           />
 
-                          {/* Map the main recommended route first */}
-                          <Polyline
-                            eventHandlers={{
-                              click: () =>
-                                handleRouteSelection(
-                                  result.recommended_route_details,
-                                ),
-                            }}
-                            positions={getRealisticRoute(
-                              result.origin,
-                              result.destination,
-                              result.recommended_route_details,
-                              result.recommended_route,
-                            )}
-                            color={
-                              activeRoute.route_id === result.recommended_route
-                                ? "#10b981"
-                                : "#64748b"
-                            }
-                            weight={
-                              activeRoute.route_id === result.recommended_route
-                                ? 4
-                                : 2
-                            }
-                            dashArray={
-                              activeRoute.route_id === result.recommended_route
-                                ? ""
-                                : "6, 6"
-                            }
-                            opacity={
-                              activeRoute.route_id === result.recommended_route
-                                ? 1
-                                : 0.4
-                            }
-                          >
-                            <Popup>
-                              <strong>{result.recommended_route}</strong>
-                              <br />
-                              Click to view details
-                            </Popup>
-                          </Polyline>
+                          {/* 1. Recommended / Primary Maritime Route */}
+                          {seaRoutePositions.length > 1 && (
+                            <Polyline
+                              positions={seaRoutePositions}
+                              eventHandlers={{
+                                click: () => {
+                                  if (result.recommended_route_details) {
+                                    handleRouteSelection(
+                                      result.recommended_route_details,
+                                    );
+                                  }
+                                },
+                              }}
+                              pathOptions={{
+                                color:
+                                  activeRoute?.route_id ===
+                                  result.recommended_route
+                                    ? "#38bdf8"
+                                    : "#475569",
+                                weight:
+                                  activeRoute?.route_id ===
+                                  result.recommended_route
+                                    ? 4.5
+                                    : 2,
+                                opacity:
+                                  activeRoute?.route_id ===
+                                  result.recommended_route
+                                    ? 1
+                                    : 0.45,
+                                dashArray:
+                                  activeRoute?.route_id ===
+                                  result.recommended_route
+                                    ? undefined
+                                    : "6, 6",
+                              }}
+                            >
+                              <Popup>
+                                <strong>
+                                  {result.recommended_route} (Recommended)
+                                </strong>
+                                <br />
+                                Status: Optimal Transit Route
+                              </Popup>
+                            </Polyline>
+                          )}
 
-                          {/* Map all alternative routes dynamically */}
-                          {result.alternatives.map((routeOpt) => {
-                            const isActive =
-                              activeRoute.route_id === routeOpt.route_id;
+                          {/* 2. All Available Alternative Maritime Routes */}
+                          {alternativeRoutes.map((alt, index) => {
+                            const matchingAltDetails =
+                              result.alternatives && result.alternatives[index]
+                                ? result.alternatives[index]
+                                : {
+                                    route_id: alt.id,
+                                    transit_days: "—",
+                                    distance_nm: alt.distance_nm,
+                                    base_freight_usd: 0,
+                                  };
+
+                            const isSelected =
+                              activeRoute?.route_id ===
+                              matchingAltDetails.route_id;
+                            const altColors = ["#10b981", "#f59e0b", "#a855f7"];
+                            const color = altColors[index % altColors.length];
+
+                            // Use the actual distance from the quotation card if available, otherwise fallback to the calculated distance
+                            const displayDistance =
+                              matchingAltDetails.distance_nm ?? alt.distance_nm;
+
                             return (
-                              <Polyline
-                                key={routeOpt.route_id}
-                                eventHandlers={{
-                                  click: () => handleRouteSelection(routeOpt),
-                                }}
-                                positions={getRealisticRoute(
-                                  result.origin,
-                                  result.destination,
-                                  routeOpt,
-                                  result.recommended_route,
-                                )}
-                                color={isActive ? "#0d6efd" : "#64748b"}
-                                weight={isActive ? 4 : 2}
-                                dashArray={isActive ? "" : "6, 6"}
-                                opacity={isActive ? 1 : 0.4}
-                              >
-                                <Popup>
-                                  <strong>{routeOpt.route_id}</strong>
-                                  <br />
-                                  Click to view details
-                                </Popup>
-                              </Polyline>
+                              alt.path &&
+                              alt.path.length > 1 && (
+                                <Polyline
+                                  key={`alt-route-${alt.id || index}`}
+                                  positions={alt.path}
+                                  eventHandlers={{
+                                    click: () =>
+                                      handleRouteSelection(matchingAltDetails),
+                                  }}
+                                  pathOptions={{
+                                    color: isSelected ? color : "#64748b",
+                                    weight: isSelected ? 4.5 : 2,
+                                    opacity: isSelected ? 1 : 0.5,
+                                    dashArray: isSelected ? undefined : "6, 6",
+                                  }}
+                                >
+                                  <Popup>
+                                    <strong>
+                                      {matchingAltDetails.route_id || alt.name}
+                                    </strong>
+                                    <br />
+                                    {/* Displays the EXACT distance matching your alternative route cards */}
+                                    Distance: {displayDistance} NM
+                                    <br />
+                                    Transit: {
+                                      matchingAltDetails.transit_days
+                                    }{" "}
+                                    days
+                                    <br />
+                                    Click to switch active quotation selection.
+                                  </Popup>
+                                </Polyline>
+                              )
                             );
                           })}
 
-                          <Marker
-                            position={portCoordinates[result.origin]}
-                            icon={originIcon}
-                          >
-                            <Popup>
-                              <strong>{result.origin}</strong>
-                              <br />
-                              Origin Port
-                            </Popup>
-                          </Marker>
-                          <Marker
-                            position={portCoordinates[result.destination]}
-                            icon={destIcon}
-                          >
-                            <Popup>
-                              <strong>{result.destination}</strong>
-                              <br />
-                              Destination Port
-                            </Popup>
-                          </Marker>
+                          {/* Origin Port Marker */}
+                          {portCoordinates[result.origin] && (
+                            <Marker
+                              position={portCoordinates[result.origin]}
+                              icon={originIcon}
+                            >
+                              <Popup>
+                                <strong>{result.origin}</strong>
+                                <br />
+                                Origin Port
+                              </Popup>
+                            </Marker>
+                          )}
+
+                          {/* Destination Port Marker */}
+                          {portCoordinates[result.destination] && (
+                            <Marker
+                              position={portCoordinates[result.destination]}
+                              icon={destIcon}
+                            >
+                              <Popup>
+                                <strong>{result.destination}</strong>
+                                <br />
+                                Destination Port
+                              </Popup>
+                            </Marker>
+                          )}
+
+                          {/* Global Network Ports */}
+                          {Object.entries(portCoordinates)
+                            .filter(
+                              ([port]) =>
+                                port !== result.origin &&
+                                port !== result.destination,
+                            )
+                            .map(([port, coordinates]) => (
+                              <Marker
+                                key={port}
+                                position={coordinates}
+                                icon={portIcon}
+                              >
+                                <Popup>
+                                  <strong>{port}</strong>
+                                  <br />
+                                  Active Maritime Hub
+                                </Popup>
+                              </Marker>
+                            ))}
+
                           <MapBounds
                             origin={result.origin}
                             destination={result.destination}
                           />
                         </MapContainer>
+
+                        {/* Dynamic Multi-Route Legend */}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "20px",
+                            padding: "10px 16px",
+                            fontSize: "12px",
+                            background: "#0f172a",
+                            color: "#e2e8f0",
+                            borderTop: "1px solid #1e293b",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <span
+                              style={{ color: "#38bdf8", fontWeight: "bold" }}
+                            >
+                              ━━━
+                            </span>{" "}
+                            Recommended Route
+                          </span>
+                          {alternativeRoutes.map((alt, idx) => {
+                            const colors = ["#10b981", "#f59e0b", "#a855f7"];
+                            return (
+                              <span
+                                key={`legend-${idx}`}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    color: colors[idx % colors.length],
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  ╌╌╌
+                                </span>{" "}
+                                {alt.name || `Alternative ${idx + 1}`}
+                              </span>
+                            );
+                          })}
+                        </div>
                       </div>
                       <p
                         style={{
@@ -2840,8 +3105,11 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                           position: "relative",
                         }}
                       >
-                        Map is fully interactive. Click any dashed line to
-                        select an alternative route.
+                        All supported ports are marked. The selected route is
+                        solid and highlighted; other routes are dotted. Click
+                        any route line to highlight it and update the selected
+                        route details. Zoom out to explore the full port
+                        network.
                       </p>
 
                       {/* 1. Active Route Details */}
@@ -2906,77 +3174,134 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                         </div>
                       </section>
 
-                      {/* 2. Alternative Routes List */}
-                      {result.alternatives.length > 0 && (
-                        <section className="alternatives-section">
-                          <div className="section-heading">
-                            <div>
-                              <h2>Alternative Routes</h2>
-                            </div>
-                          </div>
+                      {/* 2. All Available Routes (Allows Switching Back & Forth) */}
+                      {(() => {
+                        // Combine the recommended route and all alternative routes into one list
+                        const allCandidateRoutes = [
+                          {
+                            ...result.recommended_route_details,
+                            isRecommended: true,
+                            rank: "Recommended",
+                          },
+                          ...result.alternatives.map((alt) => ({
+                            ...alt,
+                            isRecommended: false,
+                          })),
+                        ];
 
-                          <div className="routes-list">
-                            {result.alternatives.map((route) => (
-                              <div
-                                className="route-item"
-                                key={route.route_id}
-                                onClick={() => handleRouteSelection(route)}
-                                style={{
-                                  cursor: "pointer",
-                                  border:
-                                    activeRoute.route_id === route.route_id
-                                      ? "2px solid #0d6efd"
-                                      : "1px solid #e2e8f0",
-                                  backgroundColor:
-                                    activeRoute.route_id === route.route_id
-                                      ? "#f0f6ff"
-                                      : "white",
-                                }}
-                              >
-                                <div className="route-rank">
-                                  {route.rank === 2
-                                    ? "🥈"
-                                    : route.rank === 3
-                                      ? "🥉"
-                                      : `#${route.rank}`}
-                                </div>
+                        // Show all routes that are not currently active in the details view above
+                        const selectableRoutes = allCandidateRoutes.filter(
+                          (route) => route.route_id !== activeRoute.route_id,
+                        );
 
-                                <div className="route-info">
-                                  <small>Route ID</small>
-                                  <strong>{route.route_id}</strong>
-                                </div>
+                        if (selectableRoutes.length === 0) return null;
 
-                                <div className="route-info">
-                                  <small>Transit</small>
-                                  <strong>{route.transit_days} days</strong>
-                                </div>
-
-                                <div className="route-info">
-                                  <small>Distance</small>
-                                  <strong>{route.distance_nm} NM</strong>
-                                </div>
-
-                                <div className="route-info">
-                                  <small>Transshipments</small>
-                                  <strong>{route.transshipments}</strong>
-                                </div>
-
-                                <div className="route-info">
-                                  <small>Score</small>
-                                  <strong>{route.route_score}</strong>
-                                </div>
-
-                                <div className="route-info freight">
-                                  <small>Base Freight</small>
-                                  <strong>
-                                    {formatCurrency(route.base_freight_usd)}
-                                  </strong>
-                                </div>
+                        return (
+                          <section
+                            className="alternatives-section"
+                            style={{ marginTop: "32px" }}
+                          >
+                            <div className="section-heading">
+                              <div>
+                                <h2>Available Route Options</h2>
+                                <p
+                                  style={{
+                                    color: "#94a3b8",
+                                    fontSize: "13px",
+                                    margin: "4px 0 0",
+                                  }}
+                                >
+                                  Click any route below to compare and set it as
+                                  your active quotation route.
+                                </p>
                               </div>
-                            ))}
-                          </div>
-                        </section>
-                      )}
+                            </div>
+
+                            <div className="routes-list">
+                              {selectableRoutes.map((route) => {
+                                const isRec = route.isRecommended;
+
+                                return (
+                                  <div
+                                    className="route-item"
+                                    key={route.route_id}
+                                    onClick={() => handleRouteSelection(route)}
+                                    style={{
+                                      cursor: "pointer",
+                                      border: isRec
+                                        ? "2px solid #38bdf8"
+                                        : "1px solid #1e293b",
+                                      backgroundColor: isRec
+                                        ? "rgba(56, 189, 248, 0.08)"
+                                        : "rgba(15, 23, 42, 0.6)",
+                                      transition: "all 0.2s ease",
+                                    }}
+                                  >
+                                    <div
+                                      className="route-rank"
+                                      style={{
+                                        background: isRec
+                                          ? "rgba(56, 189, 248, 0.2)"
+                                          : undefined,
+                                        color: isRec ? "#38bdf8" : undefined,
+                                      }}
+                                    >
+                                      {isRec
+                                        ? "🏆"
+                                        : route.rank === 2
+                                          ? "🥈"
+                                          : route.rank === 3
+                                            ? "🥉"
+                                            : `#${route.rank}`}
+                                    </div>
+
+                                    <div className="route-info">
+                                      <small>
+                                        {isRec ? "Status" : "Route ID"}
+                                      </small>
+                                      <strong
+                                        style={{
+                                          color: isRec ? "#38bdf8" : "#ffffff",
+                                        }}
+                                      >
+                                        {route.route_id}{" "}
+                                        {isRec && "(Recommended)"}
+                                      </strong>
+                                    </div>
+
+                                    <div className="route-info">
+                                      <small>Transit</small>
+                                      <strong>{route.transit_days} days</strong>
+                                    </div>
+
+                                    <div className="route-info">
+                                      <small>Distance</small>
+                                      <strong>{route.distance_nm} NM</strong>
+                                    </div>
+
+                                    <div className="route-info">
+                                      <small>Transshipments</small>
+                                      <strong>{route.transshipments}</strong>
+                                    </div>
+
+                                    <div className="route-info">
+                                      <small>Score</small>
+                                      <strong>{route.route_score}</strong>
+                                    </div>
+
+                                    <div className="route-info freight">
+                                      <small>Base Freight</small>
+                                      <strong>
+                                        {formatCurrency(route.base_freight_usd)}
+                                      </strong>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </section>
+                        );
+                      })()}
 
                       {/* 3. Route Score */}
                       <section className="route-score-section">
@@ -3604,6 +3929,68 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                             </strong>
                           </div>
                         </div>
+
+                        <div style={{ marginTop: "24px" }}>
+                          <div
+                            style={{
+                              marginBottom: "14px",
+                              color: "#64748b",
+                              fontSize: "13px",
+                            }}
+                          >
+                            {result?.status === "success"
+                              ? "✓ Route analysis completed"
+                              : "1. Complete route analysis"}
+                            {"  •  "}
+                            {freightIntelligence
+                              ? "✓ Freight Intelligence reviewed"
+                              : "2. Complete Freight Intelligence"}
+                          </div>
+                          <button
+                            type="button"
+                            className="analyze-button"
+                            onClick={handleGenerateFinalQuotation}
+                            disabled={
+                              loading ||
+                              freightIntelligenceLoading ||
+                              result?.status !== "success" ||
+                              !freightIntelligence ||
+                              quotationSubmitted
+                            }
+                            style={{
+                              width: "100%",
+                              opacity:
+                                result?.status === "success" &&
+                                freightIntelligence &&
+                                !quotationSubmitted
+                                  ? 1
+                                  : 0.55,
+                              cursor:
+                                result?.status === "success" &&
+                                freightIntelligence &&
+                                !quotationSubmitted
+                                  ? "pointer"
+                                  : "not-allowed",
+                            }}
+                          >
+                            {quotationSubmitted
+                              ? "✓ Quotation Submitted"
+                              : "Generate Final Quotation →"}
+                          </button>
+                          {quotationNotice && (
+                            <p
+                              role="status"
+                              style={{
+                                marginTop: "12px",
+                                color: quotationSubmitted
+                                  ? "#16a34a"
+                                  : "#64748b",
+                              }}
+                            >
+                              {quotationNotice}
+                            </p>
+                          )}
+                        </div>
                       </section>
                     </>
                   ) : (
@@ -3747,6 +4134,109 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
           )}
 
           {/* --- ADVANCED SETTINGS SCREEN --- */}
+          {activeSection === "feedback" && (
+            <div className="workspace">
+              <div className="page-heading">
+                <div>
+                  <div className="eyebrow">✦ YOUR VOICE MATTERS</div>
+                  <h1>Share Feedback</h1>
+                  <p>
+                    Tell us how we can improve your maritime brokerage
+                    experience.
+                  </p>
+                </div>
+              </div>
+              <form
+                onSubmit={submitCustomerFeedback}
+                className="card"
+                style={{ maxWidth: "760px", padding: "28px" }}
+              >
+                <label
+                  htmlFor="feedback-rating"
+                  style={{
+                    display: "block",
+                    marginBottom: "10px",
+                    color: "#e2e8f0",
+                    fontWeight: 600,
+                  }}
+                >
+                  How would you rate your experience?
+                </label>
+                <select
+                  id="feedback-rating"
+                  value={feedbackRating}
+                  onChange={(e) => setFeedbackRating(Number(e.target.value))}
+                  className="settings-input"
+                  style={{ width: "100%", marginBottom: "22px" }}
+                >
+                  <option value={5}>★★★★★ — Excellent</option>
+                  <option value={4}>★★★★☆ — Good</option>
+                  <option value={3}>★★★☆☆ — Average</option>
+                  <option value={2}>★★☆☆☆ — Poor</option>
+                  <option value={1}>★☆☆☆☆ — Very poor</option>
+                </select>
+                <label
+                  htmlFor="feedback-message"
+                  style={{
+                    display: "block",
+                    marginBottom: "10px",
+                    color: "#e2e8f0",
+                    fontWeight: 600,
+                  }}
+                >
+                  Your feedback
+                </label>
+                <textarea
+                  id="feedback-message"
+                  value={feedbackMessage}
+                  onChange={(e) => setFeedbackMessage(e.target.value)}
+                  placeholder="What worked well, or what should we improve?"
+                  rows={6}
+                  maxLength={2000}
+                  required
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    resize: "vertical",
+                    padding: "14px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(148,163,184,0.3)",
+                    background: "rgba(15,23,42,0.45)",
+                    color: "#f8fafc",
+                    font: "inherit",
+                    marginBottom: "8px",
+                  }}
+                />
+                <div
+                  style={{
+                    textAlign: "right",
+                    color: "#94a3b8",
+                    fontSize: "12px",
+                    marginBottom: "18px",
+                  }}
+                >
+                  {feedbackMessage.length}/2000
+                </div>
+                {feedbackNotice && (
+                  <p
+                    role="status"
+                    style={{
+                      color: feedbackNotice.startsWith("Thank you")
+                        ? "#34d399"
+                        : "#fbbf24",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    {feedbackNotice}
+                  </p>
+                )}
+                <button type="submit" className="analyze-button">
+                  Submit Feedback
+                </button>
+              </form>
+            </div>
+          )}
+
           {activeSection === "settings" && (
             <>
               <div className="page-heading">

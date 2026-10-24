@@ -5,15 +5,30 @@ function ReviewRequest({ request, onBack }) {
   // Load saved feedback or default to empty
   const [feedback, setFeedback] = useState(request?.feedback || "");
 
+  // 1. ADD ERROR STATE HERE:
+  const [feedbackError, setFeedbackError] = useState("");
+
   // Check if it's still pending
   const isPending = request?.status === "Pending Review";
 
   // Force the text box to sync up with the saved data
   useEffect(() => {
     setFeedback(request?.feedback || "");
+    setFeedbackError(""); // Clear any previous error when request changes
   }, [request]);
 
   const updateStatus = (newStatus) => {
+    // 1. Mandatory feedback check ONLY for Rejection
+    if (newStatus === "Rejected" && !feedback.trim()) {
+      setFeedbackError(
+        "Feedback is required when rejecting a quotation. Please provide a reason.",
+      );
+      return;
+    }
+
+    // 2. Clear any active error if valid
+    setFeedbackError("");
+
     const existingRequests =
       JSON.parse(localStorage.getItem("quotationRequests")) || [];
 
@@ -22,7 +37,7 @@ function ReviewRequest({ request, onBack }) {
         ? {
             ...item,
             status: newStatus,
-            feedback: feedback, // 2. Save feedback to the request object
+            feedback: feedback.trim(), // Save trimmed feedback (optional for Approved, mandatory for Rejected)
           }
         : item,
     );
@@ -410,16 +425,81 @@ function ReviewRequest({ request, onBack }) {
           <span>Provide a reason for approving or rejecting this request.</span>
         </div>
         <textarea
-          className="feedback-input"
           value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
-          placeholder={
-            isPending
-              ? "Enter feedback for the customer here..."
-              : "No feedback was provided."
-          }
-          readOnly={!isPending}
+          onChange={(e) => {
+            setFeedback(e.target.value);
+            if (feedbackError) setFeedbackError("");
+          }}
+          placeholder="Add optional notes for approval, or mandatory reason for rejection..."
+          rows={4}
+          style={{
+            width: "100%",
+            padding: "14px 16px",
+            borderRadius: "12px",
+            background: "rgba(11, 27, 53, 0.65)",
+            border: feedbackError
+              ? "1px solid rgba(239, 68, 68, 0.5)"
+              : "1px solid rgba(56, 189, 248, 0.18)",
+            boxShadow: feedbackError
+              ? "0 0 0 3px rgba(239, 68, 68, 0.15), inset 0 2px 6px rgba(0,0,0,0.3)"
+              : "inset 0 2px 6px rgba(0,0,0,0.25)",
+            color: "#f8fafc",
+            fontFamily: "inherit",
+            fontSize: "13.5px",
+            lineHeight: "1.6",
+            outline: "none",
+            resize: "vertical",
+            transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+          }}
         />
+
+        {/* Render the error warning if validation fails on rejection */}
+        {feedbackError && (
+          <div
+            style={{
+              marginTop: "12px",
+              padding: "12px 16px",
+              borderRadius: "10px",
+              background: "rgba(239, 68, 68, 0.08)",
+              border: "1px solid rgba(239, 68, 68, 0.25)",
+              borderLeft: "4px solid #ef4444",
+              backdropFilter: "blur(12px)",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.3)",
+            }}
+          >
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "22px",
+                height: "22px",
+                borderRadius: "50%",
+                background: "rgba(239, 68, 68, 0.2)",
+                color: "#f87171",
+                fontSize: "12px",
+                fontWeight: "bold",
+                flexShrink: 0,
+              }}
+            >
+              !
+            </span>
+            <span
+              style={{
+                color: "#fca5a5",
+                fontSize: "13px",
+                lineHeight: "1.5",
+                fontWeight: "500",
+                letterSpacing: "0.2px",
+              }}
+            >
+              {feedbackError}
+            </span>
+          </div>
+        )}
       </section>
 
       {/* Actions */}
