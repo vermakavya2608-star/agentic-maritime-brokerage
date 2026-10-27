@@ -2131,18 +2131,11 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                   <div className="card-3d-visual">
                     <div className="radar-pulse-visual">⌖</div>
                   </div>
-                  <div className={`agent-status-badge ${agentHealth.route}`}>
-                    {agentHealth.route === "loading"
-                      ? "⏳ CHECKING"
-                      : agentHealth.route === "online"
-                        ? "🟢 ONLINE"
-                        : "🔴 OFFLINE"}
-                  </div>
+
                   <h3>Route Intelligence</h3>
                   <p>
-                    {agentHealth.route === "offline"
-                      ? "Agent offline. Unable to access routing network database."
-                      : "Scanning global maritime networks for optimal transit paths and transshipment hubs."}
+                    Analyzing maritime routes, transit times, distances, and
+                    transshipment options.
                   </p>
                 </div>
 
@@ -2153,18 +2146,11 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                   <div className="card-3d-visual">
                     <div className="holo-globe">🌐</div>
                   </div>
-                  <div className={`agent-status-badge ${agentHealth.weather}`}>
-                    {agentHealth.weather === "loading"
-                      ? "⏳ CHECKING"
-                      : agentHealth.weather === "online"
-                        ? "🟢 ONLINE"
-                        : "🔴 OFFLINE"}
-                  </div>
+
                   <h3>Weather Routing</h3>
                   <p>
-                    {agentHealth.weather === "offline"
-                      ? "Agent offline. Live weather data unavailable."
-                      : "Live weather monitoring active. Analyzing port conditions, wind risk, marine alerts, and weather impact on freight pricing."}
+                    Assessing weather conditions and potential disruptions along
+                    shipping routes.
                   </p>
                 </div>
 
@@ -2182,18 +2168,11 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                       <div className="cube-face face-bottom">🚢</div>
                     </div>
                   </div>
-                  <div className={`agent-status-badge ${agentHealth.pricing}`}>
-                    {agentHealth.pricing === "loading"
-                      ? "⏳ CHECKING"
-                      : agentHealth.pricing === "online"
-                        ? "🟢 ONLINE"
-                        : "🔴 OFFLINE"}
-                  </div>
+
                   <h3>Dynamic Pricing</h3>
                   <p>
-                    {agentHealth.pricing === "offline"
-                      ? "Agent offline. Core pricing engine unreachable."
-                      : "Calculating live fuel surcharges, port fees, and margin optimization factors."}
+                    Estimating freight costs using route details, operating
+                    expenses, and market factors.
                   </p>
                 </div>
 
@@ -2213,18 +2192,11 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                       🏛️
                     </div>
                   </div>
-                  <div className={`agent-status-badge ${agentHealth.customs}`}>
-                    {agentHealth.customs === "loading"
-                      ? "⏳ CHECKING"
-                      : agentHealth.customs === "online"
-                        ? "🟢 ONLINE"
-                        : "🔴 OFFLINE"}
-                  </div>
+
                   <h3>Customs & Risk</h3>
                   <p>
-                    {agentHealth.customs === "offline"
-                      ? "Agent offline. Customs database unreachable."
-                      : "Validating international shipping documents and assessing holistic shipment risk."}
+                    Validating international shipping documents and assessing
+                    holistic shipment risk.
                   </p>
                 </div>
               </div>
@@ -2811,14 +2783,16 @@ function Dashboard({ user, onLogout, onUpdateUser }) {
                                       0,
                                       Math.min(
                                         100,
-                                        Number(risk.readiness_score) || 0,
+                                        ((Number(risk.readiness_score) || 0) /
+                                          10) *
+                                          100,
                                       ),
                                     )}%`,
                                   }}
                                 />
                               </div>
                               <small>
-                                Score: {risk.readiness_score ?? "—"} / 100
+                                Score: {risk.readiness_score ?? "—"} / 10
                               </small>
                             </div>
                           </section>

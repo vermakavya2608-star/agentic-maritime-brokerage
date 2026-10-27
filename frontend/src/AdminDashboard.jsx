@@ -20,8 +20,11 @@ import ReviewRequest from "./ReviewRequest";
 function AdminDashboard({ user, onLogout }) {
   const [requests, setRequests] = useState([]);
   const [customerFeedback, setCustomerFeedback] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("customerFeedback") || "[]"); }
-    catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem("customerFeedback") || "[]");
+    } catch {
+      return [];
+    }
   });
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -294,6 +297,7 @@ function AdminDashboard({ user, onLogout }) {
       );
 
       const data = await response.json();
+      console.log("Admin Freight Intelligence response:", data);
 
       if (!response.ok) {
         throw new Error(data.detail || "Freight analysis failed.");
@@ -442,8 +446,13 @@ function AdminDashboard({ user, onLogout }) {
           <button
             className={activeSection === "feedback" ? "active" : ""}
             onClick={() => {
-              try { setCustomerFeedback(JSON.parse(localStorage.getItem("customerFeedback") || "[]")); }
-              catch { setCustomerFeedback([]); }
+              try {
+                setCustomerFeedback(
+                  JSON.parse(localStorage.getItem("customerFeedback") || "[]"),
+                );
+              } catch {
+                setCustomerFeedback([]);
+              }
               setActiveSection("feedback");
             }}
           >
@@ -606,30 +615,101 @@ function AdminDashboard({ user, onLogout }) {
             <div className="panel-heading">
               <div>
                 <h2>Customer Feedback</h2>
-                <p>{customerFeedback.length} submission{customerFeedback.length === 1 ? "" : "s"} received</p>
+                <p>
+                  {customerFeedback.length} submission
+                  {customerFeedback.length === 1 ? "" : "s"} received
+                </p>
               </div>
-              <button className="refresh-button" onClick={() => {
-                try { setCustomerFeedback(JSON.parse(localStorage.getItem("customerFeedback") || "[]")); }
-                catch { setCustomerFeedback([]); }
-              }}>Refresh Feedback</button>
+              <button
+                className="refresh-button"
+                onClick={() => {
+                  try {
+                    setCustomerFeedback(
+                      JSON.parse(
+                        localStorage.getItem("customerFeedback") || "[]",
+                      ),
+                    );
+                  } catch {
+                    setCustomerFeedback([]);
+                  }
+                }}
+              >
+                Refresh Feedback
+              </button>
             </div>
             {customerFeedback.length === 0 ? (
-              <div className="admin-empty-state" style={{ padding: "36px", textAlign: "center" }}>
+              <div
+                className="admin-empty-state"
+                style={{ padding: "36px", textAlign: "center" }}
+              >
                 <h3>No feedback yet</h3>
                 <p>Customer submissions will appear here.</p>
               </div>
             ) : (
-              <div className="admin-table-container" style={{ overflowX: "auto" }}>
-                <table className="admin-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead><tr><th style={{ textAlign: "left", padding: "12px" }}>Customer</th><th style={{ textAlign: "left", padding: "12px" }}>Rating</th><th style={{ textAlign: "left", padding: "12px" }}>Feedback</th><th style={{ textAlign: "left", padding: "12px" }}>Submitted</th></tr></thead>
-                  <tbody>{customerFeedback.map((item) => (
-                    <tr key={item.id}>
-                      <td style={{ padding: "12px", verticalAlign: "top" }}><strong>{item.customerName || "Customer"}</strong><br /><small>{item.customerEmail || "No email"}</small></td>
-                      <td style={{ padding: "12px", whiteSpace: "nowrap" }}><span aria-label={`${item.rating} out of 5`}>{"★".repeat(Math.max(0, Math.min(5, Number(item.rating) || 0)))}{"☆".repeat(5 - Math.max(0, Math.min(5, Number(item.rating) || 0)))}</span></td>
-                      <td style={{ padding: "12px", minWidth: "220px", whiteSpace: "pre-wrap" }}>{item.message}</td>
-                      <td style={{ padding: "12px", whiteSpace: "nowrap" }}>{item.createdAt || "—"}</td>
+              <div
+                className="admin-table-container"
+                style={{ overflowX: "auto" }}
+              >
+                <table
+                  className="admin-table"
+                  style={{ width: "100%", borderCollapse: "collapse" }}
+                >
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left", padding: "12px" }}>
+                        Customer
+                      </th>
+                      <th style={{ textAlign: "left", padding: "12px" }}>
+                        Rating
+                      </th>
+                      <th style={{ textAlign: "left", padding: "12px" }}>
+                        Feedback
+                      </th>
+                      <th style={{ textAlign: "left", padding: "12px" }}>
+                        Submitted
+                      </th>
                     </tr>
-                  ))}</tbody>
+                  </thead>
+                  <tbody>
+                    {customerFeedback.map((item) => (
+                      <tr key={item.id}>
+                        <td style={{ padding: "12px", verticalAlign: "top" }}>
+                          <strong>{item.customerName || "Customer"}</strong>
+                          <br />
+                          <small>{item.customerEmail || "No email"}</small>
+                        </td>
+                        <td style={{ padding: "12px", whiteSpace: "nowrap" }}>
+                          <span aria-label={`${item.rating} out of 5`}>
+                            {"★".repeat(
+                              Math.max(
+                                0,
+                                Math.min(5, Number(item.rating) || 0),
+                              ),
+                            )}
+                            {"☆".repeat(
+                              5 -
+                                Math.max(
+                                  0,
+                                  Math.min(5, Number(item.rating) || 0),
+                                ),
+                            )}
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px",
+                            minWidth: "220px",
+                            whiteSpace: "pre-wrap",
+                          }}
+                        >
+                          {item.message}
+                        </td>
+                        <td style={{ padding: "12px", whiteSpace: "nowrap" }}>
+                          {item.createdAt || "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
               </div>
             )}
@@ -1547,18 +1627,6 @@ function AdminDashboard({ user, onLogout }) {
                                   analysis.risk_intelligence?.overall_risk ??
                                     "Unknown",
                                 ).toUpperCase()}
-                              </span>
-                            </div>
-
-                            <div className="freight-metric">
-                              <span>READINESS SCORE</span>
-                              <strong>
-                                {analysis.risk_intelligence?.readiness_score ??
-                                  "—"}
-                              </strong>
-                              <span className="freight-readiness-grade">
-                                {analysis.risk_intelligence?.readiness_grade ??
-                                  "Not available"}
                               </span>
                             </div>
                           </div>
